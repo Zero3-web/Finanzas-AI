@@ -1,0 +1,5 @@
+{
+  "name": "Panel de Finanzas Personales",
+  "description": "Una aplicación web para rastrear tus ingresos, gastos y deudas con un panel visual y gráficos.",
+  "requestFramePermissions": []
+}

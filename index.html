@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel de Finanzas Personales</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Manrope', 'sans-serif'],
+            },
+            colors: {
+              'background': '#f9fafb', // Light gray background
+              'surface': '#ffffff', // White for cards
+              'primary': '#723FEB', // New Brand Purple
+              'primary-focus': '#5a2fba',
+              'secondary': '#f3f4f6', // Lighter gray for accents
+              'text-main': '#1f2937', 
+              'text-secondary': '#6b7280', 
+              'income': '#22c55e', 
+              'expense': '#ef4444',
+              'brand-purple': '#723FEB',
+              'brand-cyan': '#97E0F7',
+              'brand-black': '#1A1A1A',
+              'brand-white': '#FCFCFC',
+            },
+            borderRadius: {
+                'xl': '1rem',
+                '2xl': '1.5rem',
+            },
+            boxShadow: {
+                'main': '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
+                'lg': '0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
+            }
+          }
+        }
+      }
+    </script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "recharts/": "https://aistudiocdn.com/recharts@^3.3.0/",
+    "recharts": "https://aistudiocdn.com/recharts@^3.3.0"
+  }
+}
+</script>
+</head>
+<body class="bg-background text-text-main dark:bg-brand-black dark:text-brand-white font-sans">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+import React, { useState, useMemo } from 'react';
+import { useTheme } from './hooks/useTheme';
+import useLocalStorage from './hooks/useLocalStorage';
+import { Transaction, Account, Debt, Tab, TransactionType, Language, Notification } from './types';
+import Navigation from './components/Navigation';
+import Dashboard from './views/Dashboard';
+import Accounts from './views/Accounts';
+import Debts from './views/Debts';
+import History from './views/History';
+import Settings from './views/Settings';
+import Analysis from './views/Analysis';
+import Modal from './components/Modal';
+import TransactionForm from './components/TransactionForm';
+import AccountForm from './components/AccountForm';
+import DebtForm from './components/DebtForm';
+import { translations } from './utils/translations';
+import { PlusIcon } from './components/icons';
+
+const App: React.FC = () => {
+  const [theme, toggleTheme] = useTheme();
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [modalContent, setModalContent] = useState<'transaction' | 'account' | 'debt' | null>(null);
+  
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+
+  const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
+  const [accounts, setAccounts] = useLocalStorage<Account[]>('accounts', []);
+  const [debts, setDebts] = useLocalStorage<Debt[]>('debts', []);
+  
+  const [currency, setCurrency] = useLocalStorage<string>('currency', 'USD');
+  const [language, setLanguage] = useLocalStorage<Language>('language', 'en');
+
+  const t = (key: keyof typeof translations.en) => {
+      return translations[language]?.[key] || translations.en[key];
+  }
+
+  const formatCurrency = (amount: number) => {
+    const locales: { [key: string]: string } = {
+        'USD': 'en-US', 'EUR': 'de-DE', 'GBP': 'en-GB', 'JPY': 'ja-JP', 'PEN': 'es-PE', 'MXN': 'es-MX'
+    }
+    return new Intl.NumberFormat(locales[currency] || 'en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(amount);
+  };
+  
+  const notifications = useMemo<Notification[]>(() => {
+    const upcoming = [];
+    const today = new Date();
+    const sevenDaysFromNow = new Date(today);
+    sevenDaysFromNow.setDate(today.getDate() + 7);
+
+    debts.forEach(debt => {
+        const dueDate = new Date(debt.nextPaymentDate);
+        if (dueDate >= today && dueDate <= sevenDaysFromNow) {
+            upcoming.push({
+                id: `debt-${debt.id}`,
+                message: `${t('paymentFor')} ${debt.name}`,
+                dueDate: debt.nextPaymentDate,
+                type: 'debt'
+            });
+        }
+    });
+
+    accounts.filter(acc => acc.type === 'credit' && acc.paymentDueDate).forEach(acc => {
+        const dayOfMonth = parseInt(acc.paymentDueDate!);
+        if (isNaN(dayOfMonth)) return;
+        
+        let dueDate = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
+        if(dueDate < today) {
+            dueDate.setMonth(dueDate.getMonth() + 1);
+        }
+
+        if (dueDate >= today && dueDate <= sevenDaysFromNow) {
+            upcoming.push({
+                id: `credit-${acc.id}`,
+                message: `${t('paymentFor')} ${acc.name}`,
+                dueDate: dueDate.toISOString().split('T')[0],
+                type: 'credit_card'
+            });
+        }
+    });
+    return upcoming;
+  }, [debts, accounts, t]);
+
+  // CRUD Operations
+  const handleAddTransaction = (transaction: Omit<Transaction, 'id'>) => {
+    const newTransaction = { ...transaction, id: crypto.randomUUID() };
+    setTransactions(prev => [...prev, newTransaction]);
+    
+    setAccounts(prevAccs => prevAccs.map(acc => {
+      if (acc.id === transaction.accountId) {
+        const newBalance = transaction.type === TransactionType.INCOME
+          ? acc.balance + transaction.amount
+          : acc.balance - transaction.amount;
+        return { ...acc, balance: newBalance };
+      }
+      return acc;
+    }));
+  };
+  
+  const handleUpdateTransaction = (updatedTransaction: Transaction) => {
+      const originalTransaction = transactions.find(t => t.id === updatedTransaction.id);
+      if (!originalTransaction) return;
+
+      setTransactions(prev => prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
+
+      setAccounts(prevAccs => prevAccs.map(acc => {
+          let balanceChange = 0;
+          if (acc.id === originalTransaction.accountId) {
+              const originalAmount = originalTransaction.type === TransactionType.INCOME ? originalTransaction.amount : -originalTransaction.amount;
+              balanceChange -= originalAmount;
+          }
+          if (acc.id === updatedTransaction.accountId) {
+              const newAmount = updatedTransaction.type === TransactionType.INCOME ? updatedTransaction.amount : -updatedTransaction.amount;
+              balanceChange += newAmount;
+          }
+          return { ...acc, balance: acc.balance + balanceChange };
+      }));
+      setEditingTransaction(null);
+  };
+
+  const handleRemoveTransaction = (transactionId: string) => {
+      const transactionToRemove = transactions.find(t => t.id === transactionId);
+      if (!transactionToRemove) return;
+      
+      if(window.confirm(t('confirmDeleteTransaction'))){
+          setTransactions(prev => prev.filter(t => t.id !== transactionId));
+          setAccounts(prevAccs => prevAccs.map(acc => {
+              if (acc.id === transactionToRemove.accountId) {
+                  const balanceAdjustment = transactionToRemove.type === TransactionType.INCOME
+                      ? -transactionToRemove.amount
+                      : +transactionToRemove.amount;
+                  return { ...acc, balance: acc.balance + balanceAdjustment };
+              }
+              return acc;
+          }));
+      }
+  };
+
+  const handleAddAccount = (account: Omit<Account, 'id'>) => {
+    setAccounts(prev => [...prev, { ...account, id: crypto.randomUUID() }]);
+  };
+
+  const handleUpdateAccount = (updatedAccount: Account) => {
+    setAccounts(prev => prev.map(acc => acc.id === updatedAccount.id ? updatedAccount : acc));
+    setEditingAccount(null);
+  };
+
+  const handleRemoveAccount = (accountId: string) => {
+    if(window.confirm(t('confirmDeleteAccount'))){
+      setAccounts(prev => prev.filter(acc => acc.id !== accountId));
+      setTransactions(prev => prev.filter(t => t.accountId !== accountId));
+    }
+  };
+
+  const handleAddDebt = (debt: Omit<Debt, 'id'>) => {
+    setDebts(prev => [...prev, { ...debt, id: crypto.randomUUID() }]);
+  };
+
+  const handleRemoveDebt = (debtId: string) => {
+     if(window.confirm(t('confirmDeleteDebt'))){
+        setDebts(prev => prev.filter(d => d.id !== debtId));
+     }
+  };
+
+  const openModal = (type: 'transaction' | 'account' | 'debt', entityToEdit: Transaction | Account | null = null) => {
+      if (type === 'transaction') setEditingTransaction(entityToEdit as Transaction | null);
+      if (type === 'account') setEditingAccount(entityToEdit as Account | null);
+      setModalContent(type);
+  };
+
+  const closeModal = () => {
+    setModalContent(null);
+    setEditingTransaction(null);
+    setEditingAccount(null);
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} theme={theme} formatCurrency={formatCurrency} t={t} notifications={notifications} />;
+      case 'accounts':
+        return <Accounts accounts={accounts} transactions={transactions} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={handleRemoveAccount} t={t} />;
+      case 'debts':
+        return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onRemoveDebt={handleRemoveDebt} t={t} />;
+      case 'history':
+        return <History transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onEditTransaction={(t) => openModal('transaction', t)} onRemoveTransaction={handleRemoveTransaction} t={t} />;
+      case 'analysis':
+        return <Analysis transactions={transactions} formatCurrency={formatCurrency} t={t} />;
+      case 'settings':
+        return <Settings theme={theme} toggleTheme={toggleTheme} currency={currency} setCurrency={setCurrency} language={language} setLanguage={setLanguage} t={t} />;
+      default:
+        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} theme={theme} formatCurrency={formatCurrency} t={t} notifications={notifications} />;
+    }
+  };
+
+  const getModalTitleKey = () => {
+    if (!modalContent) return '';
+    if (modalContent === 'transaction') return editingTransaction ? 'editTransactionTitle' : 'addTransactionTitle';
+    if (modalContent === 'account') return editingAccount ? 'editAccountTitle' : 'addAccountTitle';
+    if (modalContent === 'debt') return 'addDebtTitle';
+    return '';
+  }
+
+  return (
+    <div className="flex h-screen bg-background dark:bg-brand-black">
+      <Navigation 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        isCollapsed={isSidebarCollapsed}
+        toggleCollapse={() => setSidebarCollapsed(!isSidebarCollapsed)}
+        t={t}
+        notifications={notifications}
+      />
+      <main className={`flex-1 overflow-y-auto p-6 md:p-8 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
+        {renderContent()}
+      </main>
+
+      <button onClick={() => openModal('transaction')} className="fixed bottom-20 md:bottom-8 right-6 md:right-8 bg-primary text-white rounded-full p-4 shadow-lg hover:bg-primary-focus transition-transform transform hover:scale-110 z-40">
+        <PlusIcon className="w-6 h-6" />
+      </button>
+
+      <Modal isOpen={!!modalContent} onClose={closeModal} title={t(getModalTitleKey() as any)}>
+        {modalContent === 'transaction' && <TransactionForm accounts={accounts} onAddTransaction={handleAddTransaction} onUpdateTransaction={handleUpdateTransaction} onClose={closeModal} transactionToEdit={editingTransaction} t={t} />}
+        {modalContent === 'account' && <AccountForm onAddAccount={handleAddAccount} onUpdateAccount={handleUpdateAccount} onClose={closeModal} accountToEdit={editingAccount} t={t} />}
+        {modalContent === 'debt' && <DebtForm onAddDebt={handleAddDebt} onClose={closeModal} t={t} />}
+      </Modal>
+    </div>
+  );
+};
+
+export default App;
