@@ -29,6 +29,7 @@ export const translations = {
 
         // Dashboard
         welcome_back: 'Welcome back,',
+        welcome_back_short: 'Welcome,',
         add_account_prompt: 'Add an account to get started.',
         your_cards: 'Your Cards',
         activity: 'Activity',
@@ -178,6 +179,7 @@ export const translations = {
         
         // Dashboard
         welcome_back: '¡Bienvenida de nuevo,',
+        welcome_back_short: '¡Hola,',
         add_account_prompt: 'Añade una cuenta para empezar.',
         your_cards: 'Tus Tarjetas',
         activity: 'Actividad',

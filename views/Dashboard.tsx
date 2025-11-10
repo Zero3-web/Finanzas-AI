@@ -20,7 +20,7 @@ interface DashboardProps {
 
 const Header: React.FC<{ t: (key: string) => string; notifications: Notification[] }> = ({ t, notifications }) => {
     return (
-        <div className="flex justify-between items-center mb-6">
+        <div className="hidden md:flex justify-between items-center mb-6">
             <div>
                 <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('welcome_back')} Olivia!</h1>
             </div>

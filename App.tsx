@@ -20,6 +20,8 @@ import DebtForm from './components/DebtForm';
 import SubscriptionForm from './components/SubscriptionForm';
 import { translations } from './utils/translations';
 import { PlusIcon } from './components/icons';
+import MobileHeader from './components/MobileHeader';
+import MobileMenu from './components/MobileMenu';
 
 const App: React.FC = () => {
   const [theme, toggleTheme] = useTheme();
@@ -39,6 +41,9 @@ const App: React.FC = () => {
   
   const [currency, setCurrency] = useLocalStorage<string>('currency', 'USD');
   const [language, setLanguage] = useLocalStorage<Language>('language', 'en');
+
+  // Mobile Menu State
+  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Confirmation Modal State
   const [isConfirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -290,6 +295,11 @@ const App: React.FC = () => {
     return '';
   }
 
+  const handleMobileTabSelect = (tab: Tab) => {
+    setActiveTab(tab);
+    setMobileMenuOpen(false);
+  }
+
   return (
     <div className="flex h-screen bg-background dark:bg-brand-black">
       <Navigation 
@@ -298,9 +308,23 @@ const App: React.FC = () => {
         isCollapsed={isSidebarCollapsed}
         toggleCollapse={() => setSidebarCollapsed(!isSidebarCollapsed)}
         t={t}
-        notifications={notifications}
       />
-      <main className={`flex-1 overflow-y-auto p-6 md:p-8 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
+      
+      <MobileHeader 
+        activeTab={activeTab}
+        t={t}
+        notifications={notifications}
+        onAvatarClick={() => setMobileMenuOpen(true)}
+      />
+
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        setActiveTab={handleMobileTabSelect}
+        t={t}
+      />
+
+      <main className={`flex-1 overflow-y-auto p-6 md:p-8 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} pt-20 md:pt-8 pb-24 md:pb-8`}>
         {renderContent()}
       </main>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tab, Notification } from '../types';
+import { Tab } from '../types';
 import { HomeIcon, CardIcon, ScaleIcon, DocumentTextIcon, CogIcon, ChevronDoubleLeftIcon, ChartPieIcon, CalendarIcon, CollectionIcon } from './icons';
 import Notifications from './Notifications';
 
@@ -9,10 +9,9 @@ interface NavigationProps {
   isCollapsed: boolean;
   toggleCollapse: () => void;
   t: (key: string) => string;
-  notifications: Notification[];
 }
 
-const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, isCollapsed, toggleCollapse, t, notifications }) => {
+const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, isCollapsed, toggleCollapse, t }) => {
   
   const navItems: { tab: Tab; labelKey: string; icon: React.FC<{ className?: string }> }[] = [
     { tab: 'dashboard', labelKey: 'dashboard', icon: HomeIcon },
@@ -24,6 +23,8 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, isColl
     { tab: 'calendar', labelKey: 'calendar', icon: CalendarIcon },
     { tab: 'settings', labelKey: 'settings', icon: CogIcon },
   ];
+
+  const mobileNavItems = navItems.filter(item => ['dashboard', 'calendar', 'history', 'analysis'].includes(item.tab));
 
   const NavItem: React.FC<{
       item: typeof navItems[0],
@@ -62,7 +63,6 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, isColl
                     <p className="text-xs text-text-secondary dark:text-gray-400">olivia@email.com</p>
                 </div>
             )}
-             <Notifications notifications={notifications} t={t} />
            </div>
            <button onClick={toggleCollapse} className={`w-full mt-4 flex items-center p-2 rounded-lg text-text-secondary dark:text-gray-400 hover:bg-secondary dark:hover:bg-gray-700 ${isCollapsed ? 'justify-center' : ''}`}>
                <ChevronDoubleLeftIcon className={`w-6 h-6 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
@@ -73,7 +73,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, isColl
 
       {/* Mobile Bottom Bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface dark:bg-gray-900 border-t border-secondary dark:border-gray-700 flex justify-around z-50">
-          {navItems.map(item => (
+          {mobileNavItems.map(item => (
               <button key={item.tab} onClick={() => setActiveTab(item.tab)} className={`flex flex-col items-center justify-center p-2 w-full transition-colors ${ activeTab === item.tab ? 'text-primary' : 'text-text-secondary dark:text-gray-400' }`}>
                   <item.icon className="w-6 h-6" />
                   <span className="text-xs mt-1">{t(item.labelKey)}</span>
