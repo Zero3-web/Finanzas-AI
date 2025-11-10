@@ -1,17 +1,24 @@
 import React, { useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
-import { Transaction, TransactionType } from '../types';
+import { Transaction, TransactionType, ColorTheme } from '../types';
 import Card from '../components/Card';
+import { themes } from '../hooks/useColorTheme';
 
 interface AnalysisProps {
     transactions: Transaction[];
     formatCurrency: (amount: number) => string;
     t: (key: string) => string;
+    colorTheme: ColorTheme;
 }
 
-const COLORS = ['#723FEB', '#97E0F7', '#22c55e', '#ef4444', '#f59e0b', '#3b82f6'];
+const toHex = (rgb: string) => '#' + rgb.split(',').map(c => parseInt(c).toString(16).padStart(2, '0')).join('');
 
-const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t }) => {
+const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, colorTheme }) => {
+    const currentPalette = themes[colorTheme];
+    const primaryColor = toHex(currentPalette['--color-primary']);
+    const accentColor = toHex(currentPalette['--color-accent']);
+    const COLORS = [primaryColor, accentColor, '#22c55e', '#ef4444', '#f59e0b', '#3b82f6'];
+
     const spendingByCategory = useMemo(() => {
         const expenses = transactions.filter(t => t.type === TransactionType.EXPENSE);
         const categoryMap = expenses.reduce((acc, t) => {
@@ -20,8 +27,9 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t }) 
         }, {} as { [key: string]: number });
 
         return Object.entries(categoryMap)
+// FIX: Explicitly type `value` as a number to resolve arithmetic operation errors in `.sort()`.
             .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => b.value - a.value);
+            .sort((a, b) => (b.value as number) - (a.value as number));
     }, [transactions]);
 
     const totalSpent = useMemo(() => {

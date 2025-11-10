@@ -48,7 +48,7 @@ export const AccountBalancePieChart: React.FC<{ balance: number; color: string }
     );
 };
 
-export const ActivityChart: React.FC<{ transactions: Transaction[] }> = ({ transactions }) => {
+export const ActivityChart: React.FC<{ transactions: Transaction[]; primaryColor: string; accentColor: string; }> = ({ transactions, primaryColor, accentColor }) => {
     const data = transactions.reduce((acc, t) => {
         const day = new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         let entry = acc.find(e => e.name === day);
@@ -73,14 +73,14 @@ export const ActivityChart: React.FC<{ transactions: Transaction[] }> = ({ trans
                 <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(value) => `$${Number(value) / 1000}k`} className="dark:stroke-gray-400" />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{fontSize: "14px"}}/>
-                <Line type="monotone" dataKey="Ingresos" stroke="#723FEB" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="Gastos" stroke="#97E0F7" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="Ingresos" stroke={primaryColor} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="Gastos" stroke={accentColor} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
             </LineChart>
         </ResponsiveContainer>
     );
 }
 
-export const SpendingBarChart: React.FC<{ transactions: Transaction[] }> = ({ transactions }) => {
+export const SpendingBarChart: React.FC<{ transactions: Transaction[]; primaryColor: string; primaryColorRgb: string; }> = ({ transactions, primaryColor, primaryColorRgb }) => {
     const weeklyData = [
         { name: 'Mon', Gastos: 0 },
         { name: 'Tue', Gastos: 0 },
@@ -101,8 +101,8 @@ export const SpendingBarChart: React.FC<{ transactions: Transaction[] }> = ({ tr
         <ResponsiveContainer width="100%" height={150}>
             <BarChart data={weeklyData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
                 <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} className="dark:stroke-gray-400" />
-                <Tooltip cursor={{ fill: 'rgba(114, 63, 235, 0.1)' }} content={<CustomTooltip />} />
-                <Bar dataKey="Gastos" fill="#723FEB" radius={[4, 4, 0, 0]} barSize={10} />
+                <Tooltip cursor={{ fill: `rgba(${primaryColorRgb}, 0.1)` }} content={<CustomTooltip />} />
+                <Bar dataKey="Gastos" fill={primaryColor} radius={[4, 4, 0, 0]} barSize={10} />
             </BarChart>
         </ResponsiveContainer>
     );

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useTheme } from './hooks/useTheme';
+import { useColorTheme } from './hooks/useColorTheme';
 import useLocalStorage from './hooks/useLocalStorage';
 import { Transaction, Account, Debt, Tab, TransactionType, Language, Notification } from './types';
 import Navigation from './components/Navigation';
@@ -9,6 +10,7 @@ import Debts from './views/Debts';
 import History from './views/History';
 import Settings from './views/Settings';
 import Analysis from './views/Analysis';
+import Calendar from './views/Calendar';
 import Modal from './components/Modal';
 import TransactionForm from './components/TransactionForm';
 import AccountForm from './components/AccountForm';
@@ -18,6 +20,7 @@ import { PlusIcon } from './components/icons';
 
 const App: React.FC = () => {
   const [theme, toggleTheme] = useTheme();
+  const [colorTheme, setColorTheme] = useColorTheme();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [modalContent, setModalContent] = useState<'transaction' | 'account' | 'debt' | null>(null);
@@ -181,7 +184,7 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} theme={theme} formatCurrency={formatCurrency} t={t} notifications={notifications} />;
+        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} theme={theme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} />;
       case 'accounts':
         return <Accounts accounts={accounts} transactions={transactions} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={handleRemoveAccount} t={t} />;
       case 'debts':
@@ -189,11 +192,13 @@ const App: React.FC = () => {
       case 'history':
         return <History transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onEditTransaction={(t) => openModal('transaction', t)} onRemoveTransaction={handleRemoveTransaction} t={t} />;
       case 'analysis':
-        return <Analysis transactions={transactions} formatCurrency={formatCurrency} t={t} />;
+        return <Analysis transactions={transactions} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} />;
       case 'settings':
-        return <Settings theme={theme} toggleTheme={toggleTheme} currency={currency} setCurrency={setCurrency} language={language} setLanguage={setLanguage} t={t} />;
+        return <Settings theme={theme} toggleTheme={toggleTheme} currency={currency} setCurrency={setCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} t={t} />;
+      case 'calendar':
+        return <Calendar accounts={accounts} debts={debts} formatCurrency={formatCurrency} t={t} />;
       default:
-        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} theme={theme} formatCurrency={formatCurrency} t={t} notifications={notifications} />;
+        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} theme={theme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} />;
     }
   };
 

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { Transaction, Account, TransactionType, Debt, Notification } from '../types';
+import { Transaction, Account, TransactionType, Debt, Notification, ColorTheme } from '../types';
 import { Theme } from '../hooks/useTheme';
+import { themes } from '../hooks/useColorTheme';
 import Card from '../components/Card';
 import { DotsHorizontalIcon, ArrowUpIcon, VisaIcon, StripeIcon, PaypalIcon, ApplePayIcon, CalendarIcon, ArrowDownIcon } from '../components/icons';
 import { AccountBalancePieChart, ActivityChart, SpendingBarChart } from '../components/Charts';
@@ -11,6 +12,7 @@ interface DashboardProps {
   transactions: Transaction[];
   debts: Debt[];
   theme: Theme;
+  colorTheme: ColorTheme;
   formatCurrency: (amount: number) => string;
   t: (key: string) => string;
   notifications: Notification[];
@@ -84,7 +86,15 @@ const RecentActivityItem: React.FC<{ transaction: Transaction, formatCurrency: (
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, formatCurrency, t, notifications }) => {
+const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, colorTheme, formatCurrency, t, notifications }) => {
+    const currentPalette = themes[colorTheme];
+    const toHex = (rgb: string) => '#' + rgb.split(',').map(c => parseInt(c).toString(16).padStart(2, '0')).join('');
+    
+    const primaryColor = toHex(currentPalette['--color-primary']);
+    const accentColor = toHex(currentPalette['--color-accent']);
+    const primaryColorRgb = currentPalette['--color-primary'];
+
+
     const topAccounts = useMemo(() => [...accounts].sort((a, b) => b.balance - a.balance).slice(0, 2), [accounts]);
     const primaryAccount = topAccounts.length > 0 ? topAccounts[0] : null;
     const secondaryAccount = topAccounts.length > 1 ? topAccounts[1] : null;
@@ -111,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, fo
                     </div>
                     <div className="flex items-center text-sm text-income font-semibold"><ArrowUpIcon className="w-4 h-4 mr-1"/> 3.4%</div>
                 </div>
-                <div className="-ml-6 -mb-6 mt-2"><AccountBalancePieChart balance={primaryAccount.balance} color="#723FEB" /></div>
+                <div className="-ml-6 -mb-6 mt-2"><AccountBalancePieChart balance={primaryAccount.balance} color={primaryColor} /></div>
             </Card>
         ) : (
              <Card className="flex items-center justify-center"><div className="text-center text-text-secondary dark:text-gray-400"><p>{t('add_account_prompt')}</p></div></Card>
@@ -125,7 +135,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, fo
                     </div>
                      <div className="flex items-center text-sm text-income font-semibold"><ArrowUpIcon className="w-4 h-4 mr-1"/> 2.0%</div>
                 </div>
-                <div className="-ml-6 -mb-6 mt-2"><AccountBalancePieChart balance={secondaryAccount.balance} color="#97E0F7" /></div>
+                <div className="-ml-6 -mb-6 mt-2"><AccountBalancePieChart balance={secondaryAccount.balance} color={accentColor} /></div>
             </Card>
         )}
       </div>
@@ -148,7 +158,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, fo
                     <h3 className="text-xl font-bold text-text-main dark:text-brand-white">{t('activity')}</h3>
                     <div className="text-text-secondary dark:text-gray-400 text-sm flex items-center border border-secondary dark:border-gray-700 rounded-lg px-2 py-1"><CalendarIcon className="w-5 h-5 mr-2"/> Jan 6, 2024 - Jan 11, 2024</div>
                 </div>
-                <ActivityChart transactions={transactions}/>
+                <ActivityChart transactions={transactions} primaryColor={primaryColor} accentColor={accentColor} />
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -157,7 +167,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, fo
                         <h3 className="text-xl font-bold text-text-main dark:text-brand-white">{formatCurrency(totalExpenses)}</h3>
                         <button className="text-text-secondary dark:text-gray-400 border border-secondary dark:border-gray-700 rounded-lg p-1"><DotsHorizontalIcon className="w-5 h-5"/></button>
                     </div>
-                    <SpendingBarChart transactions={transactions} />
+                    <SpendingBarChart transactions={transactions} primaryColor={primaryColor} primaryColorRgb={primaryColorRgb} />
                 </Card>
                  <Card className="dark:bg-gray-800"><p className="text-text-secondary dark:text-gray-400">{t('total_income')}</p><p className="text-2xl font-bold text-text-main dark:text-brand-white">{formatCurrency(totalIncome)}</p></Card>
                  <Card className="dark:bg-gray-800"><p className="text-text-secondary dark:text-gray-400">{t('net_profit')}</p><p className={`text-2xl font-bold ${profit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(profit)}</p></Card>

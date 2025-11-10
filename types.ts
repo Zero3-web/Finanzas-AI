@@ -45,7 +45,17 @@ export interface Notification {
 }
 
 export interface CustomEvent {
-  id: string;
+  id:string;
   date: string;
   description: string;
 }
+
+export interface CalendarEvent {
+  id: string;
+  date: string; // YYYY-MM-DD
+  description: string;
+  amount: number;
+  type: 'debt' | 'credit_card';
+}
+
+export type ColorTheme = 'default' | 'ocean' | 'sunset' | 'forest';

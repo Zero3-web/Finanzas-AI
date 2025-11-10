@@ -4,11 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Panel de Finanzas Personales</title>
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#723FEB">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Finanzas">
+    <link rel="apple-touch-icon" href="https://uxwing.com/wp-content/themes/uxwing/download/finance-banking-money/wallet-icon.png">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+      const withOpacity = (variableName) => {
+        return ({ opacityValue }) => {
+          if (opacityValue !== undefined) {
+            return `rgba(var(${variableName}), ${opacityValue})`
+          }
+          return `rgb(var(${variableName}))`
+        }
+      }
+
       tailwind.config = {
         darkMode: 'class',
         theme: {
@@ -19,15 +37,15 @@
             colors: {
               'background': '#f9fafb', // Light gray background
               'surface': '#ffffff', // White for cards
-              'primary': '#723FEB', // New Brand Purple
-              'primary-focus': '#5a2fba',
+              'primary': withOpacity('--color-primary'),
+              'primary-focus': withOpacity('--color-primary-focus'),
               'secondary': '#f3f4f6', // Lighter gray for accents
               'text-main': '#1f2937', 
               'text-secondary': '#6b7280', 
               'income': '#22c55e', 
               'expense': '#ef4444',
-              'brand-purple': '#723FEB',
-              'brand-cyan': '#97E0F7',
+              'brand-purple': withOpacity('--color-primary'), // Alias for dynamic color
+              'brand-cyan': withOpacity('--color-accent'), // New accent color
               'brand-black': '#1A1A1A',
               'brand-white': '#FCFCFC',
             },

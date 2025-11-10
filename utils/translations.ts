@@ -19,6 +19,7 @@ export const translations = {
         analysis: 'Analysis',
         settings: 'Settings',
         dashboard: 'Dashboard',
+        calendar: 'Calendar',
         fillAllFields: 'Please fill in all required fields.',
 
         // Navigation
@@ -90,6 +91,11 @@ export const translations = {
         theme: 'Theme',
         light: 'Light',
         dark: 'Dark',
+        color_theme: 'Color Theme',
+        default_theme: 'Default',
+        ocean_theme: 'Ocean',
+        sunset_theme: 'Sunset',
+        forest_theme: 'Forest',
         regional: 'Regional',
         currency: 'Currency',
         language: 'Language',
@@ -105,7 +111,19 @@ export const translations = {
         notifications: 'Notifications',
         no_notifications: 'No new notifications.',
         view_all: 'View All',
-        paymentFor: 'Payment for'
+        paymentFor: 'Payment for',
+        
+        // Calendar
+        upcoming_payments: 'Payments for date',
+        payment_due: 'Payment due',
+        no_events_selected_date: 'No payments scheduled for this date.',
+        sun: 'Sun',
+        mon: 'Mon',
+        tue: 'Tue',
+        wed: 'Wed',
+        thu: 'Thu',
+        fri: 'Fri',
+        sat: 'Sat',
     },
     es: {
         // General
@@ -127,6 +145,7 @@ export const translations = {
         analysis: 'Análisis',
         settings: 'Ajustes',
         dashboard: 'Tablero',
+        calendar: 'Calendario',
         fillAllFields: 'Por favor, complete todos los campos requeridos.',
 
         // Navigation
@@ -198,6 +217,11 @@ export const translations = {
         theme: 'Tema',
         light: 'Claro',
         dark: 'Oscuro',
+        color_theme: 'Tema de Color',
+        default_theme: 'Predeterminado',
+        ocean_theme: 'Océano',
+        sunset_theme: 'Atardecer',
+        forest_theme: 'Bosque',
         regional: 'Regional',
         currency: 'Moneda',
         language: 'Idioma',
@@ -213,6 +237,18 @@ export const translations = {
         notifications: 'Notificaciones',
         no_notifications: 'No hay notificaciones nuevas.',
         view_all: 'Ver Todas',
-        paymentFor: 'Pago para'
+        paymentFor: 'Pago para',
+
+        // Calendar
+        upcoming_payments: 'Pagos para la fecha',
+        payment_due: 'Vencimiento de pago',
+        no_events_selected_date: 'No hay pagos programados para esta fecha.',
+        sun: 'Dom',
+        mon: 'Lun',
+        tue: 'Mar',
+        wed: 'Mié',
+        thu: 'Jue',
+        fri: 'Vie',
+        sat: 'Sáb',
     }
 };
