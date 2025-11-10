@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tab, Notification } from '../types';
-import { HomeIcon, CardIcon, ScaleIcon, DocumentTextIcon, CogIcon, ChevronDoubleLeftIcon, ChartPieIcon, CalendarIcon } from './icons';
+import { HomeIcon, CardIcon, ScaleIcon, DocumentTextIcon, CogIcon, ChevronDoubleLeftIcon, ChartPieIcon, CalendarIcon, CollectionIcon } from './icons';
 import Notifications from './Notifications';
 
 interface NavigationProps {
@@ -18,6 +18,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, isColl
     { tab: 'dashboard', labelKey: 'dashboard', icon: HomeIcon },
     { tab: 'accounts', labelKey: 'accounts', icon: CardIcon },
     { tab: 'debts', labelKey: 'debts', icon: ScaleIcon },
+    { tab: 'subscriptions', labelKey: 'subscriptions', icon: CollectionIcon },
     { tab: 'history', labelKey: 'history', icon: DocumentTextIcon },
     { tab: 'analysis', labelKey: 'analysis', icon: ChartPieIcon },
     { tab: 'calendar', labelKey: 'calendar', icon: CalendarIcon },

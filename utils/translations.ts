@@ -4,6 +4,7 @@ export const translations = {
         add: 'Add',
         update: 'Update',
         cancel: 'Cancel',
+        delete: 'Delete',
         category: 'Category',
         date: 'Date',
         description: 'Description',
@@ -20,6 +21,7 @@ export const translations = {
         settings: 'Settings',
         dashboard: 'Dashboard',
         calendar: 'Calendar',
+        subscriptions: 'Subscriptions',
         fillAllFields: 'Please fill in all required fields.',
 
         // Navigation
@@ -52,7 +54,6 @@ export const translations = {
         account_type: 'Account Type',
         current_balance: 'Current Balance',
         initial_balance: 'Initial Balance',
-        confirmDeleteAccount: 'Are you sure you want to delete this account? All associated transactions will also be deleted.',
 
         // Debts
         interest_rate: 'Interest Rate',
@@ -65,7 +66,18 @@ export const translations = {
         total_amount: 'Total Amount',
         amount_paid: 'Amount Paid',
         next_payment_date: 'Next Payment Date',
-        confirmDeleteDebt: 'Are you sure you want to delete this debt?',
+
+        // Subscriptions
+        addSubscription: 'Add Subscription',
+        subscription_name: 'Subscription Name',
+        subscription_name_placeholder: 'e.g. Netflix',
+        payment_day: 'Payment Day (1-31)',
+        category_entertainment: 'Entertainment',
+        category_utilities: 'Utilities',
+        category_software: 'Software',
+        category_health: 'Health',
+        category_other: 'Other',
+
 
         // Transactions
         transactionType: 'Transaction Type',
@@ -75,7 +87,6 @@ export const translations = {
         selectCategory: 'Select a category',
         description_expense_placeholder: 'e.g. Groceries',
         description_income_placeholder: 'e.g. Monthly Salary',
-        confirmDeleteTransaction: 'Are you sure you want to delete this transaction?',
 
         // History
         search_transactions: 'Search transactions...',
@@ -106,6 +117,8 @@ export const translations = {
         addAccountTitle: 'Add Account',
         editAccountTitle: 'Edit Account',
         addDebtTitle: 'Add Debt',
+        addSubscriptionTitle: 'Add Subscription',
+        editSubscriptionTitle: 'Edit Subscription',
         
         // Notifications
         notifications: 'Notifications',
@@ -124,12 +137,23 @@ export const translations = {
         thu: 'Thu',
         fri: 'Fri',
         sat: 'Sat',
+        
+        // Confirmation Modals
+        confirmDeleteTransactionTitle: 'Delete Transaction',
+        confirmDeleteTransactionMessage: 'This action cannot be undone. This will permanently delete the transaction.',
+        confirmDeleteAccountTitle: 'Delete Account',
+        confirmDeleteAccountMessage: 'This action cannot be undone. This will permanently delete the account and all its associated transactions.',
+        confirmDeleteDebtTitle: 'Delete Debt',
+        confirmDeleteDebtMessage: 'This action cannot be undone. This will permanently delete the debt record.',
+        confirmDeleteSubscriptionTitle: 'Delete Subscription',
+        confirmDeleteSubscriptionMessage: 'This action cannot be undone. This will permanently delete the subscription record.',
     },
     es: {
         // General
         add: 'Añadir',
         update: 'Actualizar',
         cancel: 'Cancelar',
+        delete: 'Eliminar',
         category: 'Categoría',
         date: 'Fecha',
         description: 'Descripción',
@@ -146,6 +170,7 @@ export const translations = {
         settings: 'Ajustes',
         dashboard: 'Tablero',
         calendar: 'Calendario',
+        subscriptions: 'Suscripciones',
         fillAllFields: 'Por favor, complete todos los campos requeridos.',
 
         // Navigation
@@ -178,8 +203,7 @@ export const translations = {
         account_type: 'Tipo de Cuenta',
         current_balance: 'Saldo Actual',
         initial_balance: 'Saldo Inicial',
-        confirmDeleteAccount: '¿Estás seguro de que quieres eliminar esta cuenta? Todas las transacciones asociadas también se eliminarán.',
-
+        
         // Debts
         interest_rate: 'Tasa de Interés',
         paid: 'Pagado',
@@ -191,7 +215,17 @@ export const translations = {
         total_amount: 'Monto Total',
         amount_paid: 'Monto Pagado',
         next_payment_date: 'Fecha del Próximo Pago',
-        confirmDeleteDebt: '¿Estás seguro de que quieres eliminar esta deuda?',
+
+        // Subscriptions
+        addSubscription: 'Añadir Suscripción',
+        subscription_name: 'Nombre de Suscripción',
+        subscription_name_placeholder: 'ej. Netflix',
+        payment_day: 'Día de Pago (1-31)',
+        category_entertainment: 'Entretenimiento',
+        category_utilities: 'Servicios',
+        category_software: 'Software',
+        category_health: 'Salud',
+        category_other: 'Otro',
 
         // Transactions
         transactionType: 'Tipo de Transacción',
@@ -201,7 +235,6 @@ export const translations = {
         selectCategory: 'Seleccione una categoría',
         description_expense_placeholder: 'ej. Comestibles',
         description_income_placeholder: 'ej. Salario Mensual',
-        confirmDeleteTransaction: '¿Estás seguro de que quieres eliminar esta transacción?',
 
         // History
         search_transactions: 'Buscar transacciones...',
@@ -232,6 +265,8 @@ export const translations = {
         addAccountTitle: 'Añadir Cuenta',
         editAccountTitle: 'Editar Cuenta',
         addDebtTitle: 'Añadir Deuda',
+        addSubscriptionTitle: 'Añadir Suscripción',
+        editSubscriptionTitle: 'Editar Suscripción',
 
         // Notifications
         notifications: 'Notificaciones',
@@ -250,5 +285,15 @@ export const translations = {
         thu: 'Jue',
         fri: 'Vie',
         sat: 'Sáb',
+        
+        // Confirmation Modals
+        confirmDeleteTransactionTitle: 'Eliminar Transacción',
+        confirmDeleteTransactionMessage: 'Esta acción no se puede deshacer. Esto eliminará permanentemente la transacción.',
+        confirmDeleteAccountTitle: 'Eliminar Cuenta',
+        confirmDeleteAccountMessage: 'Esta acción no se puede deshacer. Esto eliminará permanentemente la cuenta y todas sus transacciones asociadas.',
+        confirmDeleteDebtTitle: 'Eliminar Deuda',
+        confirmDeleteDebtMessage: 'Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de la deuda.',
+        confirmDeleteSubscriptionTitle: 'Eliminar Suscripción',
+        confirmDeleteSubscriptionMessage: 'Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de la suscripción.',
     }
 };

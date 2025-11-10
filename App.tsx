@@ -2,19 +2,22 @@ import React, { useState, useMemo } from 'react';
 import { useTheme } from './hooks/useTheme';
 import { useColorTheme } from './hooks/useColorTheme';
 import useLocalStorage from './hooks/useLocalStorage';
-import { Transaction, Account, Debt, Tab, TransactionType, Language, Notification } from './types';
+import { Transaction, Account, Debt, Tab, TransactionType, Language, Notification, Subscription } from './types';
 import Navigation from './components/Navigation';
 import Dashboard from './views/Dashboard';
 import Accounts from './views/Accounts';
 import Debts from './views/Debts';
+import Subscriptions from './views/Subscriptions';
 import History from './views/History';
 import Settings from './views/Settings';
 import Analysis from './views/Analysis';
 import Calendar from './views/Calendar';
 import Modal from './components/Modal';
+import ConfirmationModal from './components/ConfirmationModal';
 import TransactionForm from './components/TransactionForm';
 import AccountForm from './components/AccountForm';
 import DebtForm from './components/DebtForm';
+import SubscriptionForm from './components/SubscriptionForm';
 import { translations } from './utils/translations';
 import { PlusIcon } from './components/icons';
 
@@ -23,17 +26,24 @@ const App: React.FC = () => {
   const [colorTheme, setColorTheme] = useColorTheme();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [modalContent, setModalContent] = useState<'transaction' | 'account' | 'debt' | null>(null);
+  const [modalContent, setModalContent] = useState<'transaction' | 'account' | 'debt' | 'subscription' | null>(null);
   
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
 
   const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
   const [accounts, setAccounts] = useLocalStorage<Account[]>('accounts', []);
   const [debts, setDebts] = useLocalStorage<Debt[]>('debts', []);
+  const [subscriptions, setSubscriptions] = useLocalStorage<Subscription[]>('subscriptions', []);
   
   const [currency, setCurrency] = useLocalStorage<string>('currency', 'USD');
   const [language, setLanguage] = useLocalStorage<Language>('language', 'en');
+
+  // Confirmation Modal State
+  const [isConfirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ onConfirm: () => void } | null>(null);
+  const [confirmModalContent, setConfirmModalContent] = useState<{ title: string; message: string }>({ title: '', message: '' });
 
   const t = (key: keyof typeof translations.en) => {
       return translations[language]?.[key] || translations.en[key];
@@ -85,8 +95,34 @@ const App: React.FC = () => {
             });
         }
     });
+
+    subscriptions.forEach(sub => {
+        const dayOfMonth = parseInt(sub.paymentDay);
+        if (isNaN(dayOfMonth)) return;
+        
+        let dueDate = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
+        if(dueDate < today) {
+            dueDate.setMonth(dueDate.getMonth() + 1);
+        }
+
+        if (dueDate >= today && dueDate <= sevenDaysFromNow) {
+            upcoming.push({
+                id: `sub-${sub.id}`,
+                message: `${t('paymentFor')} ${sub.name}`,
+                dueDate: dueDate.toISOString().split('T')[0],
+                type: 'subscription'
+            });
+        }
+    });
+
     return upcoming;
-  }, [debts, accounts, t]);
+  }, [debts, accounts, subscriptions, t]);
+  
+  const requestConfirmation = (onConfirm: () => void, title: string, message: string) => {
+    setConfirmAction({ onConfirm });
+    setConfirmModalContent({ title, message });
+    setConfirmModalOpen(true);
+  };
 
   // CRUD Operations
   const handleAddTransaction = (transaction: Omit<Transaction, 'id'>) => {
@@ -129,7 +165,7 @@ const App: React.FC = () => {
       const transactionToRemove = transactions.find(t => t.id === transactionId);
       if (!transactionToRemove) return;
       
-      if(window.confirm(t('confirmDeleteTransaction'))){
+      const onConfirm = () => {
           setTransactions(prev => prev.filter(t => t.id !== transactionId));
           setAccounts(prevAccs => prevAccs.map(acc => {
               if (acc.id === transactionToRemove.accountId) {
@@ -140,7 +176,13 @@ const App: React.FC = () => {
               }
               return acc;
           }));
-      }
+      };
+
+      requestConfirmation(
+          onConfirm,
+          t('confirmDeleteTransactionTitle'),
+          t('confirmDeleteTransactionMessage')
+      );
   };
 
   const handleAddAccount = (account: Omit<Account, 'id'>) => {
@@ -153,10 +195,16 @@ const App: React.FC = () => {
   };
 
   const handleRemoveAccount = (accountId: string) => {
-    if(window.confirm(t('confirmDeleteAccount'))){
-      setAccounts(prev => prev.filter(acc => acc.id !== accountId));
-      setTransactions(prev => prev.filter(t => t.accountId !== accountId));
-    }
+      const onConfirm = () => {
+          setAccounts(prev => prev.filter(acc => acc.id !== accountId));
+          setTransactions(prev => prev.filter(t => t.accountId !== accountId));
+      };
+      
+      requestConfirmation(
+          onConfirm,
+          t('confirmDeleteAccountTitle'),
+          t('confirmDeleteAccountMessage')
+      );
   };
 
   const handleAddDebt = (debt: Omit<Debt, 'id'>) => {
@@ -164,14 +212,42 @@ const App: React.FC = () => {
   };
 
   const handleRemoveDebt = (debtId: string) => {
-     if(window.confirm(t('confirmDeleteDebt'))){
+     const onConfirm = () => {
         setDebts(prev => prev.filter(d => d.id !== debtId));
-     }
+     };
+
+     requestConfirmation(
+        onConfirm,
+        t('confirmDeleteDebtTitle'),
+        t('confirmDeleteDebtMessage')
+     );
+  };
+  
+  const handleAddSubscription = (subscription: Omit<Subscription, 'id'>) => {
+    setSubscriptions(prev => [...prev, { ...subscription, id: crypto.randomUUID() }]);
   };
 
-  const openModal = (type: 'transaction' | 'account' | 'debt', entityToEdit: Transaction | Account | null = null) => {
+  const handleUpdateSubscription = (updatedSubscription: Subscription) => {
+    setSubscriptions(prev => prev.map(sub => sub.id === updatedSubscription.id ? updatedSubscription : sub));
+    setEditingSubscription(null);
+  };
+
+  const handleRemoveSubscription = (subscriptionId: string) => {
+     const onConfirm = () => {
+        setSubscriptions(prev => prev.filter(s => s.id !== subscriptionId));
+     };
+
+     requestConfirmation(
+        onConfirm,
+        t('confirmDeleteSubscriptionTitle'),
+        t('confirmDeleteSubscriptionMessage')
+     );
+  };
+
+  const openModal = (type: 'transaction' | 'account' | 'debt' | 'subscription', entityToEdit: Transaction | Account | Subscription | null = null) => {
       if (type === 'transaction') setEditingTransaction(entityToEdit as Transaction | null);
       if (type === 'account') setEditingAccount(entityToEdit as Account | null);
+      if (type === 'subscription') setEditingSubscription(entityToEdit as Subscription | null);
       setModalContent(type);
   };
 
@@ -179,6 +255,7 @@ const App: React.FC = () => {
     setModalContent(null);
     setEditingTransaction(null);
     setEditingAccount(null);
+    setEditingSubscription(null);
   };
 
   const renderContent = () => {
@@ -189,6 +266,8 @@ const App: React.FC = () => {
         return <Accounts accounts={accounts} transactions={transactions} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={handleRemoveAccount} t={t} />;
       case 'debts':
         return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onRemoveDebt={handleRemoveDebt} t={t} />;
+      case 'subscriptions':
+        return <Subscriptions subscriptions={subscriptions} formatCurrency={formatCurrency} onAddSubscription={() => openModal('subscription')} onEditSubscription={(sub) => openModal('subscription', sub)} onRemoveSubscription={handleRemoveSubscription} t={t} />;
       case 'history':
         return <History transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onEditTransaction={(t) => openModal('transaction', t)} onRemoveTransaction={handleRemoveTransaction} t={t} />;
       case 'analysis':
@@ -196,7 +275,7 @@ const App: React.FC = () => {
       case 'settings':
         return <Settings theme={theme} toggleTheme={toggleTheme} currency={currency} setCurrency={setCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} t={t} />;
       case 'calendar':
-        return <Calendar accounts={accounts} debts={debts} formatCurrency={formatCurrency} t={t} />;
+        return <Calendar accounts={accounts} debts={debts} subscriptions={subscriptions} formatCurrency={formatCurrency} t={t} />;
       default:
         return <Dashboard accounts={accounts} transactions={transactions} debts={debts} theme={theme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} />;
     }
@@ -207,6 +286,7 @@ const App: React.FC = () => {
     if (modalContent === 'transaction') return editingTransaction ? 'editTransactionTitle' : 'addTransactionTitle';
     if (modalContent === 'account') return editingAccount ? 'editAccountTitle' : 'addAccountTitle';
     if (modalContent === 'debt') return 'addDebtTitle';
+    if (modalContent === 'subscription') return editingSubscription ? 'editSubscriptionTitle' : 'addSubscriptionTitle';
     return '';
   }
 
@@ -232,7 +312,22 @@ const App: React.FC = () => {
         {modalContent === 'transaction' && <TransactionForm accounts={accounts} onAddTransaction={handleAddTransaction} onUpdateTransaction={handleUpdateTransaction} onClose={closeModal} transactionToEdit={editingTransaction} t={t} />}
         {modalContent === 'account' && <AccountForm onAddAccount={handleAddAccount} onUpdateAccount={handleUpdateAccount} onClose={closeModal} accountToEdit={editingAccount} t={t} />}
         {modalContent === 'debt' && <DebtForm onAddDebt={handleAddDebt} onClose={closeModal} t={t} />}
+        {modalContent === 'subscription' && <SubscriptionForm onAddSubscription={handleAddSubscription} onUpdateSubscription={handleUpdateSubscription} onClose={closeModal} subscriptionToEdit={editingSubscription} t={t} />}
       </Modal>
+
+      <ConfirmationModal
+          isOpen={isConfirmModalOpen}
+          onClose={() => setConfirmModalOpen(false)}
+          onConfirm={() => {
+              if (confirmAction) {
+                  confirmAction.onConfirm();
+              }
+          }}
+          title={confirmModalContent.title}
+          message={confirmModalContent.message}
+          confirmText={t('delete')}
+          cancelText={t('cancel')}
+      />
     </div>
   );
 };

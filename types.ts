@@ -33,7 +33,15 @@ export interface Debt {
   nextPaymentDate: string;
 }
 
-export type Tab = 'dashboard' | 'accounts' | 'debts' | 'history' | 'analysis' | 'settings' | 'calendar';
+export interface Subscription {
+  id: string;
+  name: string;
+  amount: number;
+  paymentDay: string; // Day of the month, e.g., "15"
+  category: string;
+}
+
+export type Tab = 'dashboard' | 'accounts' | 'debts' | 'subscriptions' | 'history' | 'analysis' | 'settings' | 'calendar';
 
 export type Language = 'en' | 'es';
 
@@ -41,7 +49,7 @@ export interface Notification {
     id: string;
     message: string;
     dueDate: string;
-    type: 'debt' | 'credit_card';
+    type: 'debt' | 'credit_card' | 'subscription';
 }
 
 export interface CustomEvent {
@@ -55,7 +63,7 @@ export interface CalendarEvent {
   date: string; // YYYY-MM-DD
   description: string;
   amount: number;
-  type: 'debt' | 'credit_card';
+  type: 'debt' | 'credit_card' | 'subscription';
 }
 
 export type ColorTheme = 'default' | 'ocean' | 'sunset' | 'forest';

@@ -1,16 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { Account, Debt, CalendarEvent } from '../types';
+import { Account, Debt, CalendarEvent, Subscription } from '../types';
 import Card from '../components/Card';
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 
 interface CalendarProps {
   accounts: Account[];
   debts: Debt[];
+  subscriptions: Subscription[];
   formatCurrency: (amount: number) => string;
   t: (key: string) => string;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ accounts, debts, formatCurrency, t }) => {
+const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, formatCurrency, t }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
@@ -51,9 +52,26 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, formatCurrency, t 
           type: 'credit_card',
         });
       });
+      
+    // Subscription events
+    subscriptions.forEach(sub => {
+      const dayOfMonth = parseInt(sub.paymentDay);
+      if (isNaN(dayOfMonth)) return;
+
+      const eventDate = new Date(year, month, dayOfMonth);
+      const key = eventDate.toISOString().split('T')[0];
+      if (!events.has(key)) events.set(key, []);
+      events.get(key)!.push({
+        id: `sub-${sub.id}`,
+        date: key,
+        description: sub.name,
+        amount: sub.amount,
+        type: 'subscription',
+      });
+    });
 
     return events;
-  }, [accounts, debts, currentDate, t]);
+  }, [accounts, debts, subscriptions, currentDate, t]);
 
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
@@ -91,6 +109,19 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, formatCurrency, t 
     }
     return { classes, hasEvent };
   }
+  
+  const getEventTypeStyling = (type: CalendarEvent['type']) => {
+      switch (type) {
+          case 'debt':
+              return { bar: 'bg-expense', text: 'text-expense' };
+          case 'credit_card':
+              return { bar: 'bg-primary', text: 'text-primary' };
+          case 'subscription':
+              return { bar: 'bg-brand-cyan', text: 'text-brand-cyan' };
+          default:
+              return { bar: 'bg-gray-400', text: 'text-text-secondary' };
+      }
+  };
 
   return (
     <div className="space-y-6">
@@ -130,15 +161,18 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, formatCurrency, t 
             <p className="text-sm text-text-secondary dark:text-gray-400 mb-4">{selectedDate ? selectedDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : ''}</p>
             <div className="space-y-4 max-h-96 overflow-y-auto">
                 {eventsForSelectedDate.length > 0 ? (
-                    eventsForSelectedDate.map(event => (
-                        <div key={event.id} className="flex items-center p-3 rounded-lg bg-secondary dark:bg-gray-700/50">
-                            <div className={`w-2 h-10 rounded-full mr-4 ${event.type === 'debt' ? 'bg-expense' : 'bg-primary'}`}></div>
-                            <div>
-                                <p className="font-semibold text-text-main dark:text-gray-200">{event.description}</p>
-                                <p className={`font-medium ${event.type === 'debt' ? 'text-expense' : 'text-primary'}`}>{formatCurrency(event.amount)}</p>
+                    eventsForSelectedDate.map(event => {
+                        const styling = getEventTypeStyling(event.type);
+                        return (
+                            <div key={event.id} className="flex items-center p-3 rounded-lg bg-secondary dark:bg-gray-700/50">
+                                <div className={`w-2 h-10 rounded-full mr-4 ${styling.bar}`}></div>
+                                <div>
+                                    <p className="font-semibold text-text-main dark:text-gray-200">{event.description}</p>
+                                    <p className={`font-medium ${styling.text}`}>{formatCurrency(event.amount)}</p>
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        )
+                    })
                 ) : (
                     <div className="text-center py-10 text-text-secondary dark:text-gray-400">
                        <p>{t('no_events_selected_date')}</p>
