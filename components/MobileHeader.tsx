@@ -7,12 +7,14 @@ interface MobileHeaderProps {
   t: (key: string) => string;
   notifications: Notification[];
   onAvatarClick: () => void;
+  userName: string;
+  avatar: string;
 }
 
-const MobileHeader: React.FC<MobileHeaderProps> = ({ activeTab, t, notifications, onAvatarClick }) => {
+const MobileHeader: React.FC<MobileHeaderProps> = ({ activeTab, t, notifications, onAvatarClick, userName, avatar }) => {
     
     const titleKey = activeTab === 'dashboard' ? 'welcome_back_short' : activeTab;
-    const title = activeTab === 'dashboard' ? `${t(titleKey)} Olivia!` : t(titleKey);
+    const title = activeTab === 'dashboard' ? `${t(titleKey)} ${userName}!` : t(titleKey);
 
     return (
         <div className="md:hidden fixed top-0 left-0 right-0 bg-surface dark:bg-gray-900 h-16 px-4 flex justify-between items-center z-40 border-b border-secondary dark:border-gray-800">
@@ -23,7 +25,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ activeTab, t, notifications
                 <Notifications notifications={notifications} t={t} />
                 <button onClick={onAvatarClick}>
                     <img 
-                        src="https://i.pravatar.cc/40?u=a042581f4e29026704d" 
+                        src={avatar} 
                         alt="User Avatar"
                         className="w-10 h-10 rounded-full"
                     />

@@ -20,6 +20,7 @@ import DebtForm from './components/DebtForm';
 import SubscriptionForm from './components/SubscriptionForm';
 import OnboardingTour from './components/OnboardingTour';
 import { translations } from './utils/translations';
+import { avatars } from './utils/avatars';
 import { PlusIcon } from './components/icons';
 import MobileHeader from './components/MobileHeader';
 import MobileMenu from './components/MobileMenu';
@@ -42,6 +43,8 @@ const App: React.FC = () => {
   
   const [currency, setCurrency] = useLocalStorage<string>('currency', 'USD');
   const [language, setLanguage] = useLocalStorage<Language>('language', 'en');
+  const [userName, setUserName] = useLocalStorage<string>('userName', 'Olivia');
+  const [avatar, setAvatar] = useLocalStorage<string>('userAvatar', avatars[0]);
   const [onboardingCompleted, setOnboardingCompleted] = useLocalStorage<boolean>('onboardingCompleted', false);
 
   // Mobile Menu State
@@ -216,6 +219,7 @@ const App: React.FC = () => {
 
   const handleAddDebt = (debt: Omit<Debt, 'id'>) => {
     setDebts(prev => [...prev, { ...debt, id: crypto.randomUUID() }]);
+    setActiveTab('debts');
   };
 
   const handleRemoveDebt = (debtId: string) => {
@@ -232,6 +236,7 @@ const App: React.FC = () => {
   
   const handleAddSubscription = (subscription: Omit<Subscription, 'id'>) => {
     setSubscriptions(prev => [...prev, { ...subscription, id: crypto.randomUUID() }]);
+    setActiveTab('subscriptions');
   };
 
   const handleUpdateSubscription = (updatedSubscription: Subscription) => {
@@ -268,7 +273,23 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} subscriptions={subscriptions} theme={theme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} onAddAccount={() => openModal('account')} />;
+        return <Dashboard 
+                    accounts={accounts} 
+                    transactions={transactions} 
+                    debts={debts} 
+                    subscriptions={subscriptions} 
+                    theme={theme} 
+                    toggleTheme={toggleTheme}
+                    colorTheme={colorTheme} 
+                    formatCurrency={formatCurrency} 
+                    t={t} 
+                    notifications={notifications}
+                    userName={userName}
+                    avatar={avatar}
+                    onAddAccount={() => openModal('account')}
+                    onAddDebt={() => openModal('debt')}
+                    onAddSubscription={() => openModal('subscription')}
+                />;
       case 'accounts':
         return <Accounts accounts={accounts} transactions={transactions} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={handleRemoveAccount} t={t} />;
       case 'debts':
@@ -280,11 +301,27 @@ const App: React.FC = () => {
       case 'analysis':
         return <Analysis transactions={transactions} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} />;
       case 'settings':
-        return <Settings theme={theme} toggleTheme={toggleTheme} currency={currency} setCurrency={setCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} t={t} />;
+        return <Settings theme={theme} toggleTheme={toggleTheme} currency={currency} setCurrency={setCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} t={t} />;
       case 'calendar':
         return <Calendar accounts={accounts} debts={debts} subscriptions={subscriptions} formatCurrency={formatCurrency} t={t} />;
       default:
-        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} subscriptions={subscriptions} theme={theme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} onAddAccount={() => openModal('account')} />;
+        return <Dashboard 
+                    accounts={accounts} 
+                    transactions={transactions} 
+                    debts={debts} 
+                    subscriptions={subscriptions} 
+                    theme={theme} 
+                    toggleTheme={toggleTheme}
+                    colorTheme={colorTheme} 
+                    formatCurrency={formatCurrency} 
+                    t={t} 
+                    notifications={notifications}
+                    userName={userName}
+                    avatar={avatar}
+                    onAddAccount={() => openModal('account')} 
+                    onAddDebt={() => openModal('debt')}
+                    onAddSubscription={() => openModal('subscription')}
+                />;
     }
   };
 
@@ -315,6 +352,10 @@ const App: React.FC = () => {
           setLanguage={setLanguage}
           currency={currency}
           setCurrency={setCurrency}
+          userName={userName}
+          setUserName={setUserName}
+          avatar={avatar}
+          setAvatar={setAvatar}
         />
       )}
       <Navigation 
@@ -323,6 +364,8 @@ const App: React.FC = () => {
         isCollapsed={isSidebarCollapsed}
         toggleCollapse={() => setSidebarCollapsed(!isSidebarCollapsed)}
         t={t}
+        userName={userName}
+        avatar={avatar}
       />
       
       <MobileHeader 
@@ -330,6 +373,8 @@ const App: React.FC = () => {
         t={t}
         notifications={notifications}
         onAvatarClick={() => setMobileMenuOpen(true)}
+        userName={userName}
+        avatar={avatar}
       />
 
       <MobileMenu
@@ -337,6 +382,8 @@ const App: React.FC = () => {
         onClose={() => setMobileMenuOpen(false)}
         setActiveTab={handleMobileTabSelect}
         t={t}
+        userName={userName}
+        avatar={avatar}
       />
 
       <main className={`flex-1 overflow-y-auto p-6 md:p-8 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} pt-20 md:pt-8 pb-24 md:pb-8`}>

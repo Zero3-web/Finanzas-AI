@@ -6,6 +6,7 @@ import Card from '../components/Card';
 import { PlusIcon, ArrowUpIcon, VisaIcon, StripeIcon, PaypalIcon, ApplePayIcon, CalendarIcon, ArrowDownIcon, CollectionIcon } from '../components/icons';
 import { AccountBalancePieChart, ActivityChart } from '../components/Charts';
 import Notifications from '../components/Notifications';
+import ThemeToggle from '../components/ThemeToggle';
 
 interface DashboardProps {
   accounts: Account[];
@@ -13,26 +14,27 @@ interface DashboardProps {
   debts: Debt[];
   subscriptions: Subscription[];
   theme: Theme;
+  toggleTheme: () => void;
   colorTheme: ColorTheme;
   formatCurrency: (amount: number) => string;
   t: (key: string) => string;
   notifications: Notification[];
+  userName: string;
+  avatar: string;
   onAddAccount: () => void;
+  onAddDebt: () => void;
+  onAddSubscription: () => void;
 }
 
-const Header: React.FC<{ t: (key: string) => string; notifications: Notification[] }> = ({ t, notifications }) => {
+const Header: React.FC<{ t: (key: string) => string; notifications: Notification[], userName: string, theme: Theme, toggleTheme: () => void }> = ({ t, notifications, userName, theme, toggleTheme }) => {
     return (
         <div className="hidden md:flex justify-between items-center mb-6">
             <div>
-                <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('welcome_back')} Olivia!</h1>
+                <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('welcome_back')} {userName}!</h1>
             </div>
             <div className="flex items-center space-x-2 md:space-x-4">
                 <Notifications notifications={notifications} t={t} />
-                <img 
-                    src="https://i.pravatar.cc/40?u=a042581f4e29026704d" 
-                    alt="User Avatar"
-                    className="w-10 h-10 rounded-full"
-                />
+                <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
             </div>
         </div>
     );
@@ -44,7 +46,8 @@ const CreditCardVisual: React.FC<{
     variant: 'purple' | 'dark',
     isSelected: boolean,
     onClick: () => void,
-}> = ({ account, formatCurrency, variant, isSelected, onClick }) => {
+    userName: string,
+}> = ({ account, formatCurrency, variant, isSelected, onClick, userName }) => {
     const cardClasses = variant === 'purple' ? 'bg-primary text-white' : 'bg-gray-800 text-white';
     const fakeCardNumber = `**** **** **** ${account.id.slice(-4)}`;
     const selectionClasses = isSelected ? 'ring-2 ring-primary' : '';
@@ -60,7 +63,7 @@ const CreditCardVisual: React.FC<{
                  <p className="font-semibold text-lg">{formatCurrency(account.balance)}</p>
             </div>
             <div>
-                <p className="text-sm opacity-80">OLIVIA RHYE</p>
+                <p className="text-sm opacity-80 uppercase">{userName}</p>
                 <p className="font-mono tracking-wider text-sm">{fakeCardNumber}</p>
             </div>
         </div>
@@ -111,7 +114,7 @@ const RecentActivityItem: React.FC<{ transaction: Transaction, formatCurrency: (
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, subscriptions, colorTheme, formatCurrency, t, notifications, onAddAccount }) => {
+const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, subscriptions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddSubscription }) => {
     const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
     const currentPalette = themes[colorTheme];
@@ -169,7 +172,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
 
   return (
     <div className="space-y-6">
-      <Header t={t} notifications={notifications} />
+      <Header t={t} notifications={notifications} userName={userName} theme={theme} toggleTheme={toggleTheme} />
       
       <div className={getAccountGridClasses(sortedAccounts.length)}>
         {sortedAccounts.length > 0 ? (
@@ -202,7 +205,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                 </div>
                 <div className="flex space-x-4 overflow-x-auto pb-4 custom-scrollbar">
                     <AllAccountsCard isSelected={selectedAccountId === null} onClick={() => setSelectedAccountId(null)} t={t} />
-                    {accounts.map((acc, index) => <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={index % 2 === 0 ? 'purple' : 'dark'} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} /> )}
+                    {accounts.map((acc, index) => <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={index % 2 === 0 ? 'purple' : 'dark'} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} userName={userName} /> )}
                 </div>
                  <style>{`.custom-scrollbar::-webkit-scrollbar{height:6px;}.custom-scrollbar::-webkit-scrollbar-track{background:transparent;}.custom-scrollbar::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:10px;}.dark .custom-scrollbar::-webkit-scrollbar-thumb{background:#4b5563;}`}</style>
             </Card>
@@ -224,7 +227,6 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                     <h3 className="font-bold text-text-main dark:text-brand-white">
                          {t('recent_activity')} <span className="text-sm font-medium text-text-secondary dark:text-gray-400">{selectedAccount ? `(${selectedAccount.name})` : ''}</span>
                     </h3>
-                    <button className="text-text-secondary dark:text-gray-400"><PlusIcon className="w-5 h-5"/></button>
                 </div>
                 <div className="space-y-4">
                     {recentActivity.map(transaction => (
@@ -236,7 +238,9 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
              <Card>
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="font-bold text-text-main dark:text-brand-white">{t('debt_summary')}</h3>
-                    <button className="text-text-secondary dark:text-gray-400"><PlusIcon className="w-5 h-5"/></button>
+                    <button onClick={onAddDebt} className="text-text-secondary dark:text-gray-400 hover:text-primary transition-colors">
+                        <PlusIcon className="w-5 h-5"/>
+                    </button>
                 </div>
                 <div className="space-y-4">
                     {debts.length > 0 ? (
@@ -257,7 +261,9 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
             <Card>
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="font-bold text-text-main dark:text-brand-white">{t('subscription_summary')}</h3>
-                    <button className="text-text-secondary dark:text-gray-400"><PlusIcon className="w-5 h-5"/></button>
+                    <button onClick={onAddSubscription} className="text-text-secondary dark:text-gray-400 hover:text-primary transition-colors">
+                        <PlusIcon className="w-5 h-5"/>
+                    </button>
                 </div>
                 <div className="space-y-4">
                     {upcomingSubscriptions.length > 0 ? (

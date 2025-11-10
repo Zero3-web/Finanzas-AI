@@ -3,6 +3,7 @@ import { Theme } from '../hooks/useTheme';
 import { themes } from '../hooks/useColorTheme';
 import ThemeToggle from '../components/ThemeToggle';
 import Card from '../components/Card';
+import AvatarGrid from '../components/AvatarGrid';
 import { Language, ColorTheme } from '../types';
 
 interface SettingsProps {
@@ -14,10 +15,12 @@ interface SettingsProps {
   setLanguage: (language: Language) => void;
   colorTheme: ColorTheme;
   setColorTheme: (theme: ColorTheme) => void;
+  avatar: string;
+  setAvatar: (avatarUrl: string) => void;
   t: (key: string) => string;
 }
 
-const Settings: React.FC<SettingsProps> = ({ theme, toggleTheme, currency, setCurrency, language, setLanguage, colorTheme, setColorTheme, t }) => {
+const Settings: React.FC<SettingsProps> = ({ theme, toggleTheme, currency, setCurrency, language, setLanguage, colorTheme, setColorTheme, avatar, setAvatar, t }) => {
   const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'PEN', 'MXN'];
 
   const inputClasses = "mt-1 block bg-secondary dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary focus:border-primary text-text-main dark:text-gray-100 p-2";
@@ -28,6 +31,11 @@ const Settings: React.FC<SettingsProps> = ({ theme, toggleTheme, currency, setCu
     <div className="space-y-6 max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('settings')}</h1>
 
+      <Card>
+        <h2 className="text-xl font-bold mb-4 text-text-main dark:text-brand-white">{t('profile')}</h2>
+        <AvatarGrid selectedAvatar={avatar} onSelectAvatar={setAvatar} />
+      </Card>
+      
       <Card>
         <h2 className="text-xl font-bold mb-4 text-text-main dark:text-brand-white">{t('appearance')}</h2>
         <div className="space-y-4">

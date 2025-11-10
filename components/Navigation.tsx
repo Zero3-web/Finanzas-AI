@@ -9,9 +9,11 @@ interface NavigationProps {
   isCollapsed: boolean;
   toggleCollapse: () => void;
   t: (key: string) => string;
+  userName: string;
+  avatar: string;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, isCollapsed, toggleCollapse, t }) => {
+const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, isCollapsed, toggleCollapse, t, userName, avatar }) => {
   
   const navItems: { tab: Tab; labelKey: string; icon: React.FC<{ className?: string }> }[] = [
     { tab: 'dashboard', labelKey: 'dashboard', icon: HomeIcon },
@@ -56,10 +58,10 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, isColl
         
         <div className="p-4 border-t border-secondary dark:border-gray-700">
            <div className="flex items-center">
-             <img src="https://i.pravatar.cc/40?u=a042581f4e29026704d" alt="User Avatar" className="w-10 h-10 rounded-full" />
+             <img src={avatar} alt="User Avatar" className="w-10 h-10 rounded-full" />
              {!isCollapsed && (
                 <div className="ml-3 flex-1">
-                    <p className="font-semibold">Olivia Rhye</p>
+                    <p className="font-semibold">{userName}</p>
                     <p className="text-xs text-text-secondary dark:text-gray-400">olivia@email.com</p>
                 </div>
             )}

@@ -122,6 +122,7 @@ export const translations = {
         regional: 'Regional',
         currency: 'Currency',
         language: 'Language',
+        profile: 'Profile',
         
         // Modal Titles
         addTransactionTitle: 'Add Transaction',
@@ -165,6 +166,11 @@ export const translations = {
         tour_welcome_desc: 'Let\'s get you set up to take control of your finances.',
         tour_regional_title: 'Configure Your Region',
         tour_regional_desc: 'Select your preferred language and currency.',
+        tour_name_title: 'What Should We Call You?',
+        tour_name_desc: 'Please enter your name to personalize your experience.',
+        tour_name_placeholder: 'Your Name',
+        tour_avatar_title: 'Choose Your Avatar',
+        tour_avatar_desc: 'Select a profile picture that you like.',
         tour_theme_title: 'Personalize Your Experience',
         tour_theme_desc: 'Choose a color theme that you like.',
         tour_account_title: 'Add Your First Account',
@@ -299,6 +305,7 @@ export const translations = {
         regional: 'Regional',
         currency: 'Moneda',
         language: 'Idioma',
+        profile: 'Perfil',
         
         // Modal Titles
         addTransactionTitle: 'Añadir Transacción',
@@ -342,6 +349,11 @@ export const translations = {
         tour_welcome_desc: 'Empezaremos configurando tu perfil para que tomes el control de tus finanzas.',
         tour_regional_title: 'Configura tu Región',
         tour_regional_desc: 'Selecciona tu idioma y moneda de preferencia.',
+        tour_name_title: '¿Cómo Deberíamos Llamarte?',
+        tour_name_desc: 'Por favor, ingresa tu nombre para personalizar tu experiencia.',
+        tour_name_placeholder: 'Tu Nombre',
+        tour_avatar_title: 'Elige tu Avatar',
+        tour_avatar_desc: 'Selecciona una foto de perfil que te guste.',
         tour_theme_title: 'Personaliza tu Experiencia',
         tour_theme_desc: 'Elige el tema de color que más te guste.',
         tour_account_title: 'Añade tu Primera Cuenta',

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Account, ColorTheme, Language } from '../types';
 import { themes } from '../hooks/useColorTheme';
 import AccountForm from './AccountForm';
+import AvatarGrid from './AvatarGrid';
 import { ChartPieIcon, PlusIcon, ScaleIcon } from './icons';
 
 interface OnboardingTourProps {
@@ -14,6 +15,10 @@ interface OnboardingTourProps {
   setLanguage: (language: Language) => void;
   currency: string;
   setCurrency: (currency: string) => void;
+  userName: string;
+  setUserName: (name: string) => void;
+  avatar: string;
+  setAvatar: (avatarUrl: string) => void;
 }
 
 const OnboardingTour: React.FC<OnboardingTourProps> = ({ 
@@ -25,10 +30,14 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
     language, 
     setLanguage, 
     currency, 
-    setCurrency 
+    setCurrency,
+    userName,
+    setUserName,
+    avatar,
+    setAvatar,
 }) => {
   const [step, setStep] = useState(1);
-  const totalSteps = 5;
+  const totalSteps = 7;
 
   const handleNext = () => setStep(s => Math.min(s + 1, totalSteps));
   const handleBack = () => setStep(s => Math.max(s - 1, 1));
@@ -73,7 +82,36 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
               </div>
             </div>
         );
-      case 3: // Theme Selection
+      case 3: // User Name
+        return (
+          <div>
+            <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2 text-center">{t('tour_name_title')}</h2>
+            <p className="text-text-secondary dark:text-gray-400 mb-6 text-center">{t('tour_name_desc')}</p>
+            <div className="max-w-xs mx-auto">
+                <label htmlFor="name-tour" className="block text-sm font-medium text-text-secondary dark:text-gray-400 sr-only">{t('tour_name_placeholder')}</label>
+                <input
+                    id="name-tour"
+                    type="text"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    placeholder={t('tour_name_placeholder')}
+                    className={`${inputClasses} text-center`}
+                    autoFocus
+                />
+            </div>
+          </div>
+        );
+      case 4: // Avatar Selection
+        return (
+          <div>
+            <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2 text-center">{t('tour_avatar_title')}</h2>
+            <p className="text-text-secondary dark:text-gray-400 mb-6 text-center">{t('tour_avatar_desc')}</p>
+            <div className="max-w-xs mx-auto">
+                <AvatarGrid selectedAvatar={avatar} onSelectAvatar={setAvatar} />
+            </div>
+          </div>
+        );
+      case 5: // Theme Selection
         return (
           <div>
             <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2 text-center">{t('tour_theme_title')}</h2>
@@ -91,7 +129,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
             </div>
           </div>
         );
-      case 4: // Add Account
+      case 6: // Add Account
         return (
             <div>
                 <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2 text-center">{t('tour_account_title')}</h2>
@@ -107,7 +145,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
                 </div>
             </div>
         );
-      case 5: // Tips
+      case 7: // Tips
         return (
             <div className="text-center">
                 <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2">{t('tour_tips_title')}</h2>
@@ -132,6 +170,8 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
         return null;
     }
   };
+  
+  const isNextDisabled = step === 3 && !userName.trim();
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] backdrop-blur-sm">
@@ -147,7 +187,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
                     <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i + 1 === step ? 'bg-primary' : 'bg-secondary dark:bg-gray-600'}`}></div>
                 ))}
             </div>
-            { step !== 4 && (
+            { step !== 6 && (
                 <div className="flex items-center justify-between">
                 <button 
                     onClick={handleBack} 
@@ -157,7 +197,11 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
                     {t('tour_back')}
                 </button>
                 {step < totalSteps ? (
-                    <button onClick={handleNext} className="bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded">
+                    <button 
+                        onClick={handleNext} 
+                        disabled={isNextDisabled}
+                        className="bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
                         {t('tour_next')}
                     </button>
                 ) : (

@@ -7,9 +7,11 @@ interface MobileMenuProps {
   onClose: () => void;
   setActiveTab: (tab: Tab) => void;
   t: (key: string) => string;
+  userName: string;
+  avatar: string;
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, setActiveTab, t }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, setActiveTab, t, userName, avatar }) => {
   if (!isOpen) return null;
 
   const menuItems: { tab: Tab; labelKey: string; icon: React.FC<{ className?: string }> }[] = [
@@ -29,9 +31,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, setActiveTab, 
         <div className="fixed inset-0 bg-background dark:bg-brand-black p-6 animate-slide-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center">
-                    <img src="https://i.pravatar.cc/40?u=a042581f4e29026704d" alt="User Avatar" className="w-12 h-12 rounded-full" />
+                    <img src={avatar} alt="User Avatar" className="w-12 h-12 rounded-full" />
                     <div className="ml-4">
-                        <p className="font-semibold text-lg">Olivia Rhye</p>
+                        <p className="font-semibold text-lg">{userName}</p>
                         <p className="text-sm text-text-secondary dark:text-gray-400">olivia@email.com</p>
                     </div>
                 </div>
