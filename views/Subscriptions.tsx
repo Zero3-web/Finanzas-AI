@@ -60,6 +60,21 @@ const SubscriptionCard: React.FC<{
   );
 };
 
+const AddNewCard: React.FC<{
+    onClick: () => void;
+    title: string;
+    examples: string;
+}> = ({ onClick, title, examples }) => (
+    <Card className="flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 bg-transparent shadow-none hover:border-primary dark:hover:border-primary-dark cursor-pointer transition-colors" onClick={onClick}>
+        <div className="text-center text-text-secondary dark:text-gray-400">
+            <PlusIcon className="w-8 h-8 mx-auto mb-2" />
+            <p className="font-semibold text-text-main dark:text-gray-200">{title}</p>
+            <p className="text-xs mt-1">{examples}</p>
+        </div>
+    </Card>
+);
+
+
 const Subscriptions: React.FC<SubscriptionsProps> = ({ subscriptions, formatCurrency, onAddSubscription, onEditSubscription, onRemoveSubscription, t }) => {
   return (
     <div className="space-y-6">
@@ -74,12 +89,16 @@ const Subscriptions: React.FC<SubscriptionsProps> = ({ subscriptions, formatCurr
         {subscriptions.map(sub => (
           <SubscriptionCard key={sub.id} subscription={sub} formatCurrency={formatCurrency} onEdit={onEditSubscription} onRemove={onRemoveSubscription} t={t} />
         ))}
-        <Card className="flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 bg-transparent shadow-none hover:border-primary dark:hover:border-primary-dark cursor-pointer transition-colors" onClick={onAddSubscription}>
-            <div className="text-center text-text-secondary dark:text-gray-400">
-                <PlusIcon className="w-8 h-8 mx-auto mb-2" />
-                <p>{t('addSubscription')}</p>
-            </div>
-        </Card>
+        <AddNewCard 
+            onClick={onAddSubscription}
+            title={t('add_fixed_expense')}
+            examples={t('fixed_expense_examples')}
+        />
+        <AddNewCard 
+            onClick={onAddSubscription}
+            title={t('addSubscription')}
+            examples={t('subscription_examples')}
+        />
       </div>
     </div>
   );

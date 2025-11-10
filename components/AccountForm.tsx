@@ -7,9 +7,10 @@ interface AccountFormProps {
   onClose: () => void;
   accountToEdit?: Account | null;
   t: (key: string) => string;
+  onSuccess?: () => void;
 }
 
-const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount, onClose, accountToEdit, t }) => {
+const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount, onClose, accountToEdit, t, onSuccess }) => {
   const [name, setName] = useState('');
   const [balance, setBalance] = useState('');
   const [type, setType] = useState<AccountType>('checking');
@@ -49,6 +50,7 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount
         onAddAccount(accountData);
     }
     
+    onSuccess?.();
     onClose();
   };
 

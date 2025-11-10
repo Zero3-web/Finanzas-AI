@@ -12,6 +12,8 @@ export const translations = {
         actions: 'Actions',
         account: 'Account',
         accounts: 'Accounts',
+        all_accounts: 'All Accounts',
+        all: 'All',
         debt: 'Debt',
         debts: 'Debts',
         expense: 'Expense',
@@ -40,6 +42,8 @@ export const translations = {
         next_payment: 'Next Payment',
         remaining: 'Remaining',
         no_debts: 'You have no debts. Great!',
+        subscription_summary: 'Subscription Summary',
+        no_subscriptions: 'No active subscriptions.',
 
         // Accounts
         checking: 'Checking',
@@ -78,6 +82,9 @@ export const translations = {
         category_software: 'Software',
         category_health: 'Health',
         category_other: 'Other',
+        add_fixed_expense: 'Add Fixed Expense',
+        fixed_expense_examples: 'Electricity, water, phone...',
+        subscription_examples: 'Netflix, Spotify...',
 
 
         // Transactions
@@ -95,8 +102,12 @@ export const translations = {
 
         // Analysis
         spendingAnalysis: 'Spending Analysis',
+        incomeAnalysis: 'Income Analysis',
         totalSpent: 'Total Spent',
+        totalEarned: 'Total Earned',
         noExpenseData: 'No expense data available for analysis.',
+        noIncomeData: 'No income data available for analysis.',
+
 
         // Settings
         appearance: 'Appearance',
@@ -148,6 +159,24 @@ export const translations = {
         confirmDeleteDebtMessage: 'This action cannot be undone. This will permanently delete the debt record.',
         confirmDeleteSubscriptionTitle: 'Delete Subscription',
         confirmDeleteSubscriptionMessage: 'This action cannot be undone. This will permanently delete the subscription record.',
+
+        // Onboarding Tour
+        tour_welcome_title: 'Welcome to FlowVix!',
+        tour_welcome_desc: 'Let\'s get you set up to take control of your finances.',
+        tour_regional_title: 'Configure Your Region',
+        tour_regional_desc: 'Select your preferred language and currency.',
+        tour_theme_title: 'Personalize Your Experience',
+        tour_theme_desc: 'Choose a color theme that you like.',
+        tour_account_title: 'Add Your First Account',
+        tour_account_desc: 'This could be a checking, savings, or credit card account. You need at least one to get started.',
+        tour_tips_title: 'You\'re All Set!',
+        tour_tips_desc: 'Here are a few tips to get you started:',
+        tour_tip_1: 'Use the + button to quickly add income or expenses.',
+        tour_tip_2: 'Track loans and recurring payments in the Debts and Subscriptions sections.',
+        tour_tip_3: 'The Analysis tab gives you a visual breakdown of where your money goes.',
+        tour_next: 'Next',
+        tour_back: 'Back',
+        tour_finish: 'Finish',
     },
     es: {
         // General
@@ -162,6 +191,8 @@ export const translations = {
         actions: 'Acciones',
         account: 'Cuenta',
         accounts: 'Cuentas',
+        all_accounts: 'Todas las Cuentas',
+        all: 'Todas',
         debt: 'Deuda',
         debts: 'Deudas',
         expense: 'Gasto',
@@ -190,6 +221,8 @@ export const translations = {
         next_payment: 'Próximo Pago',
         remaining: 'Restante',
         no_debts: 'No tienes deudas. ¡Excelente!',
+        subscription_summary: 'Resumen de Suscripciones',
+        no_subscriptions: 'No tienes suscripciones activas.',
 
         // Accounts
         checking: 'Corriente',
@@ -228,6 +261,9 @@ export const translations = {
         category_software: 'Software',
         category_health: 'Salud',
         category_other: 'Otro',
+        add_fixed_expense: 'Añadir Gasto Fijo',
+        fixed_expense_examples: 'Luz, agua, teléfono...',
+        subscription_examples: 'Netflix, Spotify...',
 
         // Transactions
         transactionType: 'Tipo de Transacción',
@@ -244,8 +280,11 @@ export const translations = {
 
         // Analysis
         spendingAnalysis: 'Análisis de Gastos',
+        incomeAnalysis: 'Análisis de Ingresos',
         totalSpent: 'Total Gastado',
+        totalEarned: 'Total Recibido',
         noExpenseData: 'No hay datos de gastos disponibles para el análisis.',
+        noIncomeData: 'No hay datos de ingresos disponibles para el análisis.',
 
         // Settings
         appearance: 'Apariencia',
@@ -297,5 +336,23 @@ export const translations = {
         confirmDeleteDebtMessage: 'Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de la deuda.',
         confirmDeleteSubscriptionTitle: 'Eliminar Suscripción',
         confirmDeleteSubscriptionMessage: 'Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de la suscripción.',
+
+        // Onboarding Tour
+        tour_welcome_title: '¡Bienvenido a FlowVix!',
+        tour_welcome_desc: 'Empezaremos configurando tu perfil para que tomes el control de tus finanzas.',
+        tour_regional_title: 'Configura tu Región',
+        tour_regional_desc: 'Selecciona tu idioma y moneda de preferencia.',
+        tour_theme_title: 'Personaliza tu Experiencia',
+        tour_theme_desc: 'Elige el tema de color que más te guste.',
+        tour_account_title: 'Añade tu Primera Cuenta',
+        tour_account_desc: 'Puede ser una cuenta corriente, de ahorros o una tarjeta de crédito. Necesitas al menos una para empezar.',
+        tour_tips_title: '¡Todo Listo!',
+        tour_tips_desc: 'Aquí tienes algunos consejos para empezar:',
+        tour_tip_1: 'Usa el botón + para añadir rápidamente ingresos o gastos.',
+        tour_tip_2: 'Registra préstamos y pagos recurrentes en las secciones de Deudas y Suscripciones.',
+        tour_tip_3: 'La pestaña de Análisis te da un desglose visual de a dónde va tu dinero.',
+        tour_next: 'Siguiente',
+        tour_back: 'Atrás',
+        tour_finish: 'Finalizar',
     }
 };

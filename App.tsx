@@ -18,6 +18,7 @@ import TransactionForm from './components/TransactionForm';
 import AccountForm from './components/AccountForm';
 import DebtForm from './components/DebtForm';
 import SubscriptionForm from './components/SubscriptionForm';
+import OnboardingTour from './components/OnboardingTour';
 import { translations } from './utils/translations';
 import { PlusIcon } from './components/icons';
 import MobileHeader from './components/MobileHeader';
@@ -41,6 +42,7 @@ const App: React.FC = () => {
   
   const [currency, setCurrency] = useLocalStorage<string>('currency', 'USD');
   const [language, setLanguage] = useLocalStorage<Language>('language', 'en');
+  const [onboardingCompleted, setOnboardingCompleted] = useLocalStorage<boolean>('onboardingCompleted', false);
 
   // Mobile Menu State
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -266,7 +268,7 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} theme={theme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} />;
+        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} subscriptions={subscriptions} theme={theme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} onAddAccount={() => openModal('account')} />;
       case 'accounts':
         return <Accounts accounts={accounts} transactions={transactions} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={handleRemoveAccount} t={t} />;
       case 'debts':
@@ -282,7 +284,7 @@ const App: React.FC = () => {
       case 'calendar':
         return <Calendar accounts={accounts} debts={debts} subscriptions={subscriptions} formatCurrency={formatCurrency} t={t} />;
       default:
-        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} theme={theme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} />;
+        return <Dashboard accounts={accounts} transactions={transactions} debts={debts} subscriptions={subscriptions} theme={theme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} onAddAccount={() => openModal('account')} />;
     }
   };
 
@@ -302,6 +304,19 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-background dark:bg-brand-black">
+      {!onboardingCompleted && (
+        <OnboardingTour 
+          onFinish={() => setOnboardingCompleted(true)}
+          colorTheme={colorTheme}
+          setColorTheme={setColorTheme}
+          onAddAccount={handleAddAccount}
+          t={t}
+          language={language}
+          setLanguage={setLanguage}
+          currency={currency}
+          setCurrency={setCurrency}
+        />
+      )}
       <Navigation 
         activeTab={activeTab} 
         setActiveTab={setActiveTab}
