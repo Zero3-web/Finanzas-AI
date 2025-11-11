@@ -29,19 +29,22 @@ export interface Debt {
   id: string;
   name: string;
   totalAmount: number;
-  amountPaid: number;
+  monthlyPayment: number;
+  totalInstallments: number;
+  paidInstallments: number;
   interestRate: number;
   nextPaymentDate: string;
   currency: string;
 }
 
-export interface Subscription {
+export interface RecurringTransaction {
   id: string;
   name: string;
   amount: number;
   paymentDay: string; // Day of the month, e.g., "15"
   category: string;
   currency: string;
+  type: TransactionType;
 }
 
 export interface SpendingLimit {
@@ -60,7 +63,7 @@ export interface Goal {
   currency: string;
 }
 
-export type Tab = 'dashboard' | 'accounts' | 'debts' | 'subscriptions' | 'limits' | 'history' | 'analysis' | 'settings' | 'calendar' | 'export' | 'goals';
+export type Tab = 'dashboard' | 'accounts' | 'debts' | 'recurring' | 'limits' | 'history' | 'analysis' | 'settings' | 'calendar' | 'export' | 'goals';
 
 export type Language = 'en' | 'es';
 
@@ -68,7 +71,7 @@ export interface Notification {
     id: string;
     message: string;
     dueDate: string;
-    type: 'debt' | 'credit_card' | 'subscription';
+    type: 'debt' | 'credit_card' | 'recurring';
 }
 
 export interface CustomEvent {
@@ -83,7 +86,8 @@ export interface CalendarEvent {
   description: string;
   amount: number;
   currency: string;
-  type: 'debt' | 'credit_card' | 'subscription';
+  type: 'debt' | 'credit_card' | 'recurring';
+  transactionType?: TransactionType;
 }
 
 export type ColorTheme = 'default' | 'ocean' | 'sunset' | 'forest';

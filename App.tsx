@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Tab, Transaction, Account, Debt, Subscription, SpendingLimit, Goal, Notification, Language, ColorTheme, TransactionType, AccountType } from './types';
+import { Tab, Transaction, Account, Debt, RecurringTransaction, SpendingLimit, Goal, Notification, Language, ColorTheme, TransactionType, AccountType } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useTheme } from './hooks/useTheme';
 import { useColorTheme } from './hooks/useColorTheme';
@@ -16,7 +16,7 @@ import Modal from './components/Modal';
 import TransactionForm from './components/TransactionForm';
 import AccountForm from './components/AccountForm';
 import DebtForm from './components/DebtForm';
-import SubscriptionForm from './components/SubscriptionForm';
+import RecurringTransactionForm from './components/SubscriptionForm';
 import LimitForm from './components/LimitForm';
 import GoalForm from './components/GoalForm';
 import ConfirmationModal from './components/ConfirmationModal';
@@ -28,7 +28,7 @@ import Confetti from './components/Confetti';
 import Dashboard from './views/Dashboard';
 import Accounts from './views/Accounts';
 import Debts from './views/Debts';
-import Subscriptions from './views/Subscriptions';
+import Recurring from './views/Subscriptions';
 import Limits from './views/Limits';
 import Goals from './views/Goals';
 import History from './views/History';
@@ -59,7 +59,7 @@ const App: React.FC = () => {
     const [accounts, setAccounts] = useLocalStorage<Account[]>('accounts', []);
     const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
     const [debts, setDebts] = useLocalStorage<Debt[]>('debts', []);
-    const [subscriptions, setSubscriptions] = useLocalStorage<Subscription[]>('subscriptions', []);
+    const [recurringTransactions, setRecurringTransactions] = useLocalStorage<RecurringTransaction[]>('recurringTransactions', []);
     const [limits, setLimits] = useLocalStorage<SpendingLimit[]>('limits', []);
     const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
 
@@ -107,9 +107,11 @@ const App: React.FC = () => {
     // Data Migration: Ensure old data from localStorage has a currency field.
     const dataMigrationRan = useRef(false);
     useEffect(() => {
-        if (dataMigrationRan.current || !primaryCurrency) return;
+        if (dataMigrationRan.current) return;
     
-        const migrate = (items: any[], setter: React.Dispatch<React.SetStateAction<any[]>>, key: string) => {
+        // General migration for adding 'currency' property
+        const migrateCurrency = (items: any[], setter: React.Dispatch<React.SetStateAction<any[]>>, key: string) => {
+            if (!primaryCurrency) return;
             let needsUpdate = false;
             const updatedItems = items.map(item => {
                 if (item && typeof item === 'object' && !item.currency) {
@@ -120,21 +122,35 @@ const App: React.FC = () => {
             });
     
             if (needsUpdate) {
-                console.log(`Running data migration for '${key}': setting missing currency.`);
+                console.log(`Running currency migration for '${key}'.`);
                 setter(updatedItems);
             }
         };
+
+        // Migration for 'subscriptions' to 'recurringTransactions'
+        const oldSubscriptionsData = localStorage.getItem('subscriptions');
+        if (oldSubscriptionsData) {
+            console.log("Migrating 'subscriptions' to 'recurringTransactions'.");
+            const oldSubscriptions = JSON.parse(oldSubscriptionsData);
+            if (Array.isArray(oldSubscriptions)) {
+                const migrated = oldSubscriptions.map((sub: any) => ({
+                    ...sub,
+                    type: TransactionType.EXPENSE, // Default old subscriptions to expenses
+                    currency: sub.currency || primaryCurrency, // Ensure currency
+                }));
+                setRecurringTransactions(migrated);
+                localStorage.removeItem('subscriptions');
+            }
+        }
         
-        migrate(accounts, setAccounts, 'accounts');
-        migrate(debts, setDebts, 'debts');
-        migrate(subscriptions, setSubscriptions, 'subscriptions');
-        migrate(limits, setLimits, 'limits');
-        migrate(goals, setGoals, 'goals');
+        migrateCurrency(accounts, setAccounts, 'accounts');
+        migrateCurrency(debts, setDebts, 'debts');
+        migrateCurrency(limits, setLimits, 'limits');
+        migrateCurrency(goals, setGoals, 'goals');
     
         dataMigrationRan.current = true;
-    // We only want this to run once when the app loads and has the primary currency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [primaryCurrency, accounts, debts, subscriptions, limits, goals]);
+    }, [primaryCurrency]);
 
     // Notifications
     const notifications = useMemo<Notification[]>(() => {
@@ -231,7 +247,7 @@ const App: React.FC = () => {
             account: setAccounts,
             transaction: setTransactions,
             debt: setDebts,
-            subscription: setSubscriptions,
+            recurring: setRecurringTransactions,
             limit: setLimits,
             goal: setGoals
         };
@@ -239,7 +255,7 @@ const App: React.FC = () => {
             account: accounts,
             transaction: transactions,
             debt: debts,
-            subscription: subscriptions,
+            recurring: recurringTransactions,
             limit: limits,
             goal: goals
         };
@@ -390,18 +406,18 @@ const App: React.FC = () => {
 
     const renderView = () => {
         switch (activeTab) {
-            case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} subscriptions={subscriptions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddSubscription={() => openModal('subscription')} primaryCurrency={primaryCurrency} />;
+            case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} />;
             case 'accounts': return <Accounts accounts={accounts} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={(id) => openConfirmation('account', id)} t={t} />;
             case 'debts': return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onEditDebt={(debt) => openModal('debt', debt)} onRemoveDebt={(id) => openConfirmation('debt', id)} t={t} />;
-            case 'subscriptions': return <Subscriptions subscriptions={subscriptions} formatCurrency={formatCurrency} onAddSubscription={() => openModal('subscription')} onEditSubscription={(sub) => openModal('subscription', sub)} onRemoveSubscription={(id) => openConfirmation('subscription', id)} t={t} />;
+            case 'recurring': return <Recurring recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} onAddRecurring={() => openModal('recurring')} onEditRecurring={(rec) => openModal('recurring', rec)} onRemoveRecurring={(id) => openConfirmation('recurring', id)} t={t} />;
             case 'limits': return <Limits limits={limits} transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onAddLimit={() => openModal('limit')} onEditLimit={(limit) => openModal('limit', limit)} onRemoveLimit={(id) => openConfirmation('limit', id)} t={t} />;
             case 'goals': return <Goals goals={goals} formatCurrency={formatCurrency} onAddGoal={() => openModal('goal')} onEditGoal={(goal) => openModal('goal', goal)} onRemoveGoal={(id) => openConfirmation('goal', id)} t={t} primaryCurrency={primaryCurrency} />;
             case 'history': return <History transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onEditTransaction={(tr) => openModal('transaction', tr)} onRemoveTransaction={(id) => openConfirmation('transaction', id)} t={t} />;
             case 'analysis': return <Analysis transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} primaryCurrency={primaryCurrency} />;
-            case 'calendar': return <Calendar accounts={accounts} debts={debts} subscriptions={subscriptions} formatCurrency={formatCurrency} t={t} />;
+            case 'calendar': return <Calendar accounts={accounts} debts={debts} recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} t={t} />;
             case 'export': return <Export transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} userName={userName} colorTheme={colorTheme} />;
             case 'settings': return <Settings theme={theme} toggleTheme={toggleTheme} currency={primaryCurrency} setCurrency={setPrimaryCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} userName={userName} setUserName={setUserName} t={t} />;
-            default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} subscriptions={subscriptions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddSubscription={() => openModal('subscription')} primaryCurrency={primaryCurrency} />;
+            default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} />;
         }
     };
     
@@ -466,12 +482,12 @@ const App: React.FC = () => {
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
-            <Modal isOpen={modal === 'subscription'} onClose={closeModal} title={itemToEdit ? t('edit_subscription') : t('addSubscription')}>
-                <SubscriptionForm
-                    onAddSubscription={(sub) => handleAddOrUpdate(subscriptions, setSubscriptions, sub)}
-                    onUpdateSubscription={(sub) => handleAddOrUpdate(subscriptions, setSubscriptions, sub)}
+            <Modal isOpen={modal === 'recurring'} onClose={closeModal} title={itemToEdit ? t('edit_recurring') : t('addRecurring')}>
+                <RecurringTransactionForm
+                    onAddRecurring={(rec) => handleAddOrUpdate(recurringTransactions, setRecurringTransactions, rec)}
+                    onUpdateRecurring={(rec) => handleAddOrUpdate(recurringTransactions, setRecurringTransactions, rec)}
                     onClose={closeModal}
-                    subscriptionToEdit={itemToEdit}
+                    recurringToEdit={itemToEdit}
                     t={t}
                     primaryCurrency={primaryCurrency}
                 />

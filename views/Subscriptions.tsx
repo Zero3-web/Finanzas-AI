@@ -1,53 +1,59 @@
 import React from 'react';
-import { Subscription } from '../types';
+import { RecurringTransaction, TransactionType } from '../types';
 import Card from '../components/Card';
 import { PlusIcon, TrashIcon, PencilIcon } from '../components/icons';
 
-interface SubscriptionsProps {
-  subscriptions: Subscription[];
+interface RecurringProps {
+  recurringTransactions: RecurringTransaction[];
   formatCurrency: (amount: number, currency: string) => string;
-  onAddSubscription: () => void;
-  onEditSubscription: (subscription: Subscription) => void;
-  onRemoveSubscription: (subscriptionId: string) => void;
+  onAddRecurring: () => void;
+  onEditRecurring: (recurring: RecurringTransaction) => void;
+  onRemoveRecurring: (recurringId: string) => void;
   t: (key: string) => string;
 }
 
-const SubscriptionCard: React.FC<{ 
-    subscription: Subscription; 
+const RecurringTransactionCard: React.FC<{ 
+    recurring: RecurringTransaction; 
     formatCurrency: (amount: number, currency: string) => string; 
-    onEdit: (subscription: Subscription) => void;
+    onEdit: (recurring: RecurringTransaction) => void;
     onRemove: (id: string) => void;
     t: (key: string) => string;
-}> = ({ subscription, formatCurrency, onEdit, onRemove, t }) => {
+}> = ({ recurring, formatCurrency, onEdit, onRemove, t }) => {
   
   const getNextPaymentDate = () => {
       const today = new Date();
-      const dayOfMonth = parseInt(subscription.paymentDay);
+      const dayOfMonth = parseInt(recurring.paymentDay);
       let nextPayment = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
       if (nextPayment < today) {
           nextPayment.setMonth(nextPayment.getMonth() + 1);
       }
       return nextPayment.toLocaleDateString();
   }
+  
+  const isIncome = recurring.type === TransactionType.INCOME;
+  const borderColor = isIncome ? 'border-income' : 'border-expense';
+  const amountColor = isIncome ? 'text-income' : 'text-expense';
 
   return (
-    <Card className="flex flex-col justify-between">
+    <Card className={`flex flex-col justify-between border-l-4 ${borderColor}`}>
       <div>
         <div className="flex justify-between items-start mb-2">
             <div>
-                <h3 className="text-xl font-bold text-text-main dark:text-brand-white">{subscription.name}</h3>
-                <p className="text-xs text-text-secondary dark:text-gray-400 capitalize">{t(`category_${subscription.category.toLowerCase()}`)}</p>
+                <h3 className="text-xl font-bold text-text-main dark:text-brand-white">{recurring.name}</h3>
+                <p className="text-xs text-text-secondary dark:text-gray-400 capitalize">{t(`category_${recurring.category.toLowerCase()}`)}</p>
             </div>
             <div className="flex space-x-2">
-                <button onClick={() => onEdit(subscription)} className="text-text-secondary dark:text-gray-400 hover:text-primary dark:hover:text-primary-dark transition-colors p-1">
+                <button onClick={() => onEdit(recurring)} className="text-text-secondary dark:text-gray-400 hover:text-primary dark:hover:text-primary-dark transition-colors p-1">
                     <PencilIcon className="w-5 h-5" />
                 </button>
-                <button onClick={() => onRemove(subscription.id)} className="text-text-secondary dark:text-gray-400 hover:text-expense dark:hover:text-expense-dark transition-colors p-1">
+                <button onClick={() => onRemove(recurring.id)} className="text-text-secondary dark:text-gray-400 hover:text-expense dark:hover:text-expense-dark transition-colors p-1">
                     <TrashIcon className="w-5 h-5" />
                 </button>
             </div>
         </div>
-        <p className="text-2xl font-semibold text-text-main dark:text-gray-200">{formatCurrency(subscription.amount, subscription.currency)}</p>
+        <p className={`text-2xl font-semibold ${amountColor}`}>
+            {isIncome ? '+' : '-'}{formatCurrency(recurring.amount, recurring.currency)}
+        </p>
       </div>
 
       <div className="mt-4 pt-4 border-t border-secondary dark:border-gray-700 text-sm">
@@ -75,28 +81,28 @@ const AddNewCard: React.FC<{
 );
 
 
-const Subscriptions: React.FC<SubscriptionsProps> = ({ subscriptions, formatCurrency, onAddSubscription, onEditSubscription, onRemoveSubscription, t }) => {
+const Recurring: React.FC<RecurringProps> = ({ recurringTransactions, formatCurrency, onAddRecurring, onEditRecurring, onRemoveRecurring, t }) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('subscriptions')}</h1>
-        <button onClick={onAddSubscription} className="flex items-center bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors">
+        <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('recurring')}</h1>
+        <button onClick={onAddRecurring} className="flex items-center bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors">
           <PlusIcon className="w-5 h-5 mr-2" />
-          {t('addSubscription')}
+          {t('addRecurring')}
         </button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {subscriptions.map(sub => (
-          <SubscriptionCard key={sub.id} subscription={sub} formatCurrency={formatCurrency} onEdit={onEditSubscription} onRemove={onRemoveSubscription} t={t} />
+        {recurringTransactions.map(rec => (
+          <RecurringTransactionCard key={rec.id} recurring={rec} formatCurrency={formatCurrency} onEdit={onEditRecurring} onRemove={onRemoveRecurring} t={t} />
         ))}
         <AddNewCard 
-            onClick={onAddSubscription}
-            title={t('addSubscription')}
-            examples={t('recurring_expense_examples')}
+            onClick={onAddRecurring}
+            title={t('addRecurring')}
+            examples={t('recurring_examples')}
         />
       </div>
     </div>
   );
 };
 
-export default Subscriptions;
+export default Recurring;

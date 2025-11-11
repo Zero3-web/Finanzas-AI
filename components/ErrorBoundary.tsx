@@ -10,16 +10,11 @@ interface State {
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Reverted state initialization to use a constructor for better toolchain compatibility.
-  public state: State;
-
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-    };
-  }
+  // FIX: Refactored state initialization to a class property to resolve errors where `this.state` and `this.props` were not recognized.
+  state: State = {
+    hasError: false,
+    error: undefined,
+  };
 
   static getDerivedStateFromError(error: any): State {
     return { hasError: true, error };

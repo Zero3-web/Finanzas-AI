@@ -9,19 +9,20 @@ interface DebtsProps {
   onAddDebt: () => void;
   onEditDebt: (debt: Debt) => void;
   onRemoveDebt: (debtId: string) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: { [key: string]: string | number }) => string;
 }
 
-const DebtCard: React.FC<{ debt: Debt; formatCurrency: (amount: number, currency: string) => string; onEdit: (debt: Debt) => void; onRemove: (id: string) => void; t: (key: string) => string }> = ({ debt, formatCurrency, onEdit, onRemove, t }) => {
-    const remainingAmount = debt.totalAmount - debt.amountPaid;
-    const progress = (debt.amountPaid / debt.totalAmount) * 100;
+const DebtCard: React.FC<{ debt: Debt; formatCurrency: (amount: number, currency: string) => string; onEdit: (debt: Debt) => void; onRemove: (id: string) => void; t: (key: string, params?: { [key: string]: string | number }) => string; }> = ({ debt, formatCurrency, onEdit, onRemove, t }) => {
+    const amountPaid = debt.paidInstallments * debt.monthlyPayment;
+    const remainingAmount = debt.totalAmount - amountPaid;
+    const progress = debt.totalInstallments > 0 ? (debt.paidInstallments / debt.totalInstallments) * 100 : 0;
 
     return (
         <Card>
             <div className="flex justify-between items-start">
                 <div>
                     <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark">{debt.name}</h3>
-                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('interest_rate')}: {debt.interestRate}%</p>
+                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('monthlyPayment')}: {formatCurrency(debt.monthlyPayment, debt.currency)}</p>
                 </div>
                 <div className="flex space-x-2">
                     <button onClick={() => onEdit(debt)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark transition-colors p-1">
@@ -41,8 +42,8 @@ const DebtCard: React.FC<{ debt: Debt; formatCurrency: (amount: number, currency
                     <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
                 </div>
                 <div className="flex justify-between text-xs text-text-secondary dark:text-gray-500 mt-1">
-                    <span>{formatCurrency(debt.amountPaid, debt.currency)} {t('paid')}</span>
-                    <span>{formatCurrency(debt.totalAmount, debt.currency)} {t('total')}</span>
+                    <span>{t('installments_paid', { paid: debt.paidInstallments, total: debt.totalInstallments })}</span>
+                    <span>{t('total')}: {formatCurrency(debt.totalAmount, debt.currency)}</span>
                 </div>
             </div>
             <div className="text-sm text-text-secondary dark:text-text-secondary-dark">

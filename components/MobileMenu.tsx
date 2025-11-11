@@ -17,7 +17,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, setActiveTab, 
   const menuItems: { tab: Tab; labelKey: string; icon: React.FC<{ className?: string }> }[] = [
     { tab: 'accounts', labelKey: 'accounts', icon: CardIcon },
     { tab: 'debts', labelKey: 'debts', icon: ScaleIcon },
-    { tab: 'subscriptions', labelKey: 'subscriptions', icon: CollectionIcon },
+    { tab: 'recurring', labelKey: 'recurring', icon: CollectionIcon },
     { tab: 'limits', labelKey: 'limits', icon: ShieldCheckIcon },
     { tab: 'goals', labelKey: 'goals', icon: BullseyeIcon },
     { tab: 'export', labelKey: 'analysis_export', icon: DocumentArrowDownIcon },

@@ -1,14 +1,14 @@
-import React, { useState, useMemo } from 'react';
-import { Account, Debt, CalendarEvent, Subscription } from '../types';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Account, Debt, CalendarEvent, RecurringTransaction, TransactionType } from '../types';
 import Card from '../components/Card';
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 
 interface CalendarProps {
   accounts: Account[];
   debts: Debt[];
-  subscriptions: Subscription[];
+  recurringTransactions: RecurringTransaction[];
   formatCurrency: (amount: number, currency: string) => string;
-  t: (key: string) => string;
+  t: (key: string, params?: { [key: string]: string | number }) => string;
 }
 
 const getDaysUntil = (dateString: string): number => {
@@ -20,9 +20,10 @@ const getDaysUntil = (dateString: string): number => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, formatCurrency, t }) => {
+const Calendar: React.FC<CalendarProps> = ({ accounts, debts, recurringTransactions, formatCurrency, t }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const selectedEventsRef = useRef<HTMLDivElement>(null);
 
   const eventsMap = useMemo(() => {
     const events = new Map<string, CalendarEvent[]>();
@@ -34,11 +35,13 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
       const eventDate = new Date(debt.nextPaymentDate);
       const key = eventDate.toISOString().split('T')[0];
       if (!events.has(key)) events.set(key, []);
+      const amountPaid = debt.paidInstallments * debt.monthlyPayment;
+      const remainingAmount = debt.totalAmount - amountPaid;
       events.get(key)!.push({
         id: `debt-${debt.id}`,
         date: key,
         description: `${t('paymentFor')} ${debt.name}`,
-        amount: debt.totalAmount - debt.amountPaid,
+        amount: remainingAmount,
         currency: debt.currency,
         type: 'debt',
       });
@@ -64,26 +67,27 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
         });
       });
       
-    // Subscription events
-    subscriptions.forEach(sub => {
-      const dayOfMonth = parseInt(sub.paymentDay);
+    // Recurring transaction events
+    recurringTransactions.forEach(rec => {
+      const dayOfMonth = parseInt(rec.paymentDay);
       if (isNaN(dayOfMonth)) return;
 
       const eventDate = new Date(year, month, dayOfMonth);
       const key = eventDate.toISOString().split('T')[0];
       if (!events.has(key)) events.set(key, []);
       events.get(key)!.push({
-        id: `sub-${sub.id}`,
+        id: `rec-${rec.id}`,
         date: key,
-        description: sub.name,
-        amount: sub.amount,
-        currency: sub.currency,
-        type: 'subscription',
+        description: rec.name,
+        amount: rec.amount,
+        currency: rec.currency,
+        type: 'recurring',
+        transactionType: rec.type,
       });
     });
 
     return events;
-  }, [accounts, debts, subscriptions, currentDate, t]);
+  }, [accounts, debts, recurringTransactions, currentDate, t]);
 
   const upcomingEventsIn5Days = useMemo(() => {
     const allUpcoming: (CalendarEvent & { daysUntil: number })[] = [];
@@ -95,11 +99,13 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
     debts.forEach(debt => {
       const eventDate = new Date(debt.nextPaymentDate);
       if (eventDate >= today && eventDate <= fiveDaysFromNow) {
+        const amountPaid = debt.paidInstallments * debt.monthlyPayment;
+        const remainingAmount = debt.totalAmount - amountPaid;
         allUpcoming.push({
           id: `debt-${debt.id}`,
           date: debt.nextPaymentDate,
           description: `${t('paymentFor')} ${debt.name}`,
-          amount: debt.totalAmount - debt.amountPaid,
+          amount: remainingAmount,
           currency: debt.currency,
           type: 'debt',
           daysUntil: getDaysUntil(debt.nextPaymentDate),
@@ -107,12 +113,12 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
       }
     });
 
-    const recurringItems = [
-      ...subscriptions.map(s => ({ ...s, type: 'subscription' as const, day: s.paymentDay, amount: s.amount })),
-      ...accounts.filter(a => a.type === 'credit' && a.paymentDueDate).map(a => ({ ...a, type: 'credit_card' as const, day: a.paymentDueDate!, amount: a.balance }))
+    const recurringItemsForCalendar = [
+      ...recurringTransactions.map(r => ({ ...r, day: r.paymentDay })),
+      ...accounts.filter(a => a.type === 'credit' && a.paymentDueDate).map(a => ({ ...a, type: 'credit' as const, day: a.paymentDueDate!, amount: a.balance }))
     ];
 
-    recurringItems.forEach(item => {
+    recurringItemsForCalendar.forEach(item => {
       const dayOfMonth = parseInt(item.day);
       if (isNaN(dayOfMonth)) return;
 
@@ -122,13 +128,15 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
       const checkAndAdd = (date: Date) => {
         if (date >= today && date <= fiveDaysFromNow) {
           const dateStr = date.toISOString().split('T')[0];
+          const isCreditCard = 'creditLimit' in item; // Differentiate account from recurring
           allUpcoming.push({
-            id: `${item.type}-${item.id}-${dateStr}`,
+            id: `${isCreditCard ? 'credit' : 'recurring'}-${item.id}-${dateStr}`,
             date: dateStr,
-            description: item.type === 'subscription' ? item.name : `${t('paymentFor')} ${item.name}`,
+            description: isCreditCard ? `${t('paymentFor')} ${item.name}` : item.name,
             amount: item.amount,
             currency: item.currency,
-            type: item.type,
+            type: isCreditCard ? 'credit_card' : 'recurring',
+            transactionType: isCreditCard ? TransactionType.EXPENSE : item.type,
             daysUntil: getDaysUntil(dateStr),
           });
         }
@@ -139,11 +147,27 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
          checkAndAdd(nextPaymentDateNextMonth);
       }
     });
-
+    
     return allUpcoming
-      .filter((event, index, self) => index === self.findIndex(e => e.id === event.id)) // Remove duplicates
+      .filter((event, index, self) => index === self.findIndex(e => e.id.startsWith(event.id.substring(0, event.id.lastIndexOf('-')))))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [accounts, debts, subscriptions, t]);
+  }, [accounts, debts, recurringTransactions, t]);
+
+  const selectedDateEvents = useMemo(() => {
+    if (!selectedDate) return [];
+    const key = selectedDate.toISOString().split('T')[0];
+    return eventsMap.get(key) || [];
+  }, [selectedDate, eventsMap]);
+  
+  const handleDateClick = (day: number) => {
+    setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
+  };
+  
+  useEffect(() => {
+    if (window.innerWidth < 768 && selectedDateEvents.length > 0) {
+        selectedEventsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedDate, selectedDateEvents]);
 
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
@@ -180,16 +204,15 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
     return { classes, hasEvent };
   }
   
-  const getEventTypeStyling = (type: CalendarEvent['type']) => {
-      switch (type) {
-          case 'debt':
-              return { bar: 'bg-expense', text: 'text-expense' };
-          case 'credit_card':
-              return { bar: 'bg-primary', text: 'text-primary' };
-          case 'subscription':
-              return { bar: 'bg-accent', text: 'text-accent' };
-          default:
-              return { bar: 'bg-gray-400', text: 'text-text-secondary' };
+  const getEventTypeStyling = (event: CalendarEvent) => {
+      switch (event.type) {
+          case 'debt': return { bar: 'bg-expense', text: 'text-expense' };
+          case 'credit_card': return { bar: 'bg-primary', text: 'text-primary' };
+          case 'recurring':
+              return event.transactionType === TransactionType.INCOME
+                  ? { bar: 'bg-income', text: 'text-income' }
+                  : { bar: 'bg-accent', text: 'text-accent' };
+          default: return { bar: 'bg-gray-400', text: 'text-text-secondary' };
       }
   };
   
@@ -224,7 +247,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
                 {days.map(day => {
                     const { classes, hasEvent } = getDayClass(day);
                     return (
-                        <div key={day} className={classes} onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}>
+                        <div key={day} className={classes} onClick={() => handleDateClick(day)}>
                             <span>{day}</span>
                             {hasEvent && <span className="absolute bottom-2 h-1.5 w-1.5 bg-accent rounded-full"></span>}
                         </div>
@@ -238,7 +261,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
             <div className="space-y-3 max-h-[28rem] overflow-y-auto pr-2">
                 {upcomingEventsIn5Days.length > 0 ? (
                     upcomingEventsIn5Days.map(event => {
-                        const styling = getEventTypeStyling(event.type);
+                        const styling = getEventTypeStyling(event);
                         const daysText = getDaysUntilText(event.daysUntil);
                         return (
                             <div key={event.id} className="flex items-center p-3 rounded-lg bg-secondary dark:bg-secondary-dark/50">
@@ -259,6 +282,37 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
             </div>
         </Card>
       </div>
+
+      <div ref={selectedEventsRef} className="mt-6">
+        {selectedDate && (
+          <Card>
+            <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">
+              {t('events_on')} {selectedDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </h2>
+            <div className="space-y-3">
+              {selectedDateEvents.length > 0 ? (
+                selectedDateEvents.map(event => {
+                  const styling = getEventTypeStyling(event);
+                  return (
+                    <div key={event.id} className="flex items-center p-3 rounded-lg bg-secondary dark:bg-secondary-dark/50">
+                      <div className={`w-1.5 h-10 rounded-full mr-3 ${styling.bar}`}></div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-text-main dark:text-text-main-dark text-sm">{event.description}</p>
+                        <p className={`font-medium text-xs ${styling.text}`}>{formatCurrency(event.amount, event.currency)}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-10 text-text-secondary dark:text-text-secondary-dark">
+                  <p className="text-sm">{t('no_events_on_date')}</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
+      </div>
+
     </div>
   );
 };

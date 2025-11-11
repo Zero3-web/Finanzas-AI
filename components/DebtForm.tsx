@@ -13,7 +13,9 @@ interface DebtFormProps {
 const DebtForm: React.FC<DebtFormProps> = ({ onAddDebt, onUpdateDebt, onClose, debtToEdit, t, primaryCurrency }) => {
   const [name, setName] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
-  const [amountPaid, setAmountPaid] = useState('0');
+  const [monthlyPayment, setMonthlyPayment] = useState('');
+  const [totalInstallments, setTotalInstallments] = useState('');
+  const [paidInstallments, setPaidInstallments] = useState('0');
   const [interestRate, setInterestRate] = useState('');
   const [nextPaymentDate, setNextPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [currency, setCurrency] = useState(primaryCurrency);
@@ -24,7 +26,9 @@ const DebtForm: React.FC<DebtFormProps> = ({ onAddDebt, onUpdateDebt, onClose, d
     if (isEditing) {
       setName(debtToEdit.name);
       setTotalAmount(String(debtToEdit.totalAmount));
-      setAmountPaid(String(debtToEdit.amountPaid));
+      setMonthlyPayment(String(debtToEdit.monthlyPayment));
+      setTotalInstallments(String(debtToEdit.totalInstallments));
+      setPaidInstallments(String(debtToEdit.paidInstallments));
       setInterestRate(String(debtToEdit.interestRate));
       setNextPaymentDate(new Date(debtToEdit.nextPaymentDate).toISOString().split('T')[0]);
       setCurrency(debtToEdit.currency);
@@ -34,7 +38,7 @@ const DebtForm: React.FC<DebtFormProps> = ({ onAddDebt, onUpdateDebt, onClose, d
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !totalAmount || !interestRate || !nextPaymentDate) {
+    if (!name || !totalAmount || !interestRate || !nextPaymentDate || !monthlyPayment || !totalInstallments) {
       alert(t('fillAllFields'));
       return;
     }
@@ -42,7 +46,9 @@ const DebtForm: React.FC<DebtFormProps> = ({ onAddDebt, onUpdateDebt, onClose, d
     const debtData = {
       name,
       totalAmount: parseFloat(totalAmount),
-      amountPaid: parseFloat(amountPaid),
+      monthlyPayment: parseFloat(monthlyPayment),
+      totalInstallments: parseInt(totalInstallments),
+      paidInstallments: parseInt(paidInstallments),
       interestRate: parseFloat(interestRate),
       nextPaymentDate,
       currency,
@@ -72,19 +78,31 @@ const DebtForm: React.FC<DebtFormProps> = ({ onAddDebt, onUpdateDebt, onClose, d
             <input type="number" id="totalAmount" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} className={inputClasses} placeholder="10000" />
         </div>
         <div>
-            <label htmlFor="amountPaid" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('amount_paid')}</label>
-            <input type="number" id="amountPaid" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} className={inputClasses} placeholder="0" />
+            <label htmlFor="item_currency" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('item_currency')}</label>
+            <select id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClasses}>
+                {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
         </div>
       </div>
-      <div>
-        <label htmlFor="item_currency" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('item_currency')}</label>
-        <select id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClasses}>
-            {currencies.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+       <div className="grid grid-cols-2 gap-4">
+        <div>
+            <label htmlFor="monthlyPayment" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('monthlyPayment')}</label>
+            <input type="number" id="monthlyPayment" value={monthlyPayment} onChange={(e) => setMonthlyPayment(e.target.value)} className={inputClasses} placeholder="500" />
+        </div>
+        <div>
+            <label htmlFor="interestRate" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('interest_rate')} (%)</label>
+            <input type="number" id="interestRate" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} className={inputClasses} placeholder="5.5" />
+        </div>
       </div>
-      <div>
-        <label htmlFor="interestRate" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('interest_rate')} (%)</label>
-        <input type="number" id="interestRate" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} className={inputClasses} placeholder="5.5" />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+            <label htmlFor="paidInstallments" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('paidInstallments')}</label>
+            <input type="number" id="paidInstallments" value={paidInstallments} onChange={(e) => setPaidInstallments(e.target.value)} className={inputClasses} placeholder="0" />
+        </div>
+        <div>
+            <label htmlFor="totalInstallments" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('totalInstallments')}</label>
+            <input type="number" id="totalInstallments" value={totalInstallments} onChange={(e) => setTotalInstallments(e.target.value)} className={inputClasses} placeholder="24" />
+        </div>
       </div>
       <div>
         <label htmlFor="nextPaymentDate" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('next_payment_date')}</label>

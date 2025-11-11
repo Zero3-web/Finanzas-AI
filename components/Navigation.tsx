@@ -38,7 +38,7 @@ const Navigation: React.FC<NavigationProps> = ({
     { tab: 'dashboard', labelKey: 'dashboard', icon: HomeIcon },
     { tab: 'accounts', labelKey: 'accounts', icon: CardIcon },
     { tab: 'debts', labelKey: 'debts', icon: ScaleIcon },
-    { tab: 'subscriptions', labelKey: 'subscriptions', icon: CollectionIcon },
+    { tab: 'recurring', labelKey: 'recurring', icon: CollectionIcon },
     { tab: 'limits', labelKey: 'limits', icon: ShieldCheckIcon },
     { tab: 'goals', labelKey: 'goals', icon: BullseyeIcon },
     { tab: 'history', labelKey: 'history', icon: DocumentTextIcon },

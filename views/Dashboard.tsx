@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Transaction, Account, TransactionType, Debt, Notification, ColorTheme, Subscription } from '../types';
+import { Transaction, Account, TransactionType, Debt, Notification, ColorTheme, RecurringTransaction } from '../types';
 import { Theme } from '../hooks/useTheme';
 import { themes } from '../hooks/useColorTheme';
 import Card from '../components/Card';
@@ -12,7 +12,7 @@ interface DashboardProps {
   accounts: Account[];
   transactions: Transaction[];
   debts: Debt[];
-  subscriptions: Subscription[];
+  recurringTransactions: RecurringTransaction[];
   theme: Theme;
   toggleTheme: () => void;
   colorTheme: ColorTheme;
@@ -23,7 +23,7 @@ interface DashboardProps {
   avatar: string;
   onAddAccount: () => void;
   onAddDebt: () => void;
-  onAddSubscription: () => void;
+  onAddRecurring: () => void;
   primaryCurrency: string;
 }
 
@@ -120,7 +120,7 @@ const RecentActivityItem: React.FC<{ transaction: Transaction, account: Account 
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, subscriptions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddSubscription, primaryCurrency }) => {
+const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, recurringTransactions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddRecurring, primaryCurrency }) => {
     const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
     const accountMap = useMemo(() => new Map(accounts.map(acc => [acc.id, acc])), [accounts]);
 
@@ -159,22 +159,22 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
         return { totalIncome: income, totalExpenses: expenses, profit: income - expenses };
     }, [displayedTransactions, primaryCurrency, accounts]);
     
-    const upcomingSubscriptions = useMemo(() => {
+    const upcomingRecurring = useMemo(() => {
         const today = new Date();
-        return subscriptions
-            .map(sub => {
-                const dayOfMonth = parseInt(sub.paymentDay);
+        return recurringTransactions
+            .map(rec => {
+                const dayOfMonth = parseInt(rec.paymentDay);
                 if (isNaN(dayOfMonth)) return null;
                 let nextPaymentDate = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
                 if (nextPaymentDate < today) {
                     nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
                 }
-                return { ...sub, nextPaymentDate: nextPaymentDate.toISOString().split('T')[0] };
+                return { ...rec, nextPaymentDate: nextPaymentDate.toISOString().split('T')[0] };
             })
-            .filter((sub): sub is Subscription & { nextPaymentDate: string } => sub !== null)
+            .filter((rec): rec is RecurringTransaction & { nextPaymentDate: string } => rec !== null)
             .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime())
             .slice(0, 4);
-    }, [subscriptions]);
+    }, [recurringTransactions]);
 
     const getAccountGridClasses = (count: number) => {
         if (count === 1) {
@@ -265,15 +265,19 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                 </div>
                 <div className="space-y-4">
                     {debts.length > 0 ? (
-                        debts.slice(0, 3).map(debt => (
-                            <div key={debt.id} className="flex justify-between items-center">
-                                <div>
-                                    <p className="font-semibold text-text-main dark:text-text-main-dark">{debt.name}</p>
-                                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(debt.nextPaymentDate).toLocaleDateString()}</p>
+                        debts.slice(0, 3).map(debt => {
+                            const amountPaid = debt.paidInstallments * debt.monthlyPayment;
+                            const remainingAmount = debt.totalAmount - amountPaid;
+                            return (
+                                <div key={debt.id} className="flex justify-between items-center">
+                                    <div>
+                                        <p className="font-semibold text-text-main dark:text-text-main-dark">{debt.name}</p>
+                                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(debt.nextPaymentDate).toLocaleDateString()}</p>
+                                    </div>
+                                    <p className="font-semibold text-expense">{formatCurrency(remainingAmount, debt.currency)}</p>
                                 </div>
-                                <p className="font-semibold text-expense">{formatCurrency(debt.totalAmount - debt.amountPaid, debt.currency)}</p>
-                            </div>
-                        ))
+                            )
+                        })
                     ) : (
                         <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('no_debts')}</p>
                     )}
@@ -281,24 +285,26 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
             </Card>
             <Card>
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-text-main dark:text-text-main-dark">{t('subscription_summary')}</h3>
-                    <button onClick={onAddSubscription} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary transition-colors">
+                    <h3 className="font-bold text-text-main dark:text-text-main-dark">{t('recurring_summary')}</h3>
+                    <button onClick={onAddRecurring} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary transition-colors">
                         <PlusIcon className="w-5 h-5"/>
                     </button>
                 </div>
                 <div className="space-y-4">
-                    {upcomingSubscriptions.length > 0 ? (
-                        upcomingSubscriptions.map(sub => (
-                            <div key={sub.id} className="flex justify-between items-center">
+                    {upcomingRecurring.length > 0 ? (
+                        upcomingRecurring.map(rec => (
+                            <div key={rec.id} className="flex justify-between items-center">
                                 <div>
-                                    <p className="font-semibold text-text-main dark:text-text-main-dark">{sub.name}</p>
-                                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(sub.nextPaymentDate).toLocaleDateString()}</p>
+                                    <p className="font-semibold text-text-main dark:text-text-main-dark">{rec.name}</p>
+                                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(rec.nextPaymentDate).toLocaleDateString()}</p>
                                 </div>
-                                <p className="font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(sub.amount, sub.currency)}</p>
+                                <p className={`font-semibold ${rec.type === 'income' ? 'text-income' : 'text-expense'}`}>
+                                    {formatCurrency(rec.amount, rec.currency)}
+                                </p>
                             </div>
                         ))
                     ) : (
-                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('no_subscriptions')}</p>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('no_recurring')}</p>
                     )}
                 </div>
             </Card>
