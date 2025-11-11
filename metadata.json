@@ -1,5 +1,7 @@
 {
   "name": "Panel de Finanzas Personales",
-  "description": "Una aplicación web para rastrear tus ingresos, gastos y deudas con un panel visual y gráficos.",
-  "requestFramePermissions": []
+  "description": "Una aplicación web para gestionar tus finanzas personales, hacer un seguimiento de los ingresos, los gastos y los presupuestos.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }

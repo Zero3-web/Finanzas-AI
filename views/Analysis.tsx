@@ -86,6 +86,11 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
   
   const hasData = monthlyTransactions.length > 0;
 
+  const getCategoryTranslation = (category: string) => {
+    const key = `category_${category.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`;
+    return t(key);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
@@ -121,7 +126,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} currency={primaryCurrency} />} />
-                <Legend iconSize={10} formatter={(value) => t(`category_${value.toLowerCase()}`)} />
+                <Legend iconSize={10} formatter={(value) => getCategoryTranslation(value)} />
               </PieChart>
             </ResponsiveContainer>
           </Card>

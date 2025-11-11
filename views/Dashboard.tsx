@@ -27,11 +27,11 @@ interface DashboardProps {
   primaryCurrency: string;
 }
 
-const Header: React.FC<{ t: (key: string) => string; notifications: Notification[], userName: string, theme: Theme, toggleTheme: () => void }> = ({ t, notifications, userName, theme, toggleTheme }) => {
+const Header: React.FC<{ t: (key: string, params?: { [key: string]: string | number }) => string; notifications: Notification[], userName: string, theme: Theme, toggleTheme: () => void }> = ({ t, notifications, userName, theme, toggleTheme }) => {
     return (
         <div className="hidden md:flex justify-between items-center mb-6">
             <div>
-                <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('welcome_back')} {userName}!</h1>
+                <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('welcome_back', { userName })}</h1>
             </div>
             <div className="flex items-center space-x-2 md:space-x-4">
                 <Notifications notifications={notifications} t={t} />
@@ -46,9 +46,8 @@ const CreditCardVisual: React.FC<{
     formatCurrency: (amount: number, currency: string) => string, 
     variant: 'purple' | 'dark' | 'cyan',
     isSelected: boolean,
-    onClick: () => void,
-    userName: string,
-}> = ({ account, formatCurrency, variant, isSelected, onClick, userName }) => {
+    onClick: () => void
+}> = ({ account, formatCurrency, variant, isSelected, onClick }) => {
     const getCardClasses = () => {
         switch(variant) {
             case 'purple': return 'bg-primary text-white';
@@ -71,7 +70,6 @@ const CreditCardVisual: React.FC<{
                  <p className="font-semibold text-lg">{formatCurrency(account.balance, account.currency)}</p>
             </div>
             <div>
-                <p className="text-sm opacity-80 uppercase">{userName}</p>
                 <p className="font-mono tracking-wider text-sm">{fakeCardNumber}</p>
             </div>
         </div>
@@ -216,7 +214,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
         <div className="lg:col-span-2 space-y-6">
             <Card className="p-4 dark:bg-surface-dark">
                  <div className="flex justify-between items-center mb-4 px-2">
-                    <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">{t('your_cards')}</h3>
+                    <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">{t('your_accounts')}</h3>
                     <button onClick={onAddAccount} className="flex items-center bg-primary/10 text-primary hover:bg-primary/20 rounded-lg px-3 py-1 text-sm font-semibold transition-colors">
                         <PlusIcon className="w-4 h-4 mr-1"/>
                         {t('add')}
@@ -227,7 +225,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                     {accounts.map((acc, index) => {
                         const cardVariants: Array<'purple' | 'cyan' | 'dark'> = ['purple', 'cyan', 'dark'];
                         const variant = cardVariants[index % cardVariants.length];
-                        return <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={variant} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} userName={userName} />;
+                        return <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={variant} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} />;
                     })}
                 </div>
                  <style>{`.custom-scrollbar::-webkit-scrollbar{height:6px;}.custom-scrollbar::-webkit-scrollbar-track{background:transparent;}.custom-scrollbar::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:10px;}.dark .custom-scrollbar::-webkit-scrollbar-thumb{background:#4b5563;}`}</style>

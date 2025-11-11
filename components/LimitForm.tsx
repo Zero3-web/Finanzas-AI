@@ -17,7 +17,7 @@ const LimitForm: React.FC<LimitFormProps> = ({ onAddLimit, onUpdateLimit, onClos
   const [currency, setCurrency] = useState(primaryCurrency);
   
   const isEditing = !!limitToEdit;
-  const expenseCategories = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Other'];
+  const expenseCategories = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Utilities', 'Other'];
   const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'PEN', 'MXN'];
 
   useEffect(() => {

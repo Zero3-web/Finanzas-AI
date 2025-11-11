@@ -12,27 +12,19 @@ interface MobileHeaderProps {
 }
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({ activeTab, t, notifications, onAvatarClick, userName, avatar }) => {
-    
-    const titleKey = activeTab === 'dashboard' ? 'welcome_back_short' : activeTab;
-    const title = activeTab === 'dashboard' ? `${t(titleKey)} ${userName}!` : t(titleKey);
-
-    return (
-        <div className="md:hidden fixed top-0 left-0 right-0 bg-surface dark:bg-surface-dark h-16 px-4 flex justify-between items-center z-40 border-b border-secondary dark:border-border-dark">
-             <h1 className="text-xl font-bold text-text-main dark:text-text-main-dark capitalize">
-                {title}
-             </h1>
-            <div className="flex items-center space-x-2">
-                <Notifications notifications={notifications} t={t} />
-                <button onClick={onAvatarClick}>
-                    <img 
-                        src={avatar} 
-                        alt="User Avatar"
-                        className="w-10 h-10 rounded-full"
-                    />
-                </button>
-            </div>
-        </div>
-    );
+  return (
+    <header className="md:hidden fixed top-0 left-0 right-0 bg-background/80 dark:bg-background-dark/80 backdrop-blur-sm h-16 px-4 flex justify-between items-center z-40 border-b border-secondary dark:border-border-dark">
+      <div>
+        <h1 className="text-xl font-bold text-text-main dark:text-text-main-dark capitalize">{t(activeTab)}</h1>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Notifications notifications={notifications} t={t} />
+        <button onClick={onAvatarClick}>
+          <img src={avatar} alt={userName} className="w-9 h-9 rounded-full" />
+        </button>
+      </div>
+    </header>
+  );
 };
 
 export default MobileHeader;

@@ -51,16 +51,16 @@ export interface SpendingLimit {
   currency: string;
 }
 
-// FIX: Added missing Goal interface.
 export interface Goal {
   id: string;
   name: string;
   targetAmount: number;
   savedAmount: number;
   deadline: string;
+  currency: string;
 }
 
-export type Tab = 'dashboard' | 'accounts' | 'debts' | 'subscriptions' | 'limits' | 'history' | 'analysis' | 'settings' | 'calendar' | 'export';
+export type Tab = 'dashboard' | 'accounts' | 'debts' | 'subscriptions' | 'limits' | 'history' | 'analysis' | 'settings' | 'calendar' | 'export' | 'goals';
 
 export type Language = 'en' | 'es';
 

@@ -17,16 +17,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
   const [type, setType] = useState<TransactionType>(TransactionType.EXPENSE);
   const [accountId, setAccountId] = useState<string>(accounts[0]?.id || '');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [installments, setInstallments] = useState('');
   
   const isEditing = !!transactionToEdit;
-  const selectedAccount = accounts.find(acc => acc.id === accountId);
-  const isCreditCardPayment = type === TransactionType.EXPENSE && selectedAccount?.type === 'credit';
 
   useEffect(() => {
     if (isEditing) {
         setAmount(String(transactionToEdit.amount));
-        setDescription(transactionToEdit.description.split(' (')[0]); // Remove installment info
+        setDescription(transactionToEdit.description);
         setCategory(transactionToEdit.category);
         setType(transactionToEdit.type);
         setAccountId(transactionToEdit.accountId);
@@ -41,16 +38,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
         alert(t('fillAllFields'));
         return;
     }
-    
-    let finalDescription = description;
-    if(isCreditCardPayment && installments){
-        finalDescription = `${description} (${t('installments_pre')} ${installments} ${t('installments_post')})`;
-    }
 
     const transactionData = {
       accountId,
       amount: parseFloat(amount),
-      description: finalDescription,
+      description,
       category,
       type,
       date,
@@ -65,8 +57,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
     onClose();
   };
   
-  const expenseCategories = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Other'];
-  const incomeCategories = ['Salary', 'Freelance', 'Investments', 'Gifts', 'Other'];
+  const expenseCategories = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Utilities', 'Other'];
+  const incomeCategories = ['Salary', 'Freelance', 'Gifts', 'Investments', 'Other'];
 
   const inputClasses = "mt-1 block w-full bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
 
@@ -93,18 +85,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
         <label htmlFor="description" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('description')}</label>
         <input type="text" id="description" value={description} onChange={(e) => setDescription(e.target.value)} className={inputClasses} placeholder={type === TransactionType.EXPENSE ? t('description_expense_placeholder') : t('description_income_placeholder')} />
       </div>
-      {isCreditCardPayment && (
-         <div>
-            <label htmlFor="installments" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('installments')}</label>
-            <input type="number" id="installments" value={installments} onChange={(e) => setInstallments(e.target.value)} className={inputClasses} placeholder="3" />
-        </div>
-      )}
       <div>
         <label htmlFor="category" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('category')}</label>
         <select id="category" value={category} onChange={(e) => setCategory(e.target.value)} className={inputClasses}>
             <option value="">{t('selectCategory')}</option>
             {(type === TransactionType.EXPENSE ? expenseCategories : incomeCategories).map(cat => (
-                <option key={cat} value={cat}>{t(`category_${cat.toLowerCase()}`)}</option>
+                <option key={cat} value={cat}>{t(`category_${cat.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`)}</option>
             ))}
         </select>
       </div>

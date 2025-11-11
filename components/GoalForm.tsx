@@ -7,13 +7,15 @@ interface GoalFormProps {
   onClose: () => void;
   goalToEdit?: Goal | null;
   t: (key: string) => string;
+  primaryCurrency: string;
 }
 
-const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, goalToEdit, t }) => {
+const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, goalToEdit, t, primaryCurrency }) => {
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
   const [savedAmount, setSavedAmount] = useState('0');
   const [deadline, setDeadline] = useState(new Date().toISOString().split('T')[0]);
+  const [currency, setCurrency] = useState(primaryCurrency);
 
   const isEditing = !!goalToEdit;
 
@@ -23,6 +25,7 @@ const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, g
       setTargetAmount(String(goalToEdit.targetAmount));
       setSavedAmount(String(goalToEdit.savedAmount));
       setDeadline(new Date(goalToEdit.deadline).toISOString().split('T')[0]);
+      setCurrency(goalToEdit.currency);
     }
   }, [goalToEdit, isEditing]);
 
@@ -38,6 +41,7 @@ const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, g
       targetAmount: parseFloat(targetAmount),
       savedAmount: parseFloat(savedAmount),
       deadline,
+      currency,
     };
 
     if (isEditing) {
@@ -49,6 +53,7 @@ const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, g
     onClose();
   };
   
+  const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'PEN', 'MXN'];
   const inputClasses = "mt-1 block w-full bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
 
   return (
@@ -66,6 +71,12 @@ const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, g
             <label htmlFor="savedAmount" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('saved_amount')}</label>
             <input type="number" id="savedAmount" value={savedAmount} onChange={(e) => setSavedAmount(e.target.value)} className={inputClasses} placeholder="0" />
         </div>
+      </div>
+       <div>
+        <label htmlFor="currency" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('item_currency')}</label>
+        <select id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClasses}>
+            {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
       </div>
       <div>
         <label htmlFor="deadline" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('deadline')}</label>

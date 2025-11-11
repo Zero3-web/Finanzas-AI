@@ -79,7 +79,8 @@ const LimitCard: React.FC<{
                 </div>
                 <div className="flex justify-between text-xs text-text-secondary dark:text-gray-500 mt-1">
                     <span>{formatCurrency(spentAmount, limit.currency)} {t('spent')}</span>
-                    <span>{formatCurrency(limit.limitAmount, limit.currency)} {t('limit')}</span>
+                    {/* FIX: Use the renamed 'limit_suffix' key to avoid translation key conflicts. */}
+                    <span>{formatCurrency(limit.limitAmount, limit.currency)} {t('limit_suffix')}</span>
                 </div>
             </div>
              <div className="text-sm">

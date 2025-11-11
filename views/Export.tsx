@@ -15,7 +15,6 @@ interface ExportProps {
 
 const Export: React.FC<ExportProps> = ({ transactions, accounts, formatCurrency, t, userName, colorTheme }) => {
 
-  // FIX: Wrap accountMap creation in useMemo to fix type inference issues and improve performance.
   const accountMap = useMemo(() => new Map(accounts.map(acc => [acc.id, acc])), [accounts]);
   const currentPalette = themes[colorTheme];
 
@@ -155,7 +154,7 @@ const Export: React.FC<ExportProps> = ({ transactions, accounts, formatCurrency,
                 <tr key={tr.id}>
                   <td>{new Date(tr.date).toLocaleDateString()}</td>
                   <td>{tr.description}</td>
-                  <td>{t(`category_${tr.category.toLowerCase()}`)}</td>
+                  <td>{t(`category_${tr.category.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`)}</td>
                   <td>{account?.name || 'N/A'}</td>
                   <td className={amount >= 0 ? 'income' : 'expense'}>
                     {formatCurrency(amount, account?.currency || 'USD')}

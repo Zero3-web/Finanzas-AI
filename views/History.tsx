@@ -62,7 +62,8 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
   };
 
   const getCategoryTranslation = (category: string) => {
-    return t(`category_${category.toLowerCase()}`);
+    const key = `category_${category.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`;
+    return t(key);
   }
 
   return (
