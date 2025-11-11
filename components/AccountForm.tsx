@@ -8,12 +8,14 @@ interface AccountFormProps {
   accountToEdit?: Account | null;
   t: (key: string) => string;
   onSuccess?: () => void;
+  primaryCurrency: string;
 }
 
-const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount, onClose, accountToEdit, t, onSuccess }) => {
+const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount, onClose, accountToEdit, t, onSuccess, primaryCurrency }) => {
   const [name, setName] = useState('');
   const [balance, setBalance] = useState('');
   const [type, setType] = useState<AccountType>('checking');
+  const [currency, setCurrency] = useState(primaryCurrency);
   const [creditLimit, setCreditLimit] = useState('');
   const [paymentDueDate, setPaymentDueDate] = useState('');
   
@@ -24,6 +26,7 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount
         setName(accountToEdit.name);
         setBalance(String(accountToEdit.balance));
         setType(accountToEdit.type);
+        setCurrency(accountToEdit.currency);
         setCreditLimit(String(accountToEdit.creditLimit || ''));
         setPaymentDueDate(String(accountToEdit.paymentDueDate || ''));
     }
@@ -40,6 +43,7 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount
       name,
       balance: parseFloat(balance),
       type,
+      currency,
       creditLimit: type === 'credit' ? parseFloat(creditLimit) : undefined,
       paymentDueDate: type === 'credit' ? paymentDueDate : undefined,
     };
@@ -53,7 +57,8 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount
     onSuccess?.();
     onClose();
   };
-
+  
+  const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'PEN', 'MXN'];
   const inputClasses = "mt-1 block w-full bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
 
   return (
@@ -70,9 +75,17 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount
           <option value="credit">{t('credit')}</option>
         </select>
       </div>
-      <div>
-        <label htmlFor="balance" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{isEditing ? t('current_balance') : t('initial_balance')}</label>
-        <input type="number" id="balance" value={balance} onChange={(e) => setBalance(e.target.value)} className={inputClasses} placeholder="0.00" />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+            <label htmlFor="balance" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{isEditing ? t('current_balance') : t('initial_balance')}</label>
+            <input type="number" id="balance" value={balance} onChange={(e) => setBalance(e.target.value)} className={inputClasses} placeholder="0.00" />
+        </div>
+        <div>
+            <label htmlFor="currency" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('item_currency')}</label>
+            <select id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClasses}>
+                {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+        </div>
       </div>
 
       {type === 'credit' && (

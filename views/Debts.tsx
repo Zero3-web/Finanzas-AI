@@ -5,14 +5,14 @@ import { PlusIcon, TrashIcon, PencilIcon } from '../components/icons';
 
 interface DebtsProps {
   debts: Debt[];
-  formatCurrency: (amount: number) => string;
+  formatCurrency: (amount: number, currency: string) => string;
   onAddDebt: () => void;
   onEditDebt: (debt: Debt) => void;
   onRemoveDebt: (debtId: string) => void;
   t: (key: string) => string;
 }
 
-const DebtCard: React.FC<{ debt: Debt; formatCurrency: (amount: number) => string; onEdit: (debt: Debt) => void; onRemove: (id: string) => void; t: (key: string) => string }> = ({ debt, formatCurrency, onEdit, onRemove, t }) => {
+const DebtCard: React.FC<{ debt: Debt; formatCurrency: (amount: number, currency: string) => string; onEdit: (debt: Debt) => void; onRemove: (id: string) => void; t: (key: string) => string }> = ({ debt, formatCurrency, onEdit, onRemove, t }) => {
     const remainingAmount = debt.totalAmount - debt.amountPaid;
     const progress = (debt.amountPaid / debt.totalAmount) * 100;
 
@@ -35,14 +35,14 @@ const DebtCard: React.FC<{ debt: Debt; formatCurrency: (amount: number) => strin
             <div className="my-4">
                 <div className="flex justify-between text-sm mb-1">
                     <span className="font-semibold text-text-main dark:text-text-main-dark">{t('remaining')}</span>
-                    <span className="font-bold text-expense">{formatCurrency(remainingAmount)}</span>
+                    <span className="font-bold text-expense">{formatCurrency(remainingAmount, debt.currency)}</span>
                 </div>
                 <div className="w-full bg-secondary dark:bg-secondary-dark rounded-full h-2.5">
                     <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
                 </div>
                 <div className="flex justify-between text-xs text-text-secondary dark:text-gray-500 mt-1">
-                    <span>{formatCurrency(debt.amountPaid)} {t('paid')}</span>
-                    <span>{formatCurrency(debt.totalAmount)} {t('total')}</span>
+                    <span>{formatCurrency(debt.amountPaid, debt.currency)} {t('paid')}</span>
+                    <span>{formatCurrency(debt.totalAmount, debt.currency)} {t('total')}</span>
                 </div>
             </div>
             <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
@@ -53,7 +53,8 @@ const DebtCard: React.FC<{ debt: Debt; formatCurrency: (amount: number) => strin
 };
 
 const Debts: React.FC<DebtsProps> = ({ debts, formatCurrency, onAddDebt, onEditDebt, onRemoveDebt, t }) => {
-  const totalRemainingDebt = debts.reduce((sum, d) => sum + (d.totalAmount - d.amountPaid), 0);
+  // Note: Aggregating debts of different currencies is complex. This view shows them separately.
+  // A total summary would require currency conversion.
   
   return (
     <div className="space-y-6">
@@ -64,10 +65,7 @@ const Debts: React.FC<DebtsProps> = ({ debts, formatCurrency, onAddDebt, onEditD
           {t('addDebt')}
         </button>
       </div>
-      <Card>
-        <h2 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark">{t('total_remaining_debt')}</h2>
-        <p className="text-3xl font-bold text-expense">{formatCurrency(totalRemainingDebt)}</p>
-      </Card>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {debts.map(debt => (
             <DebtCard key={debt.id} debt={debt} formatCurrency={formatCurrency} onEdit={onEditDebt} onRemove={onRemoveDebt} t={t} />

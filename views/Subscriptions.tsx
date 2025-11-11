@@ -5,7 +5,7 @@ import { PlusIcon, TrashIcon, PencilIcon } from '../components/icons';
 
 interface SubscriptionsProps {
   subscriptions: Subscription[];
-  formatCurrency: (amount: number) => string;
+  formatCurrency: (amount: number, currency: string) => string;
   onAddSubscription: () => void;
   onEditSubscription: (subscription: Subscription) => void;
   onRemoveSubscription: (subscriptionId: string) => void;
@@ -14,7 +14,7 @@ interface SubscriptionsProps {
 
 const SubscriptionCard: React.FC<{ 
     subscription: Subscription; 
-    formatCurrency: (amount: number) => string; 
+    formatCurrency: (amount: number, currency: string) => string; 
     onEdit: (subscription: Subscription) => void;
     onRemove: (id: string) => void;
     t: (key: string) => string;
@@ -35,7 +35,7 @@ const SubscriptionCard: React.FC<{
       <div>
         <div className="flex justify-between items-start mb-2">
             <div>
-                <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">{subscription.name}</h3>
+                <h3 className="text-xl font-bold text-text-main dark:text-brand-white">{subscription.name}</h3>
                 <p className="text-xs text-text-secondary dark:text-gray-400 capitalize">{t(`category_${subscription.category.toLowerCase()}`)}</p>
             </div>
             <div className="flex space-x-2">
@@ -47,7 +47,7 @@ const SubscriptionCard: React.FC<{
                 </button>
             </div>
         </div>
-        <p className="text-2xl font-semibold text-text-main dark:text-gray-200">{formatCurrency(subscription.amount)}</p>
+        <p className="text-2xl font-semibold text-text-main dark:text-gray-200">{formatCurrency(subscription.amount, subscription.currency)}</p>
       </div>
 
       <div className="mt-4 pt-4 border-t border-secondary dark:border-gray-700 text-sm">
@@ -79,7 +79,7 @@ const Subscriptions: React.FC<SubscriptionsProps> = ({ subscriptions, formatCurr
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('subscriptions')}</h1>
+        <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('subscriptions')}</h1>
         <button onClick={onAddSubscription} className="flex items-center bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors">
           <PlusIcon className="w-5 h-5 mr-2" />
           {t('addSubscription')}

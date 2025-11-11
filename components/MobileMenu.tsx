@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tab } from '../types';
-import { ScaleIcon, CogIcon, CollectionIcon, XIcon, CardIcon, CashIcon, SparklesIcon } from './icons';
+import { ScaleIcon, CogIcon, CollectionIcon, XIcon, CardIcon } from './icons';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -16,8 +16,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, setActiveTab, 
 
   const menuItems: { tab: Tab; labelKey: string; icon: React.FC<{ className?: string }> }[] = [
     { tab: 'accounts', labelKey: 'accounts', icon: CardIcon },
-    { tab: 'budgets', labelKey: 'budgets', icon: CashIcon },
-    { tab: 'goals', labelKey: 'goals', icon: SparklesIcon },
     { tab: 'debts', labelKey: 'debts', icon: ScaleIcon },
     { tab: 'subscriptions', labelKey: 'subscriptions', icon: CollectionIcon },
     { tab: 'settings', labelKey: 'settings', icon: CogIcon },

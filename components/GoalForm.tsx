@@ -12,8 +12,8 @@ interface GoalFormProps {
 const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, goalToEdit, t }) => {
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
-  const [currentAmount, setCurrentAmount] = useState('0');
-  const [deadline, setDeadline] = useState('');
+  const [savedAmount, setSavedAmount] = useState('0');
+  const [deadline, setDeadline] = useState(new Date().toISOString().split('T')[0]);
 
   const isEditing = !!goalToEdit;
 
@@ -21,15 +21,14 @@ const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, g
     if (isEditing) {
       setName(goalToEdit.name);
       setTargetAmount(String(goalToEdit.targetAmount));
-      setCurrentAmount(String(goalToEdit.currentAmount));
-      setDeadline(goalToEdit.deadline ? new Date(goalToEdit.deadline).toISOString().split('T')[0] : '');
+      setSavedAmount(String(goalToEdit.savedAmount));
+      setDeadline(new Date(goalToEdit.deadline).toISOString().split('T')[0]);
     }
   }, [goalToEdit, isEditing]);
 
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !targetAmount) {
+    if (!name || !targetAmount || !deadline) {
       alert(t('fillAllFields'));
       return;
     }
@@ -37,12 +36,12 @@ const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, g
     const goalData = {
       name,
       targetAmount: parseFloat(targetAmount),
-      currentAmount: parseFloat(currentAmount),
-      deadline: deadline || undefined,
+      savedAmount: parseFloat(savedAmount),
+      deadline,
     };
 
     if (isEditing) {
-      onUpdateGoal({ ...goalData, id: goalToEdit!.id });
+      onUpdateGoal({ ...goalData, id: goalToEdit.id });
     } else {
       onAddGoal(goalData);
     }
@@ -64,12 +63,12 @@ const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, g
             <input type="number" id="targetAmount" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} className={inputClasses} placeholder="5000" />
         </div>
         <div>
-            <label htmlFor="currentAmount" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('current_amount')}</label>
-            <input type="number" id="currentAmount" value={currentAmount} onChange={(e) => setCurrentAmount(e.target.value)} className={inputClasses} placeholder="0" />
+            <label htmlFor="savedAmount" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('saved_amount')}</label>
+            <input type="number" id="savedAmount" value={savedAmount} onChange={(e) => setSavedAmount(e.target.value)} className={inputClasses} placeholder="0" />
         </div>
       </div>
       <div>
-        <label htmlFor="deadline" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('deadline')} ({t('optional')})</label>
+        <label htmlFor="deadline" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('deadline')}</label>
         <input type="date" id="deadline" value={deadline} onChange={(e) => setDeadline(e.target.value)} className={inputClasses} />
       </div>
       <div className="flex justify-end pt-4">

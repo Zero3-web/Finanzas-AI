@@ -7,7 +7,7 @@ interface CalendarProps {
   accounts: Account[];
   debts: Debt[];
   subscriptions: Subscription[];
-  formatCurrency: (amount: number) => string;
+  formatCurrency: (amount: number, currency: string) => string;
   t: (key: string) => string;
 }
 
@@ -30,6 +30,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
         date: key,
         description: `${t('paymentFor')} ${debt.name}`,
         amount: debt.totalAmount - debt.amountPaid,
+        currency: debt.currency,
         type: 'debt',
       });
     });
@@ -49,6 +50,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
           date: key,
           description: `${t('paymentFor')} ${acc.name}`,
           amount: acc.balance,
+          currency: acc.currency,
           type: 'credit_card',
         });
       });
@@ -66,6 +68,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
         date: key,
         description: sub.name,
         amount: sub.amount,
+        currency: sub.currency,
         type: 'subscription',
       });
     });
@@ -168,7 +171,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
                                 <div className={`w-2 h-10 rounded-full mr-4 ${styling.bar}`}></div>
                                 <div>
                                     <p className="font-semibold text-text-main dark:text-text-main-dark">{event.description}</p>
-                                    <p className={`font-medium ${styling.text}`}>{formatCurrency(event.amount)}</p>
+                                    <p className={`font-medium ${styling.text}`}>{formatCurrency(event.amount, event.currency)}</p>
                                 </div>
                             </div>
                         )

@@ -16,14 +16,15 @@ interface DashboardProps {
   theme: Theme;
   toggleTheme: () => void;
   colorTheme: ColorTheme;
-  formatCurrency: (amount: number) => string;
-  t: (key: string) => string;
+  formatCurrency: (amount: number, currency: string) => string;
+  t: (key: string, params?: { [key: string]: string | number }) => string;
   notifications: Notification[];
   userName: string;
   avatar: string;
   onAddAccount: () => void;
   onAddDebt: () => void;
   onAddSubscription: () => void;
+  primaryCurrency: string;
 }
 
 const Header: React.FC<{ t: (key: string) => string; notifications: Notification[], userName: string, theme: Theme, toggleTheme: () => void }> = ({ t, notifications, userName, theme, toggleTheme }) => {
@@ -42,23 +43,22 @@ const Header: React.FC<{ t: (key: string) => string; notifications: Notification
 
 const CreditCardVisual: React.FC<{ 
     account: Account, 
-    formatCurrency: (amount: number) => string, 
-    variant: 'purple' | 'neutral' | 'cyan',
+    formatCurrency: (amount: number, currency: string) => string, 
+    variant: 'purple' | 'dark' | 'cyan',
     isSelected: boolean,
     onClick: () => void,
     userName: string,
-    theme: Theme,
-}> = ({ account, formatCurrency, variant, isSelected, onClick, userName, theme }) => {
+}> = ({ account, formatCurrency, variant, isSelected, onClick, userName }) => {
     const getCardClasses = () => {
         switch(variant) {
             case 'purple': return 'bg-primary text-white';
             case 'cyan': return 'bg-accent text-text-main';
-            case 'neutral': return 'bg-gray-700 dark:bg-secondary-dark text-white';
+            case 'dark': return 'bg-surface-dark text-white';
             default: return 'bg-primary text-white';
         }
     }
     const fakeCardNumber = `**** **** **** ${account.id.slice(-4)}`;
-    const selectionClasses = isSelected ? (theme === 'dark' ? 'border-white' : 'border-accent') : 'border-transparent';
+    const selectionClasses = isSelected ? 'border-primary' : 'border-transparent';
 
     return (
         <div 
@@ -68,7 +68,7 @@ const CreditCardVisual: React.FC<{
             <div>
                 <span className="font-semibold">{account.name}</span>
                  <p className="text-xs opacity-80">Current Balance</p>
-                 <p className="font-semibold text-lg">{formatCurrency(account.balance)}</p>
+                 <p className="font-semibold text-lg">{formatCurrency(account.balance, account.currency)}</p>
             </div>
             <div>
                 <p className="text-sm opacity-80 uppercase">{userName}</p>
@@ -78,8 +78,8 @@ const CreditCardVisual: React.FC<{
     );
 };
 
-const AllAccountsCard: React.FC<{ isSelected: boolean; onClick: () => void; t: (key: string) => string; theme: Theme }> = ({ isSelected, onClick, t, theme }) => {
-    const selectionClasses = isSelected ? (theme === 'dark' ? 'border-white' : 'border-accent') : 'border-transparent';
+const AllAccountsCard: React.FC<{ isSelected: boolean; onClick: () => void; t: (key: string) => string }> = ({ isSelected, onClick, t }) => {
+    const selectionClasses = isSelected ? 'border-primary' : 'border-transparent';
     return (
         <div
             className={`w-36 h-36 rounded-xl p-4 flex flex-col justify-center items-center shrink-0 cursor-pointer transition-all bg-surface dark:bg-surface-dark border-2 ${selectionClasses}`}
@@ -92,7 +92,7 @@ const AllAccountsCard: React.FC<{ isSelected: boolean; onClick: () => void; t: (
 };
 
 
-const RecentActivityItem: React.FC<{ transaction: Transaction, formatCurrency: (amount: number) => string }> = ({ transaction, formatCurrency }) => {
+const RecentActivityItem: React.FC<{ transaction: Transaction, account: Account | undefined, formatCurrency: (amount: number, currency: string) => string }> = ({ transaction, account, formatCurrency }) => {
     const isIncome = transaction.type === TransactionType.INCOME;
     const iconKey = transaction.description.split(' ')[0].toLowerCase();
     
@@ -116,14 +116,15 @@ const RecentActivityItem: React.FC<{ transaction: Transaction, formatCurrency: (
                 </div>
             </div>
             <p className={`font-semibold ${isIncome ? 'text-income' : 'text-expense'}`}>
-                {isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
+                {isIncome ? '+' : '-'}{formatCurrency(transaction.amount, account?.currency || 'USD')}
             </p>
         </div>
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, subscriptions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddSubscription }) => {
+const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, subscriptions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddSubscription, primaryCurrency }) => {
     const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+    const accountMap = useMemo(() => new Map(accounts.map(acc => [acc.id, acc])), [accounts]);
 
     const currentPalette = themes[colorTheme];
     const toHex = (rgb: string) => '#' + rgb.split(',').map(c => parseInt(c).toString(16).padStart(2, '0')).join('');
@@ -145,10 +146,20 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
     const recentActivity = useMemo(() => [...displayedTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5), [displayedTransactions]);
     
     const { totalIncome, totalExpenses, profit } = useMemo(() => {
-        const income = displayedTransactions.filter(t => t.type === TransactionType.INCOME).reduce((sum, t) => sum + t.amount, 0);
-        const expenses = displayedTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
+        const accountCurrencyMap = new Map(accounts.map(acc => [acc.id, acc.currency]));
+
+        const transactionsInPrimaryCurrency = displayedTransactions.filter(t => accountCurrencyMap.get(t.accountId) === primaryCurrency);
+
+        const income = transactionsInPrimaryCurrency
+            .filter(t => t.type === TransactionType.INCOME)
+            .reduce((sum, t) => sum + t.amount, 0);
+        
+        const expenses = transactionsInPrimaryCurrency
+            .filter(t => t.type === TransactionType.EXPENSE)
+            .reduce((sum, t) => sum + t.amount, 0);
+
         return { totalIncome: income, totalExpenses: expenses, profit: income - expenses };
-    }, [displayedTransactions]);
+    }, [displayedTransactions, primaryCurrency, accounts]);
     
     const upcomingSubscriptions = useMemo(() => {
         const today = new Date();
@@ -189,7 +200,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                 <div className="flex justify-between items-start">
                     <div>
                         <p className="text-text-secondary dark:text-text-secondary-dark">{account.name}</p>
-                        <p className="text-3xl font-bold text-text-main dark:text-text-main-dark">{formatCurrency(account.balance)}</p>
+                        <p className="text-3xl font-bold text-text-main dark:text-text-main-dark">{formatCurrency(account.balance, account.currency)}</p>
                     </div>
                     <div className="flex items-center text-sm text-income font-semibold"><ArrowUpIcon className="w-4 h-4 mr-1"/> {index % 2 === 0 ? '3.4%' : '2.0%'}</div>
                 </div>
@@ -212,11 +223,11 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                     </button>
                 </div>
                 <div className="flex items-center space-x-4 overflow-x-auto pb-4 custom-scrollbar">
-                    <AllAccountsCard isSelected={selectedAccountId === null} onClick={() => setSelectedAccountId(null)} t={t} theme={theme} />
+                    <AllAccountsCard isSelected={selectedAccountId === null} onClick={() => setSelectedAccountId(null)} t={t} />
                     {accounts.map((acc, index) => {
-                        const cardVariants: Array<'purple' | 'cyan' | 'neutral'> = ['purple', 'cyan', 'neutral'];
+                        const cardVariants: Array<'purple' | 'cyan' | 'dark'> = ['purple', 'cyan', 'dark'];
                         const variant = cardVariants[index % cardVariants.length];
-                        return <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={variant} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} userName={userName} theme={theme} />;
+                        return <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={variant} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} userName={userName} />;
                     })}
                 </div>
                  <style>{`.custom-scrollbar::-webkit-scrollbar{height:6px;}.custom-scrollbar::-webkit-scrollbar-track{background:transparent;}.custom-scrollbar::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:10px;}.dark .custom-scrollbar::-webkit-scrollbar-thumb{background:#4b5563;}`}</style>
@@ -242,7 +253,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                 </div>
                 <div className="space-y-4">
                     {recentActivity.map(transaction => (
-                        <RecentActivityItem key={transaction.id} transaction={transaction} formatCurrency={formatCurrency} />
+                        <RecentActivityItem key={transaction.id} transaction={transaction} account={accountMap.get(transaction.accountId)} formatCurrency={formatCurrency} />
                     ))}
                     {recentActivity.length === 0 && <p className="text-sm text-center py-4 text-text-secondary dark:text-text-secondary-dark">{t('noTransactionsFound')}</p>}
                 </div>
@@ -262,7 +273,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                                     <p className="font-semibold text-text-main dark:text-text-main-dark">{debt.name}</p>
                                     <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(debt.nextPaymentDate).toLocaleDateString()}</p>
                                 </div>
-                                <p className="font-semibold text-expense">{formatCurrency(debt.totalAmount - debt.amountPaid)}</p>
+                                <p className="font-semibold text-expense">{formatCurrency(debt.totalAmount - debt.amountPaid, debt.currency)}</p>
                             </div>
                         ))
                     ) : (
@@ -285,7 +296,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                                     <p className="font-semibold text-text-main dark:text-text-main-dark">{sub.name}</p>
                                     <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(sub.nextPaymentDate).toLocaleDateString()}</p>
                                 </div>
-                                <p className="font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(sub.amount)}</p>
+                                <p className="font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(sub.amount, sub.currency)}</p>
                             </div>
                         ))
                     ) : (
@@ -298,16 +309,16 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
-                <p className="text-text-secondary dark:text-text-secondary-dark">{t('total_income')} {selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</p>
-                <p className="text-2xl font-bold text-income">{formatCurrency(totalIncome)}</p>
+                <p className="text-text-secondary dark:text-text-secondary-dark">{t('total_income')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                <p className="text-2xl font-bold text-income">{formatCurrency(totalIncome, primaryCurrency)}</p>
             </Card>
             <Card>
-                <p className="text-text-secondary dark:text-text-secondary-dark">{t('expense')} {selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</p>
-                <p className="text-2xl font-bold text-expense">{formatCurrency(totalExpenses)}</p>
+                <p className="text-text-secondary dark:text-text-secondary-dark">{t('expense')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                <p className="text-2xl font-bold text-expense">{formatCurrency(totalExpenses, primaryCurrency)}</p>
             </Card>
             <Card>
-                <p className="text-text-secondary dark:text-text-secondary-dark">{t('net_profit')} {selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</p>
-                <p className={`text-2xl font-bold ${profit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(profit)}</p>
+                <p className="text-text-secondary dark:text-text-secondary-dark">{t('net_profit')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                <p className={`text-2xl font-bold ${profit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(profit, primaryCurrency)}</p>
             </Card>
       </div>
 

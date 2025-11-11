@@ -5,8 +5,7 @@ import { PlusIcon, TrashIcon, PencilIcon } from '../components/icons';
 
 interface AccountsProps {
   accounts: Account[];
-  transactions: Transaction[];
-  formatCurrency: (amount: number) => string;
+  formatCurrency: (amount: number, currency: string) => string;
   onAddAccount: () => void;
   onEditAccount: (account: Account) => void;
   onRemoveAccount: (accountId: string) => void;
@@ -15,7 +14,7 @@ interface AccountsProps {
 
 const AccountCard: React.FC<{ 
     account: Account; 
-    formatCurrency: (amount: number) => string; 
+    formatCurrency: (amount: number, currency: string) => string; 
     onEdit: (account: Account) => void;
     onRemove: (id: string) => void;
     t: (key: string) => string;
@@ -38,14 +37,14 @@ const AccountCard: React.FC<{
                 </button>
             </div>
         </div>
-        <p className="text-2xl font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(account.balance)}</p>
+        <p className="text-2xl font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(account.balance, account.currency)}</p>
       </div>
 
       {account.type === 'credit' && (
         <div className="mt-4 pt-4 border-t border-secondary dark:border-border-dark text-sm">
             <div className="flex justify-between">
                 <span className="text-text-secondary dark:text-text-secondary-dark">{t('credit_limit')}</span>
-                <span className="font-medium text-text-main dark:text-text-main-dark">{formatCurrency(account.creditLimit || 0)}</span>
+                <span className="font-medium text-text-main dark:text-text-main-dark">{formatCurrency(account.creditLimit || 0, account.currency)}</span>
             </div>
             <div className="flex justify-between">
                 <span className="text-text-secondary dark:text-text-secondary-dark">{t('payment_due_date')}</span>

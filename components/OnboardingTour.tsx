@@ -21,13 +21,13 @@ interface OnboardingTourProps {
   setAvatar: (avatarUrl: string) => void;
 }
 
-const AnimatedText: React.FC<{ text: string }> = ({ text }) => {
+const AnimatedWelcomeText: React.FC<{ text: string }> = ({ text }) => {
     return (
         <p className="text-text-secondary dark:text-text-secondary-dark">
             {text.split('').map((char, index) => (
-                <span 
-                    key={index} 
-                    className="animate-char" 
+                <span
+                    key={index}
+                    className="animate-fade-in-up"
                     style={{ animationDelay: `${index * 0.03}s` }}
                 >
                     {char === ' ' ? '\u00A0' : char}
@@ -72,8 +72,8 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
       case 1: // Welcome
         return (
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2">{t('tour_welcome_title')}</h2>
-            <AnimatedText text={t('tour_welcome_desc')} />
+            <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2 animate-fade-in">{t('tour_welcome_title')}</h2>
+            <AnimatedWelcomeText text={t('tour_welcome_desc')} />
           </div>
         );
       case 2: // Regional Settings
@@ -157,6 +157,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
                         onClose={() => {}} // No close button in tour
                         t={t}
                         onSuccess={handleAccountAdded}
+                        primaryCurrency={currency}
                     />
                 </div>
             </div>
@@ -236,20 +237,28 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
         }
         .animate-modal-in { animation: modal-in 0.2s ease-out forwards; }
 
-        @keyframes fadeInFromBottom {
-            0% {
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.6s ease-out forwards;
+        }
+
+        @keyframes fade-in-up {
+            from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(1em);
             }
-            100% {
+            to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        .animate-char {
+        .animate-fade-in-up {
             display: inline-block;
             opacity: 0;
-            animation: fadeInFromBottom 0.5s ease forwards;
+            animation: fade-in-up 0.3s ease-out forwards;
         }
       `}</style>
     </div>

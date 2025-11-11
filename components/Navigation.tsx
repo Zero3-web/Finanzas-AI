@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tab } from '../types';
-import { HomeIcon, CardIcon, ScaleIcon, DocumentTextIcon, CogIcon, ChevronDoubleLeftIcon, ChartPieIcon, CalendarIcon, CollectionIcon, CashIcon, SparklesIcon } from './icons';
+import { HomeIcon, CardIcon, ScaleIcon, DocumentTextIcon, CogIcon, ChevronDoubleLeftIcon, ChartPieIcon, CalendarIcon, CollectionIcon, ShieldCheckIcon } from './icons';
 import Notifications from './Notifications';
 
 interface NavigationProps {
@@ -18,10 +18,9 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab, isColl
   const navItems: { tab: Tab; labelKey: string; icon: React.FC<{ className?: string }> }[] = [
     { tab: 'dashboard', labelKey: 'dashboard', icon: HomeIcon },
     { tab: 'accounts', labelKey: 'accounts', icon: CardIcon },
-    { tab: 'budgets', labelKey: 'budgets', icon: CashIcon },
-    { tab: 'goals', labelKey: 'goals', icon: SparklesIcon },
     { tab: 'debts', labelKey: 'debts', icon: ScaleIcon },
     { tab: 'subscriptions', labelKey: 'subscriptions', icon: CollectionIcon },
+    { tab: 'limits', labelKey: 'limits', icon: ShieldCheckIcon },
     { tab: 'history', labelKey: 'history', icon: DocumentTextIcon },
     { tab: 'analysis', labelKey: 'analysis', icon: ChartPieIcon },
     { tab: 'calendar', labelKey: 'calendar', icon: CalendarIcon },

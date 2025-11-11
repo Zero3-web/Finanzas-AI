@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
-import { Transaction, TransactionType, ColorTheme } from '../types';
+import { Transaction, TransactionType, ColorTheme, Account } from '../types';
 import Card from '../components/Card';
 import ViewSwitcher from '../components/ViewSwitcher';
 import { themes } from '../hooks/useColorTheme';
@@ -8,17 +8,23 @@ import { ArrowUpIcon, ChartPieIcon } from '../components/icons';
 
 interface AnalysisProps {
     transactions: Transaction[];
-    formatCurrency: (amount: number) => string;
+    accounts: Account[];
+    formatCurrency: (amount: number, currency: string) => string;
     t: (key: string) => string;
     colorTheme: ColorTheme;
+    primaryCurrency: string;
 }
 
 type AnalysisType = 'expense' | 'income';
 
 const toHex = (rgb: string) => '#' + rgb.split(',').map(c => parseInt(c).toString(16).padStart(2, '0')).join('');
 
-const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, colorTheme }) => {
+const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurrency, t, colorTheme, primaryCurrency }) => {
     const [analysisType, setAnalysisType] = useState<AnalysisType>('expense');
+    
+    const availableCurrencies = useMemo(() => [...new Set(accounts.map(a => a.currency))], [accounts]);
+    const [selectedCurrency, setSelectedCurrency] = useState(availableCurrencies.includes(primaryCurrency) ? primaryCurrency : availableCurrencies[0] || 'USD');
+    
 
     const currentPalette = themes[colorTheme];
     const primaryColor = toHex(currentPalette['--color-primary']);
@@ -27,9 +33,10 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
 
     const dataByCategory = useMemo(() => {
         const type = analysisType === 'expense' ? TransactionType.EXPENSE : TransactionType.INCOME;
-        const filteredTransactions = transactions.filter(t => t.type === type);
+        const accountCurrencyMap = new Map(accounts.map(acc => [acc.id, acc.currency]));
+
+        const filteredTransactions = transactions.filter(t => t.type === type && accountCurrencyMap.get(t.accountId) === selectedCurrency);
         
-        // FIX: Replaced reduce with a for...of loop for improved type inference and clarity.
         const categoryMap: Record<string, number> = {};
         for (const t of filteredTransactions) {
             categoryMap[t.category] = (categoryMap[t.category] || 0) + t.amount;
@@ -38,7 +45,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
         return Object.entries(categoryMap)
             .map(([name, value]) => ({ name, value }))
             .sort((a, b) => b.value - a.value);
-    }, [transactions, analysisType]);
+    }, [transactions, analysisType, selectedCurrency, accounts]);
 
     const totalAmount = useMemo(() => {
         return dataByCategory.reduce((sum, cat) => sum + cat.value, 0);
@@ -47,11 +54,17 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
     const title = analysisType === 'expense' ? t('spendingAnalysis') : t('incomeAnalysis');
     const totalTitle = analysisType === 'expense' ? t('totalSpent') : t('totalEarned');
     const noDataMessage = analysisType === 'expense' ? t('noExpenseData') : t('noIncomeData');
+    const inputClasses = "bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('analysis')}</h1>
+                {availableCurrencies.length > 0 && (
+                     <select value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value)} className={inputClasses}>
+                        {availableCurrencies.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                )}
             </div>
 
             {/* Mobile View Switcher */}
@@ -93,7 +106,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
             </div>
 
             <Card>
-                <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{title}</h2>
+                <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{title} ({selectedCurrency})</h2>
                 {dataByCategory.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                         <div>
@@ -114,7 +127,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                                    <Tooltip formatter={(value: number) => formatCurrency(value, selectedCurrency)} />
                                     <Legend />
                                 </PieChart>
                             </ResponsiveContainer>
@@ -131,7 +144,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
                                             <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
                                             <span className="font-medium text-text-main dark:text-text-main-dark">{category.name}</span>
                                         </div>
-                                        <span className="font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(category.value)}</span>
+                                        <span className="font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(category.value, selectedCurrency)}</span>
                                     </div>
                                     <div className="w-full bg-secondary dark:bg-secondary-dark rounded-full h-2">
                                         <div

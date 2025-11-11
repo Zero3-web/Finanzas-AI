@@ -20,6 +20,7 @@ export interface Account {
   name: string;
   balance: number;
   type: AccountType;
+  currency: string;
   creditLimit?: number;
   paymentDueDate?: string;
 }
@@ -31,6 +32,7 @@ export interface Debt {
   amountPaid: number;
   interestRate: number;
   nextPaymentDate: string;
+  currency: string;
 }
 
 export interface Subscription {
@@ -39,9 +41,27 @@ export interface Subscription {
   amount: number;
   paymentDay: string; // Day of the month, e.g., "15"
   category: string;
+  currency: string;
 }
 
-export type Tab = 'dashboard' | 'accounts' | 'budgets' | 'goals' | 'debts' | 'subscriptions' | 'history' | 'analysis' | 'settings' | 'calendar';
+export interface SpendingLimit {
+  id: string;
+  category: string;
+  limitAmount: number;
+  currency: string;
+}
+
+// FIX: Add the missing `Goal` interface.
+export interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  savedAmount: number;
+  deadline: string;
+}
+
+
+export type Tab = 'dashboard' | 'accounts' | 'debts' | 'subscriptions' | 'limits' | 'history' | 'analysis' | 'settings' | 'calendar';
 
 export type Language = 'en' | 'es';
 
@@ -63,22 +83,8 @@ export interface CalendarEvent {
   date: string; // YYYY-MM-DD
   description: string;
   amount: number;
+  currency: string;
   type: 'debt' | 'credit_card' | 'subscription';
 }
 
 export type ColorTheme = 'default' | 'ocean' | 'sunset' | 'forest';
-
-export interface Budget {
-  id: string;
-  category: string;
-  limit: number;
-  period: 'monthly' | 'weekly';
-}
-
-export interface Goal {
-  id: string;
-  name: string;
-  targetAmount: number;
-  currentAmount: number;
-  deadline?: string;
-}
