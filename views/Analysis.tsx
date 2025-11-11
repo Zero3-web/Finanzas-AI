@@ -51,7 +51,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('analysis')}</h1>
+                <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('analysis')}</h1>
             </div>
 
             {/* Mobile View Switcher */}
@@ -67,14 +67,14 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
             </div>
             
             {/* Desktop Tabs */}
-            <div className="hidden md:block border-b border-secondary dark:border-gray-700">
+            <div className="hidden md:block border-b border-secondary dark:border-border-dark">
                 <nav className="-mb-px flex space-x-6" aria-label="Tabs">
                     <button
                         onClick={() => setAnalysisType('expense')}
                         className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                             analysisType === 'expense'
                             ? 'border-primary text-primary'
-                            : 'border-transparent text-text-secondary hover:text-text-main hover:border-gray-300 dark:hover:text-gray-200 dark:hover:border-gray-600'
+                            : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-main dark:hover:text-text-main-dark hover:border-gray-300 dark:hover:border-border-dark'
                         }`}
                     >
                         {t('spendingAnalysis')}
@@ -84,7 +84,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
                         className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                             analysisType === 'income'
                             ? 'border-primary text-primary'
-                            : 'border-transparent text-text-secondary hover:text-text-main hover:border-gray-300 dark:hover:text-gray-200 dark:hover:border-gray-600'
+                            : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-main dark:hover:text-text-main-dark hover:border-gray-300 dark:hover:border-border-dark'
                         }`}
                     >
                         {t('incomeAnalysis')}
@@ -93,7 +93,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
             </div>
 
             <Card>
-                <h2 className="text-xl font-bold mb-4 text-text-main dark:text-brand-white">{title}</h2>
+                <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{title}</h2>
                 {dataByCategory.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                         <div>
@@ -121,19 +121,19 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
                         </div>
                         <div className="space-y-4">
                             <div className="flex justify-between items-baseline pb-2 border-b-2 border-primary">
-                                <h3 className="text-lg font-semibold text-text-secondary dark:text-gray-400">{t('category')}</h3>
-                                <h3 className="text-lg font-semibold text-text-secondary dark:text-gray-400">{totalTitle}</h3>
+                                <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark">{t('category')}</h3>
+                                <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark">{totalTitle}</h3>
                             </div>
                             {dataByCategory.map((category, index) => (
                                 <div key={category.name}>
                                     <div className="flex justify-between items-center mb-1">
                                         <div className="flex items-center">
                                             <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                                            <span className="font-medium text-text-main dark:text-gray-200">{category.name}</span>
+                                            <span className="font-medium text-text-main dark:text-text-main-dark">{category.name}</span>
                                         </div>
-                                        <span className="font-semibold text-text-main dark:text-gray-200">{formatCurrency(category.value)}</span>
+                                        <span className="font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(category.value)}</span>
                                     </div>
-                                    <div className="w-full bg-secondary dark:bg-gray-700 rounded-full h-2">
+                                    <div className="w-full bg-secondary dark:bg-secondary-dark rounded-full h-2">
                                         <div
                                             className="h-2 rounded-full"
                                             style={{
@@ -148,7 +148,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, formatCurrency, t, co
                     </div>
                 ) : (
                     <div className="text-center py-10">
-                        <p className="text-text-secondary dark:text-gray-400">{noDataMessage}</p>
+                        <p className="text-text-secondary dark:text-text-secondary-dark">{noDataMessage}</p>
                     </div>
                 )}
             </Card>

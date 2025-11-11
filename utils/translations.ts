@@ -130,6 +130,7 @@ export const translations = {
         addAccountTitle: 'Add Account',
         editAccountTitle: 'Edit Account',
         addDebtTitle: 'Add Debt',
+        editDebtTitle: 'Edit Debt',
         addSubscriptionTitle: 'Add Subscription',
         editSubscriptionTitle: 'Edit Subscription',
         
@@ -313,6 +314,7 @@ export const translations = {
         addAccountTitle: 'Añadir Cuenta',
         editAccountTitle: 'Editar Cuenta',
         addDebtTitle: 'Añadir Deuda',
+        editDebtTitle: 'Editar Deuda',
         addSubscriptionTitle: 'Añadir Suscripción',
         editSubscriptionTitle: 'Editar Suscripción',
 

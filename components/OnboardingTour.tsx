@@ -48,7 +48,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
   
   const themeOptions = Object.keys(themes) as ColorTheme[];
   const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'PEN', 'MXN'];
-  const inputClasses = "w-full mt-1 block bg-secondary dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary focus:border-primary text-text-main dark:text-gray-100 p-2";
+  const inputClasses = "w-full mt-1 block bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
 
 
   const renderStepContent = () => {
@@ -56,25 +56,25 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
       case 1: // Welcome
         return (
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2">{t('tour_welcome_title')}</h2>
-            <p className="text-text-secondary dark:text-gray-400">{t('tour_welcome_desc')}</p>
+            <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2">{t('tour_welcome_title')}</h2>
+            <p className="text-text-secondary dark:text-text-secondary-dark">{t('tour_welcome_desc')}</p>
           </div>
         );
       case 2: // Regional Settings
         return (
             <div>
-              <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2 text-center">{t('tour_regional_title')}</h2>
-              <p className="text-text-secondary dark:text-gray-400 mb-6 text-center">{t('tour_regional_desc')}</p>
+              <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2 text-center">{t('tour_regional_title')}</h2>
+              <p className="text-text-secondary dark:text-text-secondary-dark mb-6 text-center">{t('tour_regional_desc')}</p>
               <div className="space-y-4 max-w-xs mx-auto">
                 <div>
-                  <label htmlFor="language-tour" className="block text-sm font-medium text-text-secondary dark:text-gray-400">{t('language')}</label>
+                  <label htmlFor="language-tour" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('language')}</label>
                   <select id="language-tour" value={language} onChange={(e) => setLanguage(e.target.value as Language)} className={inputClasses}>
                       <option value="en">English</option>
                       <option value="es">Español</option>
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="currency-tour" className="block text-sm font-medium text-text-secondary dark:text-gray-400">{t('currency')}</label>
+                  <label htmlFor="currency-tour" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('currency')}</label>
                   <select id="currency-tour" value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClasses}>
                       {currencies.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -85,10 +85,10 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
       case 3: // User Name
         return (
           <div>
-            <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2 text-center">{t('tour_name_title')}</h2>
-            <p className="text-text-secondary dark:text-gray-400 mb-6 text-center">{t('tour_name_desc')}</p>
+            <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2 text-center">{t('tour_name_title')}</h2>
+            <p className="text-text-secondary dark:text-text-secondary-dark mb-6 text-center">{t('tour_name_desc')}</p>
             <div className="max-w-xs mx-auto">
-                <label htmlFor="name-tour" className="block text-sm font-medium text-text-secondary dark:text-gray-400 sr-only">{t('tour_name_placeholder')}</label>
+                <label htmlFor="name-tour" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark sr-only">{t('tour_name_placeholder')}</label>
                 <input
                     id="name-tour"
                     type="text"
@@ -104,8 +104,8 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
       case 4: // Avatar Selection
         return (
           <div>
-            <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2 text-center">{t('tour_avatar_title')}</h2>
-            <p className="text-text-secondary dark:text-gray-400 mb-6 text-center">{t('tour_avatar_desc')}</p>
+            <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2 text-center">{t('tour_avatar_title')}</h2>
+            <p className="text-text-secondary dark:text-text-secondary-dark mb-6 text-center">{t('tour_avatar_desc')}</p>
             <div className="max-w-xs mx-auto">
                 <AvatarGrid selectedAvatar={avatar} onSelectAvatar={setAvatar} />
             </div>
@@ -114,15 +114,15 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
       case 5: // Theme Selection
         return (
           <div>
-            <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2 text-center">{t('tour_theme_title')}</h2>
-            <p className="text-text-secondary dark:text-gray-400 mb-6 text-center">{t('tour_theme_desc')}</p>
+            <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2 text-center">{t('tour_theme_title')}</h2>
+            <p className="text-text-secondary dark:text-text-secondary-dark mb-6 text-center">{t('tour_theme_desc')}</p>
             <div className="flex flex-wrap gap-4 justify-center">
                 {themeOptions.map((themeName) => (
                     <button key={themeName} onClick={() => setColorTheme(themeName)} className={`p-2 rounded-lg border-2 ${colorTheme === themeName ? 'border-primary' : 'border-transparent'}`}>
                         <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full" style={{ backgroundColor: `rgb(${themes[themeName]['--color-primary']})`}}></div>
                         <div className="w-6 h-6 rounded-full" style={{ backgroundColor: `rgb(${themes[themeName]['--color-accent']})`}}></div>
-                        <span className="capitalize ml-1 text-text-main dark:text-gray-300">{t(`${themeName}_theme`)}</span>
+                        <span className="capitalize ml-1 text-text-main dark:text-text-main-dark">{t(`${themeName}_theme`)}</span>
                         </div>
                     </button>
                 ))}
@@ -132,8 +132,8 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
       case 6: // Add Account
         return (
             <div>
-                <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2 text-center">{t('tour_account_title')}</h2>
-                <p className="text-text-secondary dark:text-gray-400 mb-6 text-center">{t('tour_account_desc')}</p>
+                <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2 text-center">{t('tour_account_title')}</h2>
+                <p className="text-text-secondary dark:text-text-secondary-dark mb-6 text-center">{t('tour_account_desc')}</p>
                 <div className="max-h-[50vh] overflow-y-auto px-2">
                    <AccountForm 
                         onAddAccount={onAddAccount} 
@@ -148,20 +148,20 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
       case 7: // Tips
         return (
             <div className="text-center">
-                <h2 className="text-2xl font-bold text-text-main dark:text-brand-white mb-2">{t('tour_tips_title')}</h2>
-                <p className="text-text-secondary dark:text-gray-400 mb-8">{t('tour_tips_desc')}</p>
+                <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2">{t('tour_tips_title')}</h2>
+                <p className="text-text-secondary dark:text-text-secondary-dark mb-8">{t('tour_tips_desc')}</p>
                 <ul className="space-y-4 text-left">
                     <li className="flex items-center gap-4">
                         <div className="bg-primary/10 text-primary p-3 rounded-full"><PlusIcon className="w-6 h-6"/></div>
-                        <span className="text-text-main dark:text-gray-300">{t('tour_tip_1')}</span>
+                        <span className="text-text-main dark:text-text-main-dark">{t('tour_tip_1')}</span>
                     </li>
                     <li className="flex items-center gap-4">
                         <div className="bg-primary/10 text-primary p-3 rounded-full"><ScaleIcon className="w-6 h-6"/></div>
-                        <span className="text-text-main dark:text-gray-300">{t('tour_tip_2')}</span>
+                        <span className="text-text-main dark:text-text-main-dark">{t('tour_tip_2')}</span>
                     </li>
                      <li className="flex items-center gap-4">
                         <div className="bg-primary/10 text-primary p-3 rounded-full"><ChartPieIcon className="w-6 h-6"/></div>
-                        <span className="text-text-main dark:text-gray-300">{t('tour_tip_3')}</span>
+                        <span className="text-text-main dark:text-text-main-dark">{t('tour_tip_3')}</span>
                     </li>
                 </ul>
             </div>
@@ -175,7 +175,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] backdrop-blur-sm">
-      <div className="bg-surface dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg m-4 p-8 transform transition-all duration-300 animate-modal-in">
+      <div className="bg-surface dark:bg-surface-dark rounded-2xl shadow-xl w-full max-w-lg m-4 p-8 transform transition-all duration-300 animate-modal-in">
         <div className="min-h-[250px] flex flex-col justify-center">
             {renderStepContent()}
         </div>
@@ -184,14 +184,14 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
         <div className="mt-8">
             <div className="flex justify-center gap-2 mb-6">
                 {Array.from({ length: totalSteps }).map((_, i) => (
-                    <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i + 1 === step ? 'bg-primary' : 'bg-secondary dark:bg-gray-600'}`}></div>
+                    <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i + 1 === step ? 'bg-primary' : 'bg-secondary dark:bg-secondary-dark'}`}></div>
                 ))}
             </div>
             { step !== 6 && (
                 <div className="flex items-center justify-between">
                 <button 
                     onClick={handleBack} 
-                    className={`font-bold py-2 px-4 rounded transition-opacity ${step === 1 ? 'opacity-0 cursor-default' : 'hover:bg-secondary dark:hover:bg-gray-700'}`}
+                    className={`font-bold py-2 px-4 rounded transition-opacity ${step === 1 ? 'opacity-0 cursor-default' : 'hover:bg-secondary dark:hover:bg-secondary-dark'}`}
                     disabled={step === 1}
                 >
                     {t('tour_back')}

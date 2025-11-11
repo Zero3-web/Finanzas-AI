@@ -54,16 +54,16 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount
     onClose();
   };
 
-  const inputClasses = "mt-1 block w-full bg-secondary dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary focus:border-primary text-text-main dark:text-gray-100 p-2";
+  const inputClasses = "mt-1 block w-full bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-text-secondary dark:text-gray-400">{t('account_name')}</label>
+        <label htmlFor="name" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('account_name')}</label>
         <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} className={inputClasses} placeholder={t('account_name_placeholder')} />
       </div>
       <div>
-        <label htmlFor="type" className="block text-sm font-medium text-text-secondary dark:text-gray-400">{t('account_type')}</label>
+        <label htmlFor="type" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('account_type')}</label>
         <select id="type" value={type} onChange={(e) => setType(e.target.value as AccountType)} className={inputClasses}>
           <option value="checking">{t('checking')}</option>
           <option value="savings">{t('savings')}</option>
@@ -71,25 +71,25 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount
         </select>
       </div>
       <div>
-        <label htmlFor="balance" className="block text-sm font-medium text-text-secondary dark:text-gray-400">{isEditing ? t('current_balance') : t('initial_balance')}</label>
+        <label htmlFor="balance" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{isEditing ? t('current_balance') : t('initial_balance')}</label>
         <input type="number" id="balance" value={balance} onChange={(e) => setBalance(e.target.value)} className={inputClasses} placeholder="0.00" />
       </div>
 
       {type === 'credit' && (
         <>
             <div>
-                <label htmlFor="creditLimit" className="block text-sm font-medium text-text-secondary dark:text-gray-400">{t('credit_limit')}</label>
+                <label htmlFor="creditLimit" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('credit_limit')}</label>
                 <input type="number" id="creditLimit" value={creditLimit} onChange={(e) => setCreditLimit(e.target.value)} className={inputClasses} placeholder="5000" />
             </div>
             <div>
-                <label htmlFor="paymentDueDate" className="block text-sm font-medium text-text-secondary dark:text-gray-400">{t('payment_due_day')}</label>
+                <label htmlFor="paymentDueDate" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('payment_due_day')}</label>
                 <input type="number" id="paymentDueDate" value={paymentDueDate} onChange={(e) => setPaymentDueDate(e.target.value)} className={inputClasses} placeholder="28" min="1" max="31" />
             </div>
         </>
       )}
 
       <div className="flex justify-end pt-4">
-        <button type="button" onClick={onClose} className="bg-secondary hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-text-main dark:text-gray-100 font-bold py-2 px-4 rounded mr-2">{t('cancel')}</button>
+        <button type="button" onClick={onClose} className="bg-secondary hover:bg-gray-200 dark:bg-secondary-dark dark:hover:bg-opacity-80 text-text-main dark:text-text-main-dark font-bold py-2 px-4 rounded mr-2">{t('cancel')}</button>
         <button type="submit" className="bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded">{isEditing ? t('update') : t('add')}</button>
       </div>
     </form>

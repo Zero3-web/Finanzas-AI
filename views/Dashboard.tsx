@@ -30,7 +30,7 @@ const Header: React.FC<{ t: (key: string) => string; notifications: Notification
     return (
         <div className="hidden md:flex justify-between items-center mb-6">
             <div>
-                <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('welcome_back')} {userName}!</h1>
+                <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('welcome_back')} {userName}!</h1>
             </div>
             <div className="flex items-center space-x-2 md:space-x-4">
                 <Notifications notifications={notifications} t={t} />
@@ -43,18 +43,25 @@ const Header: React.FC<{ t: (key: string) => string; notifications: Notification
 const CreditCardVisual: React.FC<{ 
     account: Account, 
     formatCurrency: (amount: number) => string, 
-    variant: 'purple' | 'dark',
+    variant: 'purple' | 'dark' | 'cyan',
     isSelected: boolean,
     onClick: () => void,
     userName: string,
 }> = ({ account, formatCurrency, variant, isSelected, onClick, userName }) => {
-    const cardClasses = variant === 'purple' ? 'bg-primary text-white' : 'bg-gray-800 text-white';
+    const getCardClasses = () => {
+        switch(variant) {
+            case 'purple': return 'bg-primary text-white';
+            case 'cyan': return 'bg-accent text-text-main';
+            case 'dark': return 'bg-surface-dark text-white';
+            default: return 'bg-primary text-white';
+        }
+    }
     const fakeCardNumber = `**** **** **** ${account.id.slice(-4)}`;
     const selectionClasses = isSelected ? 'ring-2 ring-primary' : '';
 
     return (
         <div 
-            className={`w-64 h-40 rounded-xl p-4 flex flex-col justify-between shrink-0 cursor-pointer transition-all ${cardClasses} ${selectionClasses}`}
+            className={`w-64 h-40 rounded-xl p-4 flex flex-col justify-between shrink-0 cursor-pointer transition-all ${getCardClasses()} ${selectionClasses}`}
             onClick={onClick}
         >
             <div>
@@ -74,11 +81,11 @@ const AllAccountsCard: React.FC<{ isSelected: boolean; onClick: () => void; t: (
     const selectionClasses = isSelected ? 'ring-2 ring-primary' : '';
     return (
         <div
-            className={`w-40 h-40 rounded-xl p-4 flex flex-col justify-center items-center shrink-0 cursor-pointer transition-all bg-surface dark:bg-gray-800 ${selectionClasses}`}
+            className={`w-40 h-40 rounded-xl p-4 flex flex-col justify-center items-center shrink-0 cursor-pointer transition-all bg-surface dark:bg-surface-dark ${selectionClasses}`}
             onClick={onClick}
         >
             <CollectionIcon className="w-10 h-10 text-primary mb-2" />
-            <h3 className="text-lg font-bold text-text-main dark:text-brand-white">{t('all_accounts')}</h3>
+            <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark">{t('all_accounts')}</h3>
         </div>
     );
 };
@@ -103,8 +110,8 @@ const RecentActivityItem: React.FC<{ transaction: Transaction, formatCurrency: (
             <div className="flex items-center">
                 <div className={`p-2 rounded-lg mr-4 ${isIncome ? 'bg-green-100 dark:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/50'}`}>{getIcon()}</div>
                 <div>
-                    <p className="font-semibold text-text-main dark:text-gray-200">{transaction.description}</p>
-                    <p className="text-sm text-text-secondary dark:text-gray-400">{transaction.category}</p>
+                    <p className="font-semibold text-text-main dark:text-text-main-dark">{transaction.description}</p>
+                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{transaction.category}</p>
                 </div>
             </div>
             <p className={`font-semibold ${isIncome ? 'text-income' : 'text-expense'}`}>
@@ -180,8 +187,8 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
             <Card key={account.id} className={`${sortedAccounts.length === 1 ? 'md:col-span-2' : ''}`}>
                 <div className="flex justify-between items-start">
                     <div>
-                        <p className="text-text-secondary dark:text-gray-400">{account.name}</p>
-                        <p className="text-3xl font-bold text-text-main dark:text-brand-white">{formatCurrency(account.balance)}</p>
+                        <p className="text-text-secondary dark:text-text-secondary-dark">{account.name}</p>
+                        <p className="text-3xl font-bold text-text-main dark:text-text-main-dark">{formatCurrency(account.balance)}</p>
                     </div>
                     <div className="flex items-center text-sm text-income font-semibold"><ArrowUpIcon className="w-4 h-4 mr-1"/> {index % 2 === 0 ? '3.4%' : '2.0%'}</div>
                 </div>
@@ -189,15 +196,15 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
             </Card>
           ))
         ) : (
-             <Card className="flex items-center justify-center min-h-[140px] md:col-span-2 lg:col-span-3"><div className="text-center text-text-secondary dark:text-gray-400"><p>{t('add_account_prompt')}</p></div></Card>
+             <Card className="flex items-center justify-center min-h-[140px] md:col-span-2 lg:col-span-3"><div className="text-center text-text-secondary dark:text-text-secondary-dark"><p>{t('add_account_prompt')}</p></div></Card>
         )}
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-            <Card className="p-4 dark:bg-gray-800">
+            <Card className="p-4 dark:bg-surface-dark">
                  <div className="flex justify-between items-center mb-4 px-2">
-                    <h3 className="text-xl font-bold text-text-main dark:text-brand-white">{t('your_cards')}</h3>
+                    <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">{t('your_cards')}</h3>
                     <button onClick={onAddAccount} className="flex items-center bg-primary/10 text-primary hover:bg-primary/20 rounded-lg px-3 py-1 text-sm font-semibold transition-colors">
                         <PlusIcon className="w-4 h-4 mr-1"/>
                         {t('add')}
@@ -205,17 +212,21 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                 </div>
                 <div className="flex space-x-4 overflow-x-auto pb-4 custom-scrollbar">
                     <AllAccountsCard isSelected={selectedAccountId === null} onClick={() => setSelectedAccountId(null)} t={t} />
-                    {accounts.map((acc, index) => <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={index % 2 === 0 ? 'purple' : 'dark'} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} userName={userName} /> )}
+                    {accounts.map((acc, index) => {
+                        const cardVariants: Array<'purple' | 'cyan' | 'dark'> = ['purple', 'cyan', 'dark'];
+                        const variant = cardVariants[index % cardVariants.length];
+                        return <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={variant} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} userName={userName} />;
+                    })}
                 </div>
                  <style>{`.custom-scrollbar::-webkit-scrollbar{height:6px;}.custom-scrollbar::-webkit-scrollbar-track{background:transparent;}.custom-scrollbar::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:10px;}.dark .custom-scrollbar::-webkit-scrollbar-thumb{background:#4b5563;}`}</style>
             </Card>
 
-            <Card className="dark:bg-gray-800">
+            <Card className="dark:bg-surface-dark">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold text-text-main dark:text-brand-white">
-                        {t('activity')} <span className="text-base font-medium text-text-secondary dark:text-gray-400">{selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</span>
+                    <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">
+                        {t('activity')} <span className="text-base font-medium text-text-secondary dark:text-text-secondary-dark">{selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</span>
                     </h3>
-                    <div className="text-text-secondary dark:text-gray-400 text-sm flex items-center border border-secondary dark:border-gray-700 rounded-lg px-2 py-1"><CalendarIcon className="w-5 h-5 mr-2"/> Jan 6, 2024 - Jan 11, 2024</div>
+                    <div className="text-text-secondary dark:text-text-secondary-dark text-sm flex items-center border border-secondary dark:border-border-dark rounded-lg px-2 py-1"><CalendarIcon className="w-5 h-5 mr-2"/> Jan 6, 2024 - Jan 11, 2024</div>
                 </div>
                 <ActivityChart transactions={displayedTransactions} primaryColor={primaryColor} accentColor={accentColor} />
             </Card>
@@ -224,21 +235,21 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
         <div className="lg:col-span-1 space-y-6">
              <Card>
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-text-main dark:text-brand-white">
-                         {t('recent_activity')} <span className="text-sm font-medium text-text-secondary dark:text-gray-400">{selectedAccount ? `(${selectedAccount.name})` : ''}</span>
+                    <h3 className="font-bold text-text-main dark:text-text-main-dark">
+                         {t('recent_activity')} <span className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{selectedAccount ? `(${selectedAccount.name})` : ''}</span>
                     </h3>
                 </div>
                 <div className="space-y-4">
                     {recentActivity.map(transaction => (
                         <RecentActivityItem key={transaction.id} transaction={transaction} formatCurrency={formatCurrency} />
                     ))}
-                    {recentActivity.length === 0 && <p className="text-sm text-center py-4 text-text-secondary dark:text-gray-400">{t('noTransactionsFound')}</p>}
+                    {recentActivity.length === 0 && <p className="text-sm text-center py-4 text-text-secondary dark:text-text-secondary-dark">{t('noTransactionsFound')}</p>}
                 </div>
             </Card>
              <Card>
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-text-main dark:text-brand-white">{t('debt_summary')}</h3>
-                    <button onClick={onAddDebt} className="text-text-secondary dark:text-gray-400 hover:text-primary transition-colors">
+                    <h3 className="font-bold text-text-main dark:text-text-main-dark">{t('debt_summary')}</h3>
+                    <button onClick={onAddDebt} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary transition-colors">
                         <PlusIcon className="w-5 h-5"/>
                     </button>
                 </div>
@@ -247,21 +258,21 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                         debts.slice(0, 3).map(debt => (
                             <div key={debt.id} className="flex justify-between items-center">
                                 <div>
-                                    <p className="font-semibold text-text-main dark:text-gray-200">{debt.name}</p>
-                                    <p className="text-sm text-text-secondary dark:text-gray-400">{t('next_payment')}: {new Date(debt.nextPaymentDate).toLocaleDateString()}</p>
+                                    <p className="font-semibold text-text-main dark:text-text-main-dark">{debt.name}</p>
+                                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(debt.nextPaymentDate).toLocaleDateString()}</p>
                                 </div>
                                 <p className="font-semibold text-expense">{formatCurrency(debt.totalAmount - debt.amountPaid)}</p>
                             </div>
                         ))
                     ) : (
-                        <p className="text-sm text-text-secondary dark:text-gray-400">{t('no_debts')}</p>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('no_debts')}</p>
                     )}
                 </div>
             </Card>
             <Card>
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-text-main dark:text-brand-white">{t('subscription_summary')}</h3>
-                    <button onClick={onAddSubscription} className="text-text-secondary dark:text-gray-400 hover:text-primary transition-colors">
+                    <h3 className="font-bold text-text-main dark:text-text-main-dark">{t('subscription_summary')}</h3>
+                    <button onClick={onAddSubscription} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary transition-colors">
                         <PlusIcon className="w-5 h-5"/>
                     </button>
                 </div>
@@ -270,14 +281,14 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                         upcomingSubscriptions.map(sub => (
                             <div key={sub.id} className="flex justify-between items-center">
                                 <div>
-                                    <p className="font-semibold text-text-main dark:text-gray-200">{sub.name}</p>
-                                    <p className="text-sm text-text-secondary dark:text-gray-400">{t('next_payment')}: {new Date(sub.nextPaymentDate).toLocaleDateString()}</p>
+                                    <p className="font-semibold text-text-main dark:text-text-main-dark">{sub.name}</p>
+                                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(sub.nextPaymentDate).toLocaleDateString()}</p>
                                 </div>
-                                <p className="font-semibold text-text-main dark:text-gray-200">{formatCurrency(sub.amount)}</p>
+                                <p className="font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(sub.amount)}</p>
                             </div>
                         ))
                     ) : (
-                        <p className="text-sm text-text-secondary dark:text-gray-400">{t('no_subscriptions')}</p>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('no_subscriptions')}</p>
                     )}
                 </div>
             </Card>
@@ -286,15 +297,15 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
-                <p className="text-text-secondary dark:text-gray-400">{t('total_income')} {selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</p>
+                <p className="text-text-secondary dark:text-text-secondary-dark">{t('total_income')} {selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</p>
                 <p className="text-2xl font-bold text-income">{formatCurrency(totalIncome)}</p>
             </Card>
             <Card>
-                <p className="text-text-secondary dark:text-gray-400">{t('expense')} {selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</p>
+                <p className="text-text-secondary dark:text-text-secondary-dark">{t('expense')} {selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</p>
                 <p className="text-2xl font-bold text-expense">{formatCurrency(totalExpenses)}</p>
             </Card>
             <Card>
-                <p className="text-text-secondary dark:text-gray-400">{t('net_profit')} {selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</p>
+                <p className="text-text-secondary dark:text-text-secondary-dark">{t('net_profit')} {selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</p>
                 <p className={`text-2xl font-bold ${profit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(profit)}</p>
             </Card>
       </div>

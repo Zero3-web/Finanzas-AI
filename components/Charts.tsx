@@ -9,8 +9,8 @@ import { Theme } from '../hooks/useTheme';
 const CustomTooltip = ({ active, payload, label }: TooltipProps<ValueType, NameType> & { payload?: any[], label?: string }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-surface dark:bg-gray-800 p-2 border border-secondary dark:border-gray-700 rounded-md shadow-lg">
-          <p className="label text-text-main dark:text-gray-100 font-semibold">{`${label}`}</p>
+        <div className="bg-surface dark:bg-secondary-dark p-2 border border-secondary dark:border-border-dark rounded-md shadow-lg">
+          <p className="label text-text-main dark:text-text-main-dark font-semibold">{`${label}`}</p>
           {payload.map((pld, index) => (
              <p key={index} style={{ color: pld.color }} className="intro">{`${pld.name}: $${pld.value?.toLocaleString()}`}</p>
           ))}
@@ -41,7 +41,7 @@ export const AccountBalancePieChart: React.FC<{ balance: number; color: string }
                     stroke="none"
                 >
                     <Cell fill={color} />
-                    <Cell fill="#e5e7eb" className="dark:fill-gray-700" />
+                    <Cell fill="#e5e7eb" className="dark:fill-secondary-dark" />
                 </Pie>
             </PieChart>
         </ResponsiveContainer>
@@ -68,9 +68,9 @@ export const ActivityChart: React.FC<{ transactions: Transaction[]; primaryColor
     return (
         <ResponsiveContainer width="100%" height={300}>
             <LineChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-700" />
-                <XAxis dataKey="name" stroke="#6b7280" fontSize={12} className="dark:stroke-gray-400" />
-                <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(value) => `$${Number(value) / 1000}k`} className="dark:stroke-gray-400" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-border-dark" />
+                <XAxis dataKey="name" stroke="#6b7280" fontSize={12} className="dark:stroke-text-secondary-dark" />
+                <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(value) => `$${Number(value) / 1000}k`} className="dark:stroke-text-secondary-dark" />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{fontSize: "14px"}}/>
                 <Line type="monotone" dataKey="Ingresos" stroke={primaryColor} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
@@ -100,7 +100,7 @@ export const SpendingBarChart: React.FC<{ transactions: Transaction[]; primaryCo
     return (
         <ResponsiveContainer width="100%" height={150}>
             <BarChart data={weeklyData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} className="dark:stroke-gray-400" />
+                <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} className="dark:stroke-text-secondary-dark" />
                 <Tooltip cursor={{ fill: `rgba(${primaryColorRgb}, 0.1)` }} content={<CustomTooltip />} />
                 <Bar dataKey="Gastos" fill={primaryColor} radius={[4, 4, 0, 0]} barSize={10} />
             </BarChart>

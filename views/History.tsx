@@ -58,12 +58,12 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
     if (typeFilter === type) {
         return `${baseClasses} bg-primary text-white`;
     }
-    return `${baseClasses} bg-surface dark:bg-gray-800 hover:bg-secondary dark:hover:bg-gray-700`;
+    return `${baseClasses} bg-surface dark:bg-surface-dark hover:bg-secondary dark:hover:bg-secondary-dark`;
   };
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('history')}</h1>
+      <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('history')}</h1>
       
       <Card className="p-4 space-y-4">
         <input 
@@ -71,7 +71,7 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
             placeholder={t('search_transactions')}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="block w-full bg-secondary dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-primary focus:border-primary text-text-main dark:text-gray-100 p-3"
+            className="block w-full bg-secondary dark:bg-secondary-dark border-transparent rounded-lg focus:ring-primary focus:border-primary text-text-main dark:text-text-main-dark p-3"
             id="search-transactions"
         />
         <div className="flex items-center space-x-2">
@@ -91,7 +91,7 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
       <Card className="hidden md:block">
         <div className="overflow-x-auto">
             <table className="w-full text-left">
-                <thead className="border-b border-secondary dark:border-gray-700 text-sm text-text-secondary dark:text-gray-400" id="history-table-header">
+                <thead className="border-b border-secondary dark:border-border-dark text-sm text-text-secondary dark:text-text-secondary-dark" id="history-table-header">
                     <tr>
                         <th className="p-3 cursor-pointer" onClick={() => handleSort('date')}>{t('date')}</th>
                         <th className="p-3">{t('description')}</th>
@@ -103,7 +103,7 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
                 </thead>
                 <tbody>
                     {filteredAndSortedTransactions.map(transaction => (
-                        <tr key={transaction.id} className="border-b border-secondary dark:border-gray-700 last:border-b-0 hover:bg-secondary dark:hover:bg-gray-700/50">
+                        <tr key={transaction.id} className="border-b border-secondary dark:border-border-dark last:border-b-0 hover:bg-secondary dark:hover:bg-secondary-dark/50">
                             <td className="p-3">{new Date(transaction.date).toLocaleDateString()}</td>
                             <td className="p-3">{transaction.description}</td>
                             <td className="p-3">{transaction.category}</td>
@@ -112,10 +112,10 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
                                 {transaction.type === TransactionType.INCOME ? '+' : '-'}{formatCurrency(transaction.amount)}
                             </td>
                             <td className="p-3 text-right">
-                                <button onClick={() => onEditTransaction(transaction)} className="text-text-secondary dark:text-gray-400 hover:text-primary p-1">
+                                <button onClick={() => onEditTransaction(transaction)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary p-1">
                                     <PencilIcon className="w-5 h-5" />
                                 </button>
-                                <button onClick={() => onRemoveTransaction(transaction.id)} className="text-text-secondary dark:text-gray-400 hover:text-expense p-1 ml-2">
+                                <button onClick={() => onRemoveTransaction(transaction.id)} className="text-text-secondary dark:text-text-secondary-dark hover:text-expense p-1 ml-2">
                                     <TrashIcon className="w-5 h-5" />
                                 </button>
                             </td>
@@ -126,7 +126,7 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
         </div>
         {filteredAndSortedTransactions.length === 0 && (
             <div className="text-center py-10">
-                <p className="text-text-secondary dark:text-gray-400">{t('noTransactionsFound')}</p>
+                <p className="text-text-secondary dark:text-text-secondary-dark">{t('noTransactionsFound')}</p>
             </div>
         )}
       </Card>
@@ -137,19 +137,19 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
           filteredAndSortedTransactions.map(transaction => (
             <Card key={transaction.id} className="p-4">
               <div className="flex justify-between items-start mb-2">
-                <span className="text-sm bg-secondary dark:bg-gray-700 px-2 py-1 rounded-md">{transaction.category}</span>
+                <span className="text-sm bg-secondary dark:bg-secondary-dark px-2 py-1 rounded-md">{transaction.category}</span>
                 <p className={`font-semibold text-lg ${transaction.type === TransactionType.INCOME ? 'text-income' : 'text-expense'}`}>
                     {transaction.type === TransactionType.INCOME ? '+' : '-'}{formatCurrency(transaction.amount)}
                 </p>
               </div>
-              <p className="font-semibold text-text-main dark:text-gray-200 mb-3 break-words">{transaction.description}</p>
+              <p className="font-semibold text-text-main dark:text-text-main-dark mb-3 break-words">{transaction.description}</p>
               <div className="flex justify-between items-center text-sm text-text-secondary dark:text-gray-500">
                   <span>{accountMap[transaction.accountId]} &bull; {new Date(transaction.date).toLocaleDateString()}</span>
                   <div>
-                      <button onClick={() => onEditTransaction(transaction)} className="text-text-secondary dark:text-gray-400 hover:text-primary p-1 rounded-full">
+                      <button onClick={() => onEditTransaction(transaction)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary p-1 rounded-full">
                           <PencilIcon className="w-5 h-5" />
                       </button>
-                      <button onClick={() => onRemoveTransaction(transaction.id)} className="text-text-secondary dark:text-gray-400 hover:text-expense p-1 ml-1 rounded-full">
+                      <button onClick={() => onRemoveTransaction(transaction.id)} className="text-text-secondary dark:text-text-secondary-dark hover:text-expense p-1 ml-1 rounded-full">
                           <TrashIcon className="w-5 h-5" />
                       </button>
                   </div>
@@ -159,7 +159,7 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
         ) : (
           <Card>
             <div className="text-center py-10">
-                <p className="text-text-secondary dark:text-gray-400">{t('noTransactionsFound')}</p>
+                <p className="text-text-secondary dark:text-text-secondary-dark">{t('noTransactionsFound')}</p>
             </div>
           </Card>
         )}

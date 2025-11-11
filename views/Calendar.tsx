@@ -103,9 +103,9 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
     if (isSelected) {
       classes += "bg-primary text-white ";
     } else if (isToday) {
-      classes += "bg-primary/20 text-primary dark:bg-primary/30 dark:text-brand-cyan font-semibold ";
+      classes += "bg-primary/20 text-primary dark:bg-primary/30 dark:text-accent font-semibold ";
     } else {
-      classes += "hover:bg-secondary dark:hover:bg-gray-700 ";
+      classes += "hover:bg-secondary dark:hover:bg-secondary-dark ";
     }
     return { classes, hasEvent };
   }
@@ -117,7 +117,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
           case 'credit_card':
               return { bar: 'bg-primary', text: 'text-primary' };
           case 'subscription':
-              return { bar: 'bg-brand-cyan', text: 'text-brand-cyan' };
+              return { bar: 'bg-accent', text: 'text-accent' };
           default:
               return { bar: 'bg-gray-400', text: 'text-text-secondary' };
       }
@@ -125,21 +125,21 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('calendar')}</h1>
+      <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('calendar')}</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
             <div className="flex justify-between items-center mb-4">
-                <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-secondary dark:hover:bg-gray-700">
+                <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-secondary dark:hover:bg-secondary-dark">
                     <ChevronLeftIcon className="w-6 h-6" />
                 </button>
-                <h2 className="text-xl font-bold text-text-main dark:text-brand-white">
+                <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark">
                     {currentDate.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
                 </h2>
-                <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-secondary dark:hover:bg-gray-700">
+                <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-secondary dark:hover:bg-secondary-dark">
                     <ChevronRightIcon className="w-6 h-6" />
                 </button>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center font-semibold text-text-secondary dark:text-gray-400">
+            <div className="grid grid-cols-7 gap-1 text-center font-semibold text-text-secondary dark:text-text-secondary-dark">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <div key={day} className="py-2">{t(day.toLowerCase())}</div>)}
             </div>
             <div className="grid grid-cols-7 gap-1">
@@ -149,7 +149,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
                     return (
                         <div key={day} className={classes} onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}>
                             <span>{day}</span>
-                            {hasEvent && <span className="absolute bottom-2 h-1.5 w-1.5 bg-brand-cyan rounded-full"></span>}
+                            {hasEvent && <span className="absolute bottom-2 h-1.5 w-1.5 bg-accent rounded-full"></span>}
                         </div>
                     );
                 })}
@@ -157,24 +157,24 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
         </Card>
 
         <Card>
-            <h2 className="text-xl font-bold mb-4 text-text-main dark:text-brand-white">{t('upcoming_payments')}</h2>
-            <p className="text-sm text-text-secondary dark:text-gray-400 mb-4">{selectedDate ? selectedDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : ''}</p>
+            <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('upcoming_payments')}</h2>
+            <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-4">{selectedDate ? selectedDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : ''}</p>
             <div className="space-y-4 max-h-96 overflow-y-auto">
                 {eventsForSelectedDate.length > 0 ? (
                     eventsForSelectedDate.map(event => {
                         const styling = getEventTypeStyling(event.type);
                         return (
-                            <div key={event.id} className="flex items-center p-3 rounded-lg bg-secondary dark:bg-gray-700/50">
+                            <div key={event.id} className="flex items-center p-3 rounded-lg bg-secondary dark:bg-secondary-dark/50">
                                 <div className={`w-2 h-10 rounded-full mr-4 ${styling.bar}`}></div>
                                 <div>
-                                    <p className="font-semibold text-text-main dark:text-gray-200">{event.description}</p>
+                                    <p className="font-semibold text-text-main dark:text-text-main-dark">{event.description}</p>
                                     <p className={`font-medium ${styling.text}`}>{formatCurrency(event.amount)}</p>
                                 </div>
                             </div>
                         )
                     })
                 ) : (
-                    <div className="text-center py-10 text-text-secondary dark:text-gray-400">
+                    <div className="text-center py-10 text-text-secondary dark:text-text-secondary-dark">
                        <p>{t('no_events_selected_date')}</p>
                     </div>
                 )}

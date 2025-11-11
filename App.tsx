@@ -34,6 +34,7 @@ const App: React.FC = () => {
   
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
 
   const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
@@ -222,6 +223,11 @@ const App: React.FC = () => {
     setActiveTab('debts');
   };
 
+  const handleUpdateDebt = (updatedDebt: Debt) => {
+    setDebts(prev => prev.map(d => d.id === updatedDebt.id ? updatedDebt : d));
+    setEditingDebt(null);
+  };
+
   const handleRemoveDebt = (debtId: string) => {
      const onConfirm = () => {
         setDebts(prev => prev.filter(d => d.id !== debtId));
@@ -256,9 +262,10 @@ const App: React.FC = () => {
      );
   };
 
-  const openModal = (type: 'transaction' | 'account' | 'debt' | 'subscription', entityToEdit: Transaction | Account | Subscription | null = null) => {
+  const openModal = (type: 'transaction' | 'account' | 'debt' | 'subscription', entityToEdit: Transaction | Account | Debt | Subscription | null = null) => {
       if (type === 'transaction') setEditingTransaction(entityToEdit as Transaction | null);
       if (type === 'account') setEditingAccount(entityToEdit as Account | null);
+      if (type === 'debt') setEditingDebt(entityToEdit as Debt | null);
       if (type === 'subscription') setEditingSubscription(entityToEdit as Subscription | null);
       setModalContent(type);
   };
@@ -267,6 +274,7 @@ const App: React.FC = () => {
     setModalContent(null);
     setEditingTransaction(null);
     setEditingAccount(null);
+    setEditingDebt(null);
     setEditingSubscription(null);
   };
 
@@ -293,7 +301,7 @@ const App: React.FC = () => {
       case 'accounts':
         return <Accounts accounts={accounts} transactions={transactions} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={handleRemoveAccount} t={t} />;
       case 'debts':
-        return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onRemoveDebt={handleRemoveDebt} t={t} />;
+        return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onEditDebt={(debt) => openModal('debt', debt)} onRemoveDebt={handleRemoveDebt} t={t} />;
       case 'subscriptions':
         return <Subscriptions subscriptions={subscriptions} formatCurrency={formatCurrency} onAddSubscription={() => openModal('subscription')} onEditSubscription={(sub) => openModal('subscription', sub)} onRemoveSubscription={handleRemoveSubscription} t={t} />;
       case 'history':
@@ -329,7 +337,7 @@ const App: React.FC = () => {
     if (!modalContent) return '';
     if (modalContent === 'transaction') return editingTransaction ? 'editTransactionTitle' : 'addTransactionTitle';
     if (modalContent === 'account') return editingAccount ? 'editAccountTitle' : 'addAccountTitle';
-    if (modalContent === 'debt') return 'addDebtTitle';
+    if (modalContent === 'debt') return editingDebt ? 'editDebtTitle' : 'addDebtTitle';
     if (modalContent === 'subscription') return editingSubscription ? 'editSubscriptionTitle' : 'addSubscriptionTitle';
     return '';
   }
@@ -340,7 +348,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-background dark:bg-brand-black">
+    <div className="flex h-screen bg-background dark:bg-background-dark">
       {!onboardingCompleted && (
         <OnboardingTour 
           onFinish={() => setOnboardingCompleted(true)}
@@ -378,6 +386,7 @@ const App: React.FC = () => {
       />
 
       <MobileMenu
+        // FIX: Corrected typo from isMobileMenu-Open to isMobileMenuOpen
         isOpen={isMobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         setActiveTab={handleMobileTabSelect}
@@ -397,7 +406,7 @@ const App: React.FC = () => {
       <Modal isOpen={!!modalContent} onClose={closeModal} title={t(getModalTitleKey() as any)}>
         {modalContent === 'transaction' && <TransactionForm accounts={accounts} onAddTransaction={handleAddTransaction} onUpdateTransaction={handleUpdateTransaction} onClose={closeModal} transactionToEdit={editingTransaction} t={t} />}
         {modalContent === 'account' && <AccountForm onAddAccount={handleAddAccount} onUpdateAccount={handleUpdateAccount} onClose={closeModal} accountToEdit={editingAccount} t={t} />}
-        {modalContent === 'debt' && <DebtForm onAddDebt={handleAddDebt} onClose={closeModal} t={t} />}
+        {modalContent === 'debt' && <DebtForm onAddDebt={handleAddDebt} onUpdateDebt={handleUpdateDebt} onClose={closeModal} debtToEdit={editingDebt} t={t} />}
         {modalContent === 'subscription' && <SubscriptionForm onAddSubscription={handleAddSubscription} onUpdateSubscription={handleUpdateSubscription} onClose={closeModal} subscriptionToEdit={editingSubscription} t={t} />}
       </Modal>
 

@@ -28,24 +28,24 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, setActiveTab, 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden" onClick={onClose}>
-        <div className="fixed inset-0 bg-background dark:bg-brand-black p-6 animate-slide-in" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-background dark:bg-surface-dark p-6 animate-slide-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-8">
                 <div className="flex items-center">
                     <img src={avatar} alt="User Avatar" className="w-12 h-12 rounded-full" />
                     <div className="ml-4">
                         <p className="font-semibold text-lg">{userName}</p>
-                        <p className="text-sm text-text-secondary dark:text-gray-400">olivia@email.com</p>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">olivia@email.com</p>
                     </div>
                 </div>
                 <button onClick={onClose} className="p-2">
-                    <XIcon className="w-6 h-6 text-text-secondary dark:text-gray-400"/>
+                    <XIcon className="w-6 h-6 text-text-secondary dark:text-text-secondary-dark"/>
                 </button>
             </div>
 
             <nav>
                 <ul className="space-y-4">
                     {menuItems.map(item => (
-                         <li key={item.tab} onClick={() => handleItemClick(item.tab)} className="flex items-center p-4 rounded-lg cursor-pointer text-text-secondary dark:text-gray-300 hover:bg-secondary dark:hover:bg-gray-800">
+                         <li key={item.tab} onClick={() => handleItemClick(item.tab)} className="flex items-center p-4 rounded-lg cursor-pointer text-text-secondary dark:text-text-secondary-dark hover:bg-secondary dark:hover:bg-secondary-dark">
                            <item.icon className="w-6 h-6 shrink-0 mr-4 text-primary" />
                            <span className="text-lg font-semibold">{t(item.labelKey)}</span>
                        </li>

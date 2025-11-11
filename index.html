@@ -35,19 +35,25 @@
               sans: ['Manrope', 'sans-serif'],
             },
             colors: {
-              'background': '#f9fafb', // Light gray background
-              'surface': '#ffffff', // White for cards
-              'primary': withOpacity('--color-primary'),
-              'primary-focus': withOpacity('--color-primary-focus'),
-              'secondary': '#f3f4f6', // Lighter gray for accents
+              'background': '#f9fafb',
+              'surface': '#ffffff',
+              'secondary': '#f3f4f6',
               'text-main': '#1f2937', 
               'text-secondary': '#6b7280', 
+
+              'primary': withOpacity('--color-primary'),
+              'primary-focus': withOpacity('--color-primary-focus'),
+              'accent': withOpacity('--color-accent'),
               'income': '#22c55e', 
               'expense': '#ef4444',
-              'brand-purple': withOpacity('--color-primary'), // Alias for dynamic color
-              'brand-cyan': withOpacity('--color-accent'), // New accent color
-              'brand-black': '#1A1A1A',
-              'brand-white': '#FCFCFC',
+              
+              // New Dark Mode Palette
+              'background-dark': '#1A1A1A',
+              'surface-dark': '#252525',
+              'secondary-dark': '#3A3A3A',
+              'border-dark': '#4A4A4A',
+              'text-main-dark': '#FCFCFC',
+              'text-secondary-dark': '#D1D5DB',
             },
             borderRadius: {
                 'xl': '1rem',
@@ -73,7 +79,7 @@
 }
 </script>
 </head>
-<body class="bg-background text-text-main dark:bg-brand-black dark:text-brand-white font-sans">
+<body class="bg-background text-text-main dark:bg-background-dark dark:text-text-main-dark font-sans">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>
