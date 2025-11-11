@@ -11,15 +11,9 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Initialize state in the constructor. This is a more traditional approach
-  // and can help resolve obscure type inference issues in some TypeScript configurations.
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: undefined,
-    };
-  }
+  state: State = {
+    hasError: false,
+  };
 
   // FIX: The thrown value is not guaranteed to be an Error instance.
   static getDerivedStateFromError(error: any): State {
