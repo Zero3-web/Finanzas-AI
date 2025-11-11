@@ -56,6 +56,10 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
     const noDataMessage = analysisType === 'expense' ? t('noExpenseData') : t('noIncomeData');
     const inputClasses = "bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
 
+    const getCategoryTranslation = (category: string) => {
+        return t(`category_${category.toLowerCase()}`);
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -128,7 +132,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
                                         ))}
                                     </Pie>
                                     <Tooltip formatter={(value: number) => formatCurrency(value, selectedCurrency)} />
-                                    <Legend />
+                                    <Legend formatter={(value) => getCategoryTranslation(value)} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -142,7 +146,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
                                     <div className="flex justify-between items-center mb-1">
                                         <div className="flex items-center">
                                             <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                                            <span className="font-medium text-text-main dark:text-text-main-dark">{category.name}</span>
+                                            <span className="font-medium text-text-main dark:text-text-main-dark">{getCategoryTranslation(category.name)}</span>
                                         </div>
                                         <span className="font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(category.value, selectedCurrency)}</span>
                                     </div>

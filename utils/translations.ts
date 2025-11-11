@@ -76,7 +76,7 @@ export const translations = {
         amount_paid: 'Amount Paid',
         next_payment_date: 'Next Payment Date',
 
-        // Subscriptions
+        // Subscriptions & Categories
         addSubscription: 'Add Subscription',
         subscription_name: 'Subscription Name',
         subscription_name_placeholder: 'e.g. Netflix',
@@ -86,6 +86,13 @@ export const translations = {
         category_software: 'Software',
         category_health: 'Health',
         category_other: 'Other',
+        category_food: 'Food',
+        category_transport: 'Transport',
+        category_housing: 'Housing',
+        category_salary: 'Salary',
+        category_freelance: 'Freelance',
+        category_investments: 'Investments',
+        category_gifts: 'Gifts',
         add_fixed_expense: 'Add Fixed Expense',
         fixed_expense_examples: 'Electricity, water, phone...',
         subscription_examples: 'Netflix, Spotify...',
@@ -281,7 +288,7 @@ export const translations = {
         amount_paid: 'Monto Pagado',
         next_payment_date: 'Fecha del Próximo Pago',
 
-        // Subscriptions
+        // Subscriptions & Categories
         addSubscription: 'Añadir Suscripción',
         subscription_name: 'Nombre de Suscripción',
         subscription_name_placeholder: 'ej. Netflix',
@@ -291,6 +298,13 @@ export const translations = {
         category_software: 'Software',
         category_health: 'Salud',
         category_other: 'Otro',
+        category_food: 'Comida',
+        category_transport: 'Transporte',
+        category_housing: 'Vivienda',
+        category_salary: 'Salario',
+        category_freelance: 'Freelance',
+        category_investments: 'Inversiones',
+        category_gifts: 'Regalos',
         add_fixed_expense: 'Añadir Gasto Fijo',
         fixed_expense_examples: 'Luz, agua, teléfono...',
         subscription_examples: 'Netflix, Spotify...',

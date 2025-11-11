@@ -17,7 +17,7 @@ const LimitForm: React.FC<LimitFormProps> = ({ onAddLimit, onUpdateLimit, onClos
   const [currency, setCurrency] = useState(primaryCurrency);
   
   const isEditing = !!limitToEdit;
-  const expenseCategories = ['Comida', 'Transporte', 'Vivienda', 'Entretenimiento', 'Salud', 'Otros'];
+  const expenseCategories = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Other'];
   const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'PEN', 'MXN'];
 
   useEffect(() => {
@@ -64,7 +64,7 @@ const LimitForm: React.FC<LimitFormProps> = ({ onAddLimit, onUpdateLimit, onClos
             <option value="">{t('selectCategory')}</option>
             {/* Show only categories that don't have a limit yet, but include the current one if editing */}
             {expenseCategories.filter(cat => !existingCategories.includes(cat) || category === cat).map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>{t(`category_${cat.toLowerCase()}`)}</option>
             ))}
         </select>
          {isEditing && <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">{t('category_edit_warning')}</p>}

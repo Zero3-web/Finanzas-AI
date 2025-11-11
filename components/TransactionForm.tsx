@@ -65,8 +65,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
     onClose();
   };
   
-  const expenseCategories = ['Comida', 'Transporte', 'Vivienda', 'Entretenimiento', 'Salud', 'Otros'];
-  const incomeCategories = ['Salario', 'Freelance', 'Inversiones', 'Regalos', 'Otros'];
+  const expenseCategories = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Other'];
+  const incomeCategories = ['Salary', 'Freelance', 'Investments', 'Gifts', 'Other'];
 
   const inputClasses = "mt-1 block w-full bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
 
@@ -104,7 +104,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
         <select id="category" value={category} onChange={(e) => setCategory(e.target.value)} className={inputClasses}>
             <option value="">{t('selectCategory')}</option>
             {(type === TransactionType.EXPENSE ? expenseCategories : incomeCategories).map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>{t(`category_${cat.toLowerCase()}`)}</option>
             ))}
         </select>
       </div>

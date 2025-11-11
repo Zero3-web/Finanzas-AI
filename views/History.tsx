@@ -61,6 +61,10 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
     return `${baseClasses} bg-surface dark:bg-surface-dark hover:bg-secondary dark:hover:bg-secondary-dark`;
   };
 
+  const getCategoryTranslation = (category: string) => {
+    return t(`category_${category.toLowerCase()}`);
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('history')}</h1>
@@ -108,7 +112,7 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
                         <tr key={transaction.id} className="border-b border-secondary dark:border-border-dark last:border-b-0 hover:bg-secondary dark:hover:bg-secondary-dark/50">
                             <td className="p-3">{new Date(transaction.date).toLocaleDateString()}</td>
                             <td className="p-3">{transaction.description}</td>
-                            <td className="p-3">{transaction.category}</td>
+                            <td className="p-3">{getCategoryTranslation(transaction.category)}</td>
                             <td className="p-3">{account?.name}</td>
                             <td className={`p-3 text-right font-semibold ${transaction.type === TransactionType.INCOME ? 'text-income' : 'text-expense'}`}>
                                 {transaction.type === TransactionType.INCOME ? '+' : '-'}{formatCurrency(transaction.amount, account?.currency || 'USD')}
@@ -141,7 +145,7 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
             return (
             <Card key={transaction.id} className="p-4">
               <div className="flex justify-between items-start mb-2">
-                <span className="text-sm bg-secondary dark:bg-secondary-dark px-2 py-1 rounded-md">{transaction.category}</span>
+                <span className="text-sm bg-secondary dark:bg-secondary-dark px-2 py-1 rounded-md">{getCategoryTranslation(transaction.category)}</span>
                 <p className={`font-semibold text-lg ${transaction.type === TransactionType.INCOME ? 'text-income' : 'text-expense'}`}>
                     {transaction.type === TransactionType.INCOME ? '+' : '-'}{formatCurrency(transaction.amount, account?.currency || 'USD')}
                 </p>

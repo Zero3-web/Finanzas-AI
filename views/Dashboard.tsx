@@ -240,7 +240,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                     </h3>
                     <div className="text-text-secondary dark:text-text-secondary-dark text-sm flex items-center border border-secondary dark:border-border-dark rounded-lg px-2 py-1"><CalendarIcon className="w-5 h-5 mr-2"/> Jan 6, 2024 - Jan 11, 2024</div>
                 </div>
-                <ActivityChart transactions={displayedTransactions} primaryColor={primaryColor} accentColor={accentColor} />
+                <ActivityChart transactions={displayedTransactions} primaryColor={primaryColor} accentColor={accentColor} formatCurrency={(amount) => formatCurrency(amount, primaryCurrency)} />
             </Card>
         </div>
 

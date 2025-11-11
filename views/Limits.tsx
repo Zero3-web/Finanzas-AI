@@ -61,7 +61,7 @@ const LimitCard: React.FC<{
         <Card>
             <div className="flex justify-between items-start">
                 <div>
-                    <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark">{limit.category}</h3>
+                    <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark">{t(`category_${limit.category.toLowerCase()}`)}</h3>
                     <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{t('monthly_limit')} ({limit.currency})</p>
                 </div>
                 <div className="flex space-x-2">
