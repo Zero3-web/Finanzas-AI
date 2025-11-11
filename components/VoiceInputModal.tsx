@@ -1,334 +1,242 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
-import Modal from './Modal';
-import { Account, Transaction, TransactionType } from '../types';
-
-// Audio generation utility
-const playTone = (type: 'start' | 'success' | 'error') => {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
-
-    const audioCtx = new AudioContext();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-
-    gainNode.connect(audioCtx.destination);
-    oscillator.connect(gainNode);
-
-    const now = audioCtx.currentTime;
-
-    switch (type) {
-        case 'start':
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(880, now);
-            gainNode.gain.setValueAtTime(0.1, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
-            oscillator.start(now);
-            oscillator.stop(now + 0.3);
-            break;
-        case 'success':
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(523.25, now);
-            gainNode.gain.setValueAtTime(0.1, now);
-            oscillator.frequency.setValueAtTime(659.25, now + 0.1);
-            oscillator.frequency.setValueAtTime(783.99, now + 0.2);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
-            oscillator.start(now);
-            oscillator.stop(now + 0.4);
-            break;
-        case 'error':
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(150, now);
-            gainNode.gain.setValueAtTime(0.1, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
-            oscillator.start(now);
-            oscillator.stop(now + 0.2);
-            break;
-    }
-    setTimeout(() => audioCtx.close(), 500);
-};
-
-const FuturisticOrb: React.FC<{ status: 'idle' | 'recording' | 'processing' | 'success'; onClick: () => void }> = ({ status, onClick }) => {
-    return (
-        <div className="relative flex items-center justify-center w-32 h-32 cursor-pointer" onClick={onClick}>
-            <div className={`orb-base ${status}`}>
-                {status === 'success' && (
-                     <svg className="w-12 h-12 text-white animate-checkmark" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                )}
-            </div>
-            <div className={`orb-ring one ${status}`}></div>
-            <div className={`orb-ring two ${status}`}></div>
-            <div className={`orb-ring three ${status}`}></div>
-            {status === 'processing' && (
-                <div className="absolute w-24 h-24 border-4 border-t-primary border-transparent rounded-full animate-spin"></div>
-            )}
-            <style>{`
-                .orb-base {
-                    width: 60px;
-                    height: 60px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background-color: rgb(var(--color-primary));
-                    border-radius: 50%;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 0 15px rgba(var(--color-primary), 0.7);
-                }
-                .orb-base.recording { transform: scale(0.8); }
-                .orb-base.idle:hover { transform: scale(1.1); }
-                .orb-base.success { transform: scale(1.1); background-color: #22c55e; box-shadow: 0 0 20px #22c55e; }
-
-                .orb-ring {
-                    position: absolute;
-                    border-radius: 50%;
-                    border: 2px solid rgba(var(--color-primary), 0.7);
-                    transition: all 0.5s ease;
-                }
-                .orb-ring.success { display: none; }
-                .orb-ring.idle { animation: pulse 2s infinite ease-out; }
-                .orb-ring.one.idle { width: 90px; height: 90px; }
-                .orb-ring.two.idle { width: 120px; height: 120px; animation-delay: 0.2s; }
-                .orb-ring.three.idle { width: 150px; height: 150px; animation-delay: 0.4s; }
-                .orb-ring.recording { animation: wave 1.5s infinite ease-in-out; }
-                .orb-ring.one.recording { width: 70px; height: 70px; animation-delay: 0s; }
-                .orb-ring.two.recording { width: 70px; height: 70px; animation-delay: 0.5s; }
-                .orb-ring.three.recording { width: 70px; height: 70px; animation-delay: 1s; }
-                .orb-base.processing { animation: processing-pulse 1.5s infinite ease-in-out; }
-
-                @keyframes pulse {
-                    0% { transform: scale(0.8); opacity: 0.5; }
-                    50% { opacity: 1; }
-                    100% { transform: scale(1.2); opacity: 0; }
-                }
-                @keyframes wave {
-                    0% { transform: scale(1); opacity: 1; }
-                    100% { transform: scale(2.5); opacity: 0; }
-                }
-                @keyframes processing-pulse {
-                    0% { transform: scale(1); box-shadow: 0 0 15px rgba(var(--color-primary), 0.7); }
-                    50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(var(--color-primary), 1); }
-                    100% { transform: scale(1); box-shadow: 0 0 15px rgba(var(--color-primary), 0.7); }
-                }
-                @keyframes checkmark {
-                    0% { transform: scale(0.5); opacity: 0; }
-                    100% { transform: scale(1); opacity: 1; }
-                }
-                .animate-checkmark {
-                    animation: checkmark 0.4s ease-out forwards;
-                }
-            `}</style>
-        </div>
-    );
-};
+import { GoogleGenAI, FunctionDeclaration, Type, LiveSession, LiveServerMessage, Modality, Blob } from '@google/genai';
+import { Account, TransactionType } from '../types';
+import { MicIcon, StopCircleIcon, XIcon } from './icons';
+import { playTone } from '../utils/audio';
 
 interface VoiceInputModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onAddTransaction: (transaction: Omit<Transaction, 'id'>) => void;
-    accounts: Account[];
-    t: (key: string) => string;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: (transaction: Omit<Transaction, 'id'>) => void;
+  onError: (error: string) => void;
+  accounts: Account[];
+  t: (key: string) => string;
 }
 
-const VoiceInputModal: React.FC<VoiceInputModalProps> = ({ isOpen, onClose, onAddTransaction, accounts, t }) => {
-    const [isRecording, setIsRecording] = useState(false);
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
-    const [transcript, setTranscript] = useState('');
-    const [error, setError] = useState('');
-    const recognitionRef = useRef<any | null>(null);
-    
-    const resetState = () => {
-        setIsRecording(false);
-        setIsProcessing(false);
-        setIsSuccess(false);
-        setTranscript('');
-        setError('');
+// Audio helper functions
+function encode(bytes: Uint8Array) {
+    let binary = '';
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
     }
+    return btoa(binary);
+}
 
-    useEffect(() => {
-        if (!isOpen) {
-            stopRecording(true);
-            resetState();
-            return;
-        }
-
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.continuous = false;
-            recognitionRef.current.interimResults = true;
-            recognitionRef.current.lang = 'en-US';
-
-            recognitionRef.current.onresult = (event: any) => {
-                const currentTranscript = Array.from(event.results)
-                    .map((result: any) => result[0])
-                    .map((result: any) => result.transcript)
-                    .join('');
-                setTranscript(currentTranscript);
-            };
-
-            recognitionRef.current.onend = () => {
-                setIsRecording(false);
-            };
-
-            recognitionRef.current.onerror = (event: any) => {
-                console.error("Speech recognition error", event.error);
-                setError(t('voice_input_error'));
-                playTone('error');
-                setIsRecording(false);
-            };
-        }
-    }, [isOpen, t]);
-
-    const startRecording = () => {
-        if (recognitionRef.current && !isProcessing && !isSuccess) {
-            playTone('start');
-            setTranscript('');
-            setError('');
-            setIsRecording(true);
-            recognitionRef.current.start();
-        }
+function createBlob(data: Float32Array): Blob {
+    const l = data.length;
+    const int16 = new Int116Array(l);
+    for (let i = 0; i < l; i++) {
+        int16[i] = data[i] * 32768;
+    }
+    return {
+        data: encode(new Uint8Array(int16.buffer)),
+        mimeType: 'audio/pcm;rate=16000',
     };
+}
 
-    const stopRecording = (isClosing = false) => {
-        if (recognitionRef.current && (isRecording || isClosing)) {
-            recognitionRef.current.stop();
-            setIsRecording(false);
-        }
-    };
+
+const VoiceInputModal: React.FC<VoiceInputModalProps> = ({ isOpen, onClose, onSuccess, onError, accounts, t }) => {
+  const [status, setStatus] = useState<'idle' | 'listening' | 'processing' | 'error'>('idle');
+  const [transcribedText, setTranscribedText] = useState('');
+  
+  const sessionPromiseRef = useRef<Promise<LiveSession> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    useEffect(() => {
-        if (!isRecording && transcript && !isProcessing && !isSuccess && isOpen) {
-            processTranscript(transcript);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isRecording, transcript, isOpen]);
+  const addTransactionFunctionDeclaration: FunctionDeclaration = {
+    name: 'addTransaction',
+    parameters: {
+        type: Type.OBJECT,
+        description: 'Records a new financial transaction, either an income or an expense.',
+        properties: {
+            type: { type: Type.STRING, description: 'The type of transaction, must be "income" or "expense".' },
+            amount: { type: Type.NUMBER, description: 'The numerical amount of the transaction.' },
+            description: { type: Type.STRING, description: 'A brief description of the transaction, e.g., "Groceries at Walmart".' },
+            category: {
+                type: Type.STRING,
+                description: 'The category of the transaction. For expenses, common values are "Food", "Transport", "Shopping", "Housing", "Entertainment", "Health", "Utilities", "Other". For income, "Salary", "Freelance", "Gifts", "Investments", "Other".',
+            },
+            accountName: {
+                type: Type.STRING,
+                description: 'The name of the account to associate the transaction with. Should match one of the available account names.',
+            },
+        },
+        required: ['type', 'amount', 'description', 'category', 'accountName'],
+    },
+  };
+    
+  const startListening = async () => {
+    if (status !== 'idle' && status !== 'error') return;
+    setStatus('listening');
+    setTranscribedText('');
 
-
-    const processTranscript = async (text: string) => {
-        if (!text.trim()) return;
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaStreamRef.current = stream;
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
         
-        setIsProcessing(true);
-        setError('');
-
-        if (accounts.length === 0) {
-            setError(t('no_accounts_error'));
-            playTone('error');
-            setIsProcessing(false);
-            return;
-        }
+        const availableAccounts = accounts.map(a => a.name).join(', ') || 'none';
         
-        try {
-            const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
+        sessionPromiseRef.current = ai.live.connect({
+            model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+            callbacks: {
+                onopen: () => {
+                    const source = audioContextRef.current!.createMediaStreamSource(stream);
+                    mediaStreamSourceRef.current = source;
+                    const scriptProcessor = audioContextRef.current!.createScriptProcessor(4096, 1, 1);
+                    scriptProcessorRef.current = scriptProcessor;
 
-            const transactionSchema = {
-                type: Type.OBJECT,
-                properties: {
-                    amount: { type: Type.NUMBER, description: 'The transaction amount as a positive number.' },
-                    description: { type: Type.STRING, description: 'A brief description of the transaction.' },
-                    category: { type: Type.STRING, description: `The category of the transaction. Must be one of: 'Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Utilities', 'Salary', 'Freelance', 'Gifts', 'Investments', 'Other'.` },
-                    type: { type: Type.STRING, enum: ['income', 'expense'], description: 'The type of transaction.' },
-                    date: { type: Type.STRING, description: 'The date of the transaction in YYYY-MM-DD format.' },
-                    accountNameHint: { type: Type.STRING, description: 'A hint for which account was used, taken from the text, e.g., "credit card", "checking", or an actual account name.' }
+                    scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
+                        const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
+                        const pcmBlob = createBlob(inputData);
+                        sessionPromiseRef.current?.then((session) => {
+                           session.sendRealtimeInput({ media: pcmBlob });
+                        });
+                    };
+                    source.connect(scriptProcessor);
+                    scriptProcessor.connect(audioContextRef.current!.destination);
                 },
-                required: ['amount', 'description', 'category', 'type', 'date']
-            };
+                onmessage: (message: LiveServerMessage) => {
+                    if (message.serverContent?.inputTranscription) {
+                        setTranscribedText(prev => prev + message.serverContent.inputTranscription.text);
+                    }
+                    if (message.toolCall) {
+                        setStatus('processing');
+                        const fc = message.toolCall.functionCalls[0];
+                        if (fc && fc.name === 'addTransaction') {
+                            const { type, amount, description, category, accountName } = fc.args;
+                            const targetAccount = accounts.find(a => a.name.toLowerCase() === accountName?.toLowerCase());
+                            
+                            if (!targetAccount) {
+                                onError(t('voice_input_error_account'));
+                                setStatus('error');
+                                return;
+                            }
 
-            const accountNamesString = accounts.map(a => a.name).join(', ');
-            const prompt = `Parse the following user voice command to extract transaction details: "${text}". Today's date is ${new Date().toISOString().split('T')[0]}. If the year is not specified, assume the current year. Your response must be a JSON object matching the provided schema. The user's available accounts are: ${accountNamesString}.`;
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: transactionSchema,
+                            const transactionData = {
+                                accountId: targetAccount.id,
+                                amount: parseFloat(amount),
+                                description,
+                                category,
+                                type: type as TransactionType,
+                                date: new Date().toISOString().split('T')[0],
+                            };
+                            onSuccess(transactionData);
+                            stopListening(true);
+                        }
+                    }
+                    if (message.serverContent?.turnComplete) {
+                        if (status === 'listening') {
+                            setStatus('error');
+                            onError(t('voice_input_error'));
+                        }
+                    }
                 },
-            });
-            
-            const jsonText = response.text.trim();
-            const parsed = JSON.parse(jsonText);
+                onerror: (e: ErrorEvent) => {
+                    setStatus('error');
+                    onError(t('voice_input_error'));
+                },
+                onclose: () => {},
+            },
+            config: {
+                inputAudioTranscription: {},
+                tools: [{ functionDeclarations: [addTransactionFunctionDeclaration] }],
+                systemInstruction: `You are a voice assistant for a personal finance app. The user will state a transaction. Your task is to extract the details and call the 'addTransaction' function. Today's date is ${new Date().toLocaleDateString()}. Available accounts are: ${availableAccounts}. If no account is specified, use the first one. Be concise.`
+            },
+        });
+    } catch (err) {
+        console.error("Error starting voice input:", err);
+        setStatus('error');
+        onError('Microphone access denied.');
+    }
+  };
 
-            let accountId: string | undefined;
-            if (parsed.accountNameHint && accounts.length > 0) {
-                const hint = parsed.accountNameHint.toLowerCase();
-                const foundAccount = accounts.find(acc => acc.name.toLowerCase().includes(hint) || hint.includes(acc.name.toLowerCase()));
-                accountId = foundAccount?.id;
-            }
-
-            if (!accountId && accounts.length > 0) {
-                accountId = accounts[0].id;
-            }
-
-            if (accountId) {
-                const newTransaction: Omit<Transaction, 'id'> = {
-                    accountId,
-                    amount: parsed.amount,
-                    description: parsed.description,
-                    category: parsed.category,
-                    type: parsed.type as TransactionType,
-                    date: parsed.date,
-                };
-                playTone('success');
-                setIsSuccess(true);
-                setTimeout(() => {
-                    onAddTransaction(newTransaction);
-                    onClose();
-                }, 1500);
-
-            } else {
-                setError(t('no_accounts_error'));
-                playTone('error');
-            }
-
-        } catch (e) {
-            console.error('Error processing voice input with Gemini:', e);
-            setError(t('voice_input_error'));
-            playTone('error');
-        } finally {
-            setIsProcessing(false);
-            setTranscript('');
-        }
-    };
-
-    const handleClose = () => {
-        stopRecording(true);
+  const stopListening = (isSuccess = false) => {
+    if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+    }
+    if (scriptProcessorRef.current) {
+        scriptProcessorRef.current.disconnect();
+        scriptProcessorRef.current = null;
+    }
+    if(mediaStreamSourceRef.current) {
+        mediaStreamSourceRef.current.disconnect();
+        mediaStreamSourceRef.current = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+    }
+    if (sessionPromiseRef.current) {
+        sessionPromiseRef.current.then(session => session.close());
+        sessionPromiseRef.current = null;
+    }
+    if (isSuccess) {
         onClose();
+        playTone('success');
     }
+    setStatus('idle');
+  };
 
-    const getStatus = (): 'idle' | 'recording' | 'processing' | 'success' => {
-        if (isSuccess) return 'success';
-        if (isProcessing) return 'processing';
-        if (isRecording) return 'recording';
-        return 'idle';
+  useEffect(() => {
+    if (isOpen) {
+        startListening();
+    } else {
+        stopListening();
     }
+    return () => stopListening();
+  }, [isOpen]);
 
-    return (
-        <Modal isOpen={isOpen} onClose={handleClose} title={t('voice_input_title')} variant="glass">
-            <div className="flex flex-col items-center justify-center space-y-6 p-4 min-h-[250px]">
-                
-                <FuturisticOrb status={getStatus()} onClick={isRecording ? () => stopRecording() : startRecording} />
+  if (!isOpen) return null;
 
-                <div className="text-center h-12">
-                    {isSuccess ? (
-                        <p className="text-white/90 font-semibold">{t('transaction_added')}</p>
-                    ) : isProcessing ? (
-                        <p className="text-white/70 animate-pulse">{t('voice_input_processing')}</p>
-                    ) : isRecording ? (
-                        <p className="text-white/70 animate-pulse">{t('voice_input_listening')}</p>
-                    ) : transcript ? (
-                        <p className="text-white/90 italic">"{transcript}"</p>
-                    ) : error ? (
-                        <p className="text-red-400">{error}</p>
-                    ) : (
-                         <p className="text-white/70">{t('voice_input_prompt')}</p>
-                    )}
-                </div>
-            </div>
-        </Modal>
-    );
+  return (
+    <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 backdrop-blur-sm" onClick={() => stopListening()}>
+      <div className="bg-surface dark:bg-surface-dark rounded-2xl shadow-xl w-full max-w-md m-4 p-6 text-center transform transition-all duration-300 animate-modal-in" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark">{t('voice_input_title')}</h2>
+            <button onClick={() => stopListening()} className="text-text-secondary dark:text-text-secondary-dark"><XIcon className="w-6 h-6" /></button>
+        </div>
+        
+        <div className="my-8">
+            <button 
+                onClick={status === 'listening' ? () => stopListening() : startListening}
+                className={`mx-auto flex items-center justify-center w-24 h-24 rounded-full transition-colors ${status === 'listening' ? 'bg-red-500/20' : 'bg-primary/20'}`}
+            >
+               <div className={`flex items-center justify-center w-20 h-20 rounded-full ${status === 'listening' ? 'bg-red-500 animate-pulse' : 'bg-primary'}`}>
+                 {status === 'listening' ? <StopCircleIcon className="w-10 h-10 text-white"/> : <MicIcon className="w-10 h-10 text-white"/>}
+               </div>
+            </button>
+        </div>
+        
+        <div className="min-h-[6rem] flex flex-col justify-center">
+            {status === 'listening' && <p className="text-lg font-semibold text-primary">{t('voice_input_listening')}</p>}
+            {status === 'processing' && <p className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark">{t('voice_input_processing')}</p>}
+            
+            <p className="text-text-main dark:text-text-main-dark mt-2">{transcribedText}</p>
+
+            {(status === 'idle' || status === 'error') && (
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-2">
+                    {status === 'error' ? t('voice_input_error') : t('voice_input_prompt')}
+                </p>
+            )}
+        </div>
+
+      </div>
+       <style>{`
+        @keyframes modal-in {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-modal-in { animation: modal-in 0.2s ease-out forwards; }
+      `}</style>
+    </div>
+  );
 };
 
 export default VoiceInputModal;
