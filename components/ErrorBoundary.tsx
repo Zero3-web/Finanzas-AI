@@ -6,16 +6,19 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  // FIX: The thrown value is not guaranteed to be an Error instance.
   error?: any;
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  state: State = {
-    hasError: false,
-  };
+  // FIX: Switched to a constructor for state initialization to ensure `this.props` is correctly typed.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+    };
+  }
 
-  // FIX: The thrown value is not guaranteed to be an Error instance.
   static getDerivedStateFromError(error: any): State {
     return { hasError: true, error };
   }

@@ -36,7 +36,7 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
         if (sort.key === 'date') {
           const dateA = new Date(a.date).getTime();
           const dateB = new Date(b.date).getTime();
-          return sort.order === 'asc' ? dateA - dateB : dateB - dateA;
+          return sort.order === 'asc' ? dateA - dateB : dateB - a;
         }
         if (sort.key === 'amount') {
           return sort.order === 'asc' ? a.amount - b.amount : b.amount - a.amount;
@@ -144,7 +144,7 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
           filteredAndSortedTransactions.map(transaction => {
             const account = accountMap[transaction.accountId];
             return (
-            <Card key={transaction.id} className="p-4">
+            <Card key={transaction.id} className="p-4" id={`transaction-${transaction.id}`}>
               <div className="flex justify-between items-start mb-2">
                 <span className="text-sm bg-secondary dark:bg-secondary-dark px-2 py-1 rounded-md">{getCategoryTranslation(transaction.category)}</span>
                 <p className={`font-semibold text-lg ${transaction.type === TransactionType.INCOME ? 'text-income' : 'text-expense'}`}>

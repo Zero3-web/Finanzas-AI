@@ -3,6 +3,7 @@ import Modal from './Modal';
 import { playTone } from '../utils/audio';
 // FIX: Imported the missing XIcon component.
 import { XIcon } from './icons';
+import { Language } from '../types';
 
 type Status = 'idle' | 'recording' | 'transitioning';
 
@@ -62,9 +63,10 @@ interface VoiceInputModalProps {
     onClose: () => void;
     onTranscriptReady: (transcript: string) => void;
     t: (key: string) => string;
+    lang: Language;
 }
 
-const VoiceInputModal: React.FC<VoiceInputModalProps> = ({ isOpen, onClose, onTranscriptReady, t }) => {
+const VoiceInputModal: React.FC<VoiceInputModalProps> = ({ isOpen, onClose, onTranscriptReady, t, lang }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [status, setStatus] = useState<Status>('idle');
@@ -90,7 +92,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({ isOpen, onClose, onTr
             recognitionRef.current = new SpeechRecognition();
             recognitionRef.current.continuous = false;
             recognitionRef.current.interimResults = true;
-            recognitionRef.current.lang = 'en-US';
+            recognitionRef.current.lang = lang === 'es' ? 'es-ES' : 'en-US';
 
             recognitionRef.current.onresult = (event: any) => {
                 const currentTranscript = Array.from(event.results)
@@ -112,7 +114,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({ isOpen, onClose, onTr
                 onClose();
             };
         }
-    }, [isOpen, onClose]);
+    }, [isOpen, onClose, lang]);
 
     const startRecording = () => {
         if (recognitionRef.current) {

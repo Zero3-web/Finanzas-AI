@@ -1,30 +1,17 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { GoogleGenAI, Type } from "@google/genai";
-import { 
-    Account, Transaction, Debt, Subscription, SpendingLimit, Goal, Tab, Language, 
-    TransactionType, ColorTheme, Notification 
-} from './types';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { GoogleGenAI, Type } from '@google/genai';
+import { Tab, Transaction, Account, Debt, Subscription, SpendingLimit, Goal, Notification, Language, ColorTheme, TransactionType, AccountType } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useTheme } from './hooks/useTheme';
 import { useColorTheme } from './hooks/useColorTheme';
-import { useLongPress } from './hooks/useLongPress';
 import { translations } from './utils/translations';
 import { avatars } from './utils/avatars';
 import { playTone } from './utils/audio';
 
 import Navigation from './components/Navigation';
-import Dashboard from './views/Dashboard';
-import Accounts from './views/Accounts';
-import Debts from './views/Debts';
-import History from './views/History';
-import Subscriptions from './views/Subscriptions';
-import Limits from './views/Limits';
-import Goals from './views/Goals';
-import Analysis from './views/Analysis';
-import Calendar from './views/Calendar';
-import Export from './views/Export';
-import Settings from './views/Settings';
+import MobileHeader from './components/MobileHeader';
+import MobileBottomNav from './components/MobileBottomNav';
+import MobileMenu from './components/MobileMenu';
 import Modal from './components/Modal';
 import TransactionForm from './components/TransactionForm';
 import AccountForm from './components/AccountForm';
@@ -33,27 +20,42 @@ import SubscriptionForm from './components/SubscriptionForm';
 import LimitForm from './components/LimitForm';
 import GoalForm from './components/GoalForm';
 import ConfirmationModal from './components/ConfirmationModal';
-import { PlusIcon, MicIcon } from './components/icons';
-import MobileHeader from './components/MobileHeader';
-import MobileBottomNav from './components/MobileBottomNav';
-import MobileMenu from './components/MobileMenu';
 import OnboardingTour from './components/OnboardingTour';
-import Confetti from './components/Confetti';
 import VoiceInputModal from './components/VoiceInputModal';
 import DynamicIsland from './components/DynamicIsland';
+import Confetti from './components/Confetti';
+
+import Dashboard from './views/Dashboard';
+import Accounts from './views/Accounts';
+import Debts from './views/Debts';
+import Subscriptions from './views/Subscriptions';
+import Limits from './views/Limits';
+import Goals from './views/Goals';
+import History from './views/History';
+import Analysis from './views/Analysis';
+import Calendar from './views/Calendar';
+import Export from './views/Export';
+import Settings from './views/Settings';
+import FollowUpModal from './components/FollowUpModal';
+import { MicIcon, PlusIcon } from './components/icons';
+
 
 const App: React.FC = () => {
-    // Basic hooks
+    // Global Settings
+    const [language, setLanguage] = useLocalStorage<Language>('language', 'en');
+    const [primaryCurrency, setPrimaryCurrency] = useLocalStorage<string>('primary-currency', 'USD');
+    const [userName, setUserName] = useLocalStorage<string>('user-name', 'Guest');
+    const [avatar, setAvatar] = useLocalStorage<string>('user-avatar', avatars[0]);
     const [theme, toggleTheme] = useTheme();
     const [colorTheme, setColorTheme] = useColorTheme();
-    const [isNavCollapsed, setIsNavCollapsed] = useLocalStorage('navCollapsed', false);
-    const [showConfetti, setShowConfetti] = useState(false);
-    
-    // App Data State
-    const [language, setLanguage] = useLocalStorage<Language>('language', 'en');
-    const [primaryCurrency, setPrimaryCurrency] = useLocalStorage('primaryCurrency', 'USD');
-    const [userName, setUserName] = useLocalStorage('userName', 'User');
-    const [avatar, setAvatar] = useLocalStorage('userAvatar', avatars[0]);
+    const [isFinishedOnboarding, setIsFinishedOnboarding] = useLocalStorage('onboarding-finished', false);
+
+    // Main App State
+    const [isNavCollapsed, setIsNavCollapsed] = useLocalStorage('nav-collapsed', false);
+    const [activeTab, setActiveTab] = useLocalStorage<Tab>('active-tab', 'dashboard');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Data State
     const [accounts, setAccounts] = useLocalStorage<Account[]>('accounts', []);
     const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
     const [debts, setDebts] = useLocalStorage<Debt[]>('debts', []);
@@ -61,191 +63,264 @@ const App: React.FC = () => {
     const [limits, setLimits] = useLocalStorage<SpendingLimit[]>('limits', []);
     const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
 
-    // UI State
-    const [activeTab, setActiveTab] = useLocalStorage<Tab>('activeTab', 'dashboard');
+    // Modal & Editing State
     const [modal, setModal] = useState<string | null>(null);
-    const [editingItem, setEditingItem] = useState<any | null>(null);
-    const [itemToRemove, setItemToRemove] = useState<{ type: string; id: string } | null>(null);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isOnboarding, setIsOnboarding] = useLocalStorage('onboardingComplete', false);
-    const [islandState, setIslandState] = useState<{
-        isOpen: boolean;
-        status: 'processing' | 'success' | 'error';
-        message: string;
-    }>({ isOpen: false, status: 'processing', message: '' });
+    const [itemToEdit, setItemToEdit] = useState<any>(null);
+    const [itemToRemove, setItemToRemove] = useState<{ type: string, id: string } | null>(null);
+
+    // Voice Input State
+    const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+    const [isIslandOpen, setIsIslandOpen] = useState(false);
+    const [islandStatus, setIslandStatus] = useState<'processing' | 'success' | 'error'>('processing');
+    const [islandMessage, setIslandMessage] = useState('');
+    const [scrollToTransactionId, setScrollToTransactionId] = useState<string | null>(null);
+
+
+    // Goal Completion State
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
 
     const t = useCallback((key: string, params?: { [key: string]: string | number }) => {
-        let translation = translations[language][key as keyof typeof translations.en] || key;
+        let translation = translations[language][key] || key;
         if (params) {
             Object.keys(params).forEach(pKey => {
-                translation = translation.replace(`{{${pKey}}}`, String(params[pKey]));
+                translation = translation.replace(`{${pKey}}`, String(params[pKey]));
             });
         }
         return translation;
     }, [language]);
 
-    const formatCurrency = useCallback((amount: number, currency: string) => {
-        return new Intl.NumberFormat(language, { style: 'currency', currency }).format(amount);
-    }, [language]);
+    const formatCurrency = useCallback((amount: number, currencyCode?: string) => {
+        // Ensure currencyCode is a valid, non-empty string. Fallback chain: provided code -> primary currency -> USD.
+        const code = (currencyCode && currencyCode.trim()) ? currencyCode : primaryCurrency;
+        
+        try {
+            // This will throw an error if 'code' is not a valid ISO currency code.
+            return new Intl.NumberFormat(language, { style: 'currency', currency: code }).format(amount);
+        } catch (error) {
+            // Catch the error and default to USD, preventing the app from crashing.
+            console.warn(`Could not format currency for code "${code}". Defaulting to USD.`, error);
+            return new Intl.NumberFormat(language, { style: 'currency', currency: 'USD' }).format(amount);
+        }
+    }, [language, primaryCurrency]);
 
-    const notifications = useMemo((): Notification[] => {
-        // Generate notifications for upcoming payments
-        const upcoming: Notification[] = [];
+    // Data Migration: Ensure old data from localStorage has a currency field.
+    const dataMigrationRan = useRef(false);
+    useEffect(() => {
+        if (dataMigrationRan.current || !primaryCurrency) return;
+    
+        const migrate = (items: any[], setter: React.Dispatch<React.SetStateAction<any[]>>, key: string) => {
+            let needsUpdate = false;
+            const updatedItems = items.map(item => {
+                if (item && typeof item === 'object' && !item.currency) {
+                    needsUpdate = true;
+                    return { ...item, currency: primaryCurrency };
+                }
+                return item;
+            });
+    
+            if (needsUpdate) {
+                console.log(`Running data migration for '${key}': setting missing currency.`);
+                setter(updatedItems);
+            }
+        };
+        
+        migrate(accounts, setAccounts, 'accounts');
+        migrate(debts, setDebts, 'debts');
+        migrate(subscriptions, setSubscriptions, 'subscriptions');
+        migrate(limits, setLimits, 'limits');
+        migrate(goals, setGoals, 'goals');
+    
+        dataMigrationRan.current = true;
+    // We only want this to run once when the app loads and has the primary currency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [primaryCurrency, accounts, debts, subscriptions, limits, goals]);
+
+    // Notifications
+    const notifications = useMemo<Notification[]>(() => {
         const today = new Date();
-        const threeDaysFromNow = new Date();
-        threeDaysFromNow.setDate(today.getDate() + 3);
+        const upcoming: Notification[] = [];
+        const sevenDaysFromNow = new Date();
+        sevenDaysFromNow.setDate(today.getDate() + 7);
 
         debts.forEach(d => {
             const dueDate = new Date(d.nextPaymentDate);
-            if (dueDate >= today && dueDate <= threeDaysFromNow) {
-                upcoming.push({ id: `debt-${d.id}`, message: `Payment for ${d.name} is due soon.`, dueDate: d.nextPaymentDate, type: 'debt' });
+            if (dueDate >= today && dueDate <= sevenDaysFromNow) {
+                upcoming.push({ id: `debt-${d.id}`, message: `${t('paymentFor')} ${d.name}`, dueDate: d.nextPaymentDate, type: 'debt' });
             }
         });
-        // Add more notification logic for subscriptions, credit cards, etc.
-        return upcoming;
-    }, [debts]);
+        accounts.filter(a => a.type === 'credit' && a.paymentDueDate).forEach(a => {
+            const dayOfMonth = parseInt(a.paymentDueDate!);
+            if (isNaN(dayOfMonth)) return;
+            const dueDate = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
+            if (dueDate >= today && dueDate <= sevenDaysFromNow) {
+                upcoming.push({ id: `cc-${a.id}`, message: `${t('paymentFor')} ${a.name}`, dueDate: dueDate.toISOString(), type: 'credit_card' });
+            }
+        });
 
-    // Data Handlers
-    const handleAddOrUpdate = <T extends { id: string }>(items: T[], setItems: (items: T[]) => void, newItem: Omit<T, 'id'> | T) => {
-        if ('id' in newItem && newItem.id) {
-            setItems(items.map(item => item.id === newItem.id ? newItem : item));
-        } else {
-            setItems([...items, { ...newItem, id: uuidv4() } as T]);
+        return upcoming.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    }, [debts, accounts, t]);
+
+    // CRUD Handlers
+    const handleAddOrUpdate = <T extends { id: string }>(items: T[], setItems: (items: T[]) => void, newItem: Omit<T, 'id'> | T): T => {
+        let result: T;
+        if ('id' in newItem) { // Update
+            result = newItem as T;
+            setItems(items.map(item => (item.id === result.id ? result : item)));
+        } else { // Add
+            result = { ...newItem, id: new Date().toISOString() } as T;
+            setItems([...items, result]);
         }
-        setModal(null);
-        setEditingItem(null);
+        return result;
     };
 
-    const handleRemove = () => {
-        if (!itemToRemove) return;
-        const { type, id } = itemToRemove;
-        switch (type) {
-            case 'transaction': setTransactions(transactions.filter(t => t.id !== id)); break;
-            case 'account': 
+    const handleRemove = (type: string, id: string) => {
+        const setters: { [key: string]: React.Dispatch<any> } = {
+            account: setAccounts,
+            transaction: setTransactions,
+            debt: setDebts,
+            subscription: setSubscriptions,
+            limit: setLimits,
+            goal: setGoals
+        };
+        const items: { [key: string]: any[] } = {
+            account: accounts,
+            transaction: transactions,
+            debt: debts,
+            subscription: subscriptions,
+            limit: limits,
+            goal: goals
+        };
+        if (setters[type]) {
+            setters[type](items[type].filter((item: any) => item.id !== id));
+            // Cascade delete transactions if account is removed
+            if (type === 'account') {
                 setTransactions(transactions.filter(t => t.accountId !== id));
-                setAccounts(accounts.filter(a => a.id !== id));
-                break;
-            case 'debt': setDebts(debts.filter(d => d.id !== id)); break;
-            case 'subscription': setSubscriptions(subscriptions.filter(s => s.id !== id)); break;
-            case 'limit': setLimits(limits.filter(l => l.id !== id)); break;
-            case 'goal': setGoals(goals.filter(g => g.id !== id)); break;
+            }
         }
         setItemToRemove(null);
     };
 
-    // Modal Openers
-    const openModal = (type: string, item: any | null = null) => {
-        setEditingItem(item);
-        setModal(type);
+    // Modal Open/Close Handlers
+    const openModal = (name: string, item: any = null) => {
+        setItemToEdit(item);
+        setModal(name);
     };
-    
+
+    const closeModal = () => {
+        setModal(null);
+        setItemToEdit(null);
+    };
+
     const openConfirmation = (type: string, id: string) => {
         setItemToRemove({ type, id });
     };
 
-    const handleGoalUpdate = (updatedGoal: Goal) => {
-        const originalGoal = goals.find(g => g.id === updatedGoal.id);
-        if (originalGoal && originalGoal.savedAmount < originalGoal.targetAmount && updatedGoal.savedAmount >= updatedGoal.targetAmount) {
-            setShowConfetti(true);
-            setTimeout(() => setShowConfetti(false), 5000); // Confetti for 5 seconds
-        }
-        handleAddOrUpdate(goals, setGoals, updatedGoal);
-    }
-    
-    // Voice Input Logic
-    const processVoiceTranscript = async (text: string) => {
-        if (!text.trim()) return;
-        
-        setIslandState({ isOpen: true, status: 'processing', message: t('voice_input_processing') });
+    // Goal Completion Effect
+    useEffect(() => {
+        goals.forEach(goal => {
+            if (goal.savedAmount >= goal.targetAmount) {
+                setShowConfetti(true);
+                setTimeout(() => setShowConfetti(false), 8000); // Confetti lasts 8 seconds
+            }
+        });
+    }, [goals]);
 
-        if (accounts.length === 0) {
-            playTone('error');
-            setIslandState({ isOpen: true, status: 'error', message: t('no_accounts_error') });
+    // Effect to scroll to a newly added transaction on mobile
+    useEffect(() => {
+        if (scrollToTransactionId) {
+            // We need to be on the history tab to see the transaction list
+            setActiveTab('history');
+            
+            // Allow time for the view to re-render before trying to find the element
+            const scrollTimer = setTimeout(() => {
+                const element = document.getElementById(`transaction-${scrollToTransactionId}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                // Reset the scroll state after the action
+                setScrollToTransactionId(null);
+            }, 300);
+
+            return () => clearTimeout(scrollTimer);
+        }
+    }, [scrollToTransactionId, setActiveTab]);
+    
+    // Gemini API integration
+    const handleTranscriptReady = async (transcript: string) => {
+        setIsVoiceModalOpen(false);
+        setIslandStatus('processing');
+        setIslandMessage(t('voice_processing'));
+        setIsIslandOpen(true);
+
+        if (!process.env.API_KEY) {
+            console.error("API_KEY environment variable not set.");
+            setIslandStatus('error');
+            setIslandMessage("API Key not configured.");
             return;
         }
-        
-        try {
-            const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
 
-            const transactionSchema = {
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const responseSchema = {
                 type: Type.OBJECT,
                 properties: {
-                    amount: { type: Type.NUMBER, description: 'The transaction amount as a positive number.' },
-                    description: { type: Type.STRING, description: 'A brief description of the transaction.' },
-                    category: { type: Type.STRING, description: `The category of the transaction. Must be one of: 'Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Utilities', 'Salary', 'Freelance', 'Gifts', 'Investments', 'Other'.` },
-                    type: { type: Type.STRING, enum: ['income', 'expense'], description: 'The type of transaction.' },
-                    date: { type: Type.STRING, description: 'The date of the transaction in YYYY-MM-DD format.' },
-                    accountNameHint: { type: Type.STRING, description: 'A hint for which account was used, taken from the text, e.g., "credit card", "checking", or an actual account name.' }
+                    amount: { type: Type.NUMBER, description: "The transaction amount as a number." },
+                    description: { type: Type.STRING, description: "A brief description of the transaction." },
+                    category: { type: Type.STRING, description: "The category of the transaction." },
+                    type: { type: Type.STRING, enum: ['income', 'expense'], description: "The type of transaction, either 'income' or 'expense'." },
                 },
-                required: ['amount', 'description', 'category', 'type', 'date']
+                required: ['amount', 'description', 'category', 'type'],
             };
 
-            const accountNamesString = accounts.map(a => a.name).join(', ');
-            const prompt = `Parse the following user voice command to extract transaction details: "${text}". Today's date is ${new Date().toISOString().split('T')[0]}. If the year is not specified, assume the current year. Your response must be a JSON object matching the provided schema. The user's available accounts are: ${accountNamesString}.`;
-            
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
-                contents: prompt,
+                contents: `Parse the following text into a transaction. The user's primary currency is ${primaryCurrency}. Today is ${new Date().toLocaleDateString()}. Text: "${transcript}"`,
                 config: {
-                    responseMimeType: "application/json",
-                    responseSchema: transactionSchema,
+                    responseMimeType: 'application/json',
+                    responseSchema,
+                    systemInstruction: `You are a financial assistant. Parse the user's voice input into a structured JSON transaction. Available expense categories: Food, Transport, Housing, Entertainment, Health, Shopping, Utilities, Other. Available income categories: Salary, Freelance, Gifts, Investments, Other. Infer the category. Default to 'Other' if unsure.`,
                 },
             });
-            
-            const jsonText = response.text.trim();
-            const parsed = JSON.parse(jsonText);
 
-            let accountId: string | undefined;
-            if (parsed.accountNameHint && accounts.length > 0) {
-                const hint = parsed.accountNameHint.toLowerCase();
-                const foundAccount = accounts.find(acc => acc.name.toLowerCase().includes(hint) || hint.includes(acc.name.toLowerCase()));
-                accountId = foundAccount?.id;
-            }
+            const jsonStr = response.text.trim();
+            const parsed = JSON.parse(jsonStr);
 
-            if (!accountId && accounts.length > 0) {
-                accountId = accounts[0].id;
-            }
-
-            if (accountId) {
+            if (parsed.amount && parsed.description && parsed.category && parsed.type) {
                 const newTransaction: Omit<Transaction, 'id'> = {
-                    accountId,
-                    amount: parsed.amount,
+                    amount: Math.abs(parsed.amount),
                     description: parsed.description,
                     category: parsed.category,
                     type: parsed.type as TransactionType,
-                    date: parsed.date,
+                    accountId: accounts[0]?.id || '',
+                    date: new Date().toISOString().split('T')[0],
                 };
-                
-                handleAddOrUpdate(transactions, setTransactions, newTransaction);
+                if (!accounts.length) {
+                    throw new Error("No account available to add transaction to.");
+                }
+                const newTransactionWithId = handleAddOrUpdate(transactions, setTransactions, newTransaction);
+                setIslandStatus('success');
+                setIslandMessage(t('voice_success'));
                 playTone('success');
-                setIslandState({ isOpen: true, status: 'success', message: t('transaction_added') });
 
+                if (window.innerWidth < 768) {
+                    setScrollToTransactionId(newTransactionWithId.id);
+                }
             } else {
-                playTone('error');
-                setIslandState({ isOpen: true, status: 'error', message: t('no_accounts_error') });
+                throw new Error('Invalid transaction data from AI');
             }
-
-        } catch (e) {
-            console.error('Error processing voice input with Gemini:', e);
+        } catch (error) {
+            console.error('Error processing transcript with AI:', error);
+            setIslandStatus('error');
+            setIslandMessage(t('voice_error'));
             playTone('error');
-            setIslandState({ isOpen: true, status: 'error', message: t('voice_input_error') });
         }
     };
-    
-    const handleTranscriptReady = (transcript: string) => {
-        setModal(null); // Close the modal
-        processVoiceTranscript(transcript); // Start processing with the island
-    };
 
-    // Long press for mobile FAB
-    const longPressHandlers = useLongPress(
-        () => openModal('voice'),
-        () => openModal('transaction')
-    );
-    
+
     const renderView = () => {
         switch (activeTab) {
-            case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} subscriptions={subscriptions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddSubscription={() => openModal('subscription')} primaryCurrency={primaryCurrency}/>;
+            case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} subscriptions={subscriptions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddSubscription={() => openModal('subscription')} primaryCurrency={primaryCurrency} />;
             case 'accounts': return <Accounts accounts={accounts} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={(id) => openConfirmation('account', id)} t={t} />;
             case 'debts': return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onEditDebt={(debt) => openModal('debt', debt)} onRemoveDebt={(id) => openConfirmation('debt', id)} t={t} />;
             case 'subscriptions': return <Subscriptions subscriptions={subscriptions} formatCurrency={formatCurrency} onAddSubscription={() => openModal('subscription')} onEditSubscription={(sub) => openModal('subscription', sub)} onRemoveSubscription={(id) => openConfirmation('subscription', id)} t={t} />;
@@ -254,15 +329,15 @@ const App: React.FC = () => {
             case 'history': return <History transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onEditTransaction={(tr) => openModal('transaction', tr)} onRemoveTransaction={(id) => openConfirmation('transaction', id)} t={t} />;
             case 'analysis': return <Analysis transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} primaryCurrency={primaryCurrency} />;
             case 'calendar': return <Calendar accounts={accounts} debts={debts} subscriptions={subscriptions} formatCurrency={formatCurrency} t={t} />;
-            case 'export': return <Export transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} userName={userName} colorTheme={colorTheme}/>;
+            case 'export': return <Export transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} userName={userName} colorTheme={colorTheme} />;
             case 'settings': return <Settings theme={theme} toggleTheme={toggleTheme} currency={primaryCurrency} setCurrency={setPrimaryCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} userName={userName} setUserName={setUserName} t={t} />;
-            default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} subscriptions={subscriptions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddSubscription={() => openModal('subscription')} primaryCurrency={primaryCurrency}/>;
+            default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} subscriptions={subscriptions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddSubscription={() => openModal('subscription')} primaryCurrency={primaryCurrency} />;
         }
     };
-
-    if (!isOnboarding) {
+    
+    if (!isFinishedOnboarding) {
         return <OnboardingTour 
-            onFinish={() => setIsOnboarding(true)}
+            onFinish={() => setIsFinishedOnboarding(true)}
             colorTheme={colorTheme}
             setColorTheme={setColorTheme}
             onAddAccount={(acc) => handleAddOrUpdate(accounts, setAccounts, acc)}
@@ -279,143 +354,141 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className={`flex h-screen bg-background dark:bg-background-dark font-sans ${theme}`}>
+        <div className={`flex h-screen bg-background dark:bg-background-dark text-text-main dark:text-text-main-dark font-sans`}>
             {showConfetti && <Confetti />}
-            <DynamicIsland 
-                isOpen={islandState.isOpen}
-                status={islandState.status}
-                message={islandState.message}
-                onClose={() => setIslandState(prev => ({ ...prev, isOpen: false }))}
-            />
-            <Navigation 
-                activeTab={activeTab} 
-                setActiveTab={setActiveTab} 
-                isCollapsed={isNavCollapsed}
-                toggleCollapse={() => setIsNavCollapsed(!isNavCollapsed)}
-                t={t}
-                userName={userName}
-                avatar={avatar}
-            />
+            <Navigation activeTab={activeTab} setActiveTab={setActiveTab} isCollapsed={isNavCollapsed} toggleCollapse={() => setIsNavCollapsed(!isNavCollapsed)} t={t} userName={userName} avatar={avatar} />
             <div className="flex-1 flex flex-col overflow-hidden">
-                <MobileHeader 
-                    activeTab={activeTab}
-                    t={t}
-                    notifications={notifications}
-                    onAvatarClick={() => setIsMobileMenuOpen(true)}
-                    userName={userName}
-                    avatar={avatar}
-                />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8 pt-20 md:pt-6">
+                <MobileHeader activeTab={activeTab} t={t} notifications={notifications} onAvatarClick={() => setIsMobileMenuOpen(true)} userName={userName} avatar={avatar} />
+                <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 mt-16 md:mt-0 pb-20 md:pb-8">
                     {renderView()}
                 </main>
                 <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} t={t} />
             </div>
 
             {/* Modals */}
-            <Modal isOpen={modal === 'transaction'} onClose={() => setModal(null)} title={editingItem ? t('update') : t('add') + ' ' + t('transaction')}>
+            <Modal isOpen={modal === 'transaction'} onClose={closeModal} title={itemToEdit ? t('edit_transaction') : t('add_transaction')}>
                 <TransactionForm
                     accounts={accounts}
                     onAddTransaction={(tr) => handleAddOrUpdate(transactions, setTransactions, tr)}
                     onUpdateTransaction={(tr) => handleAddOrUpdate(transactions, setTransactions, tr)}
-                    onClose={() => setModal(null)}
-                    transactionToEdit={editingItem}
+                    onClose={closeModal}
+                    transactionToEdit={itemToEdit}
                     t={t}
                 />
             </Modal>
-            <Modal isOpen={modal === 'account'} onClose={() => setModal(null)} title={editingItem ? t('update') : t('add') + ' ' + t('account')}>
+            <Modal isOpen={modal === 'account'} onClose={closeModal} title={itemToEdit ? t('edit_account') : t('addAccount')}>
                 <AccountForm
                     onAddAccount={(acc) => handleAddOrUpdate(accounts, setAccounts, acc)}
                     onUpdateAccount={(acc) => handleAddOrUpdate(accounts, setAccounts, acc)}
-                    onClose={() => setModal(null)}
-                    accountToEdit={editingItem}
+                    onClose={closeModal}
+                    accountToEdit={itemToEdit}
                     t={t}
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
-            <Modal isOpen={modal === 'debt'} onClose={() => setModal(null)} title={editingItem ? t('update') : t('add') + ' ' + t('debt')}>
-                <DebtForm
-                    onAddDebt={(d) => handleAddOrUpdate(debts, setDebts, d)}
-                    onUpdateDebt={(d) => handleAddOrUpdate(debts, setDebts, d)}
-                    onClose={() => setModal(null)}
-                    debtToEdit={editingItem}
+            <Modal isOpen={modal === 'debt'} onClose={closeModal} title={itemToEdit ? t('edit_debt') : t('addDebt')}>
+                 <DebtForm
+                    onAddDebt={(debt) => handleAddOrUpdate(debts, setDebts, debt)}
+                    onUpdateDebt={(debt) => handleAddOrUpdate(debts, setDebts, debt)}
+                    onClose={closeModal}
+                    debtToEdit={itemToEdit}
                     t={t}
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
-            <Modal isOpen={modal === 'subscription'} onClose={() => setModal(null)} title={editingItem ? t('update') : t('add') + ' ' + t('subscription')}>
+            <Modal isOpen={modal === 'subscription'} onClose={closeModal} title={itemToEdit ? t('edit_subscription') : t('addSubscription')}>
                 <SubscriptionForm
-                    onAddSubscription={(s) => handleAddOrUpdate(subscriptions, setSubscriptions, s)}
-                    onUpdateSubscription={(s) => handleAddOrUpdate(subscriptions, setSubscriptions, s)}
-                    onClose={() => setModal(null)}
-                    subscriptionToEdit={editingItem}
+                    onAddSubscription={(sub) => handleAddOrUpdate(subscriptions, setSubscriptions, sub)}
+                    onUpdateSubscription={(sub) => handleAddOrUpdate(subscriptions, setSubscriptions, sub)}
+                    onClose={closeModal}
+                    subscriptionToEdit={itemToEdit}
                     t={t}
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
-            <Modal isOpen={modal === 'limit'} onClose={() => setModal(null)} title={editingItem ? t('update') : t('add') + ' ' + t('limit')}>
+             <Modal isOpen={modal === 'limit'} onClose={closeModal} title={itemToEdit ? t('edit_limit') : t('addLimit')}>
                 <LimitForm
-                    onAddLimit={(l) => handleAddOrUpdate(limits, setLimits, l)}
-                    onUpdateLimit={(l) => handleAddOrUpdate(limits, setLimits, l)}
-                    onClose={() => setModal(null)}
-                    limitToEdit={editingItem}
+                    onAddLimit={(limit) => handleAddOrUpdate(limits, setLimits, limit)}
+                    onUpdateLimit={(limit) => handleAddOrUpdate(limits, setLimits, limit)}
+                    onClose={closeModal}
+                    limitToEdit={itemToEdit}
                     t={t}
                     existingCategories={limits.map(l => l.category)}
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
-            <Modal isOpen={modal === 'goal'} onClose={() => setModal(null)} title={editingItem ? t('update') : t('add') + ' ' + t('goal')}>
+             <Modal isOpen={modal === 'goal'} onClose={closeModal} title={itemToEdit ? t('edit_goal') : t('addGoal')}>
                 <GoalForm
-                    onAddGoal={(g) => handleAddOrUpdate(goals, setGoals, g)}
-                    onUpdateGoal={handleGoalUpdate}
-                    onClose={() => setModal(null)}
-                    goalToEdit={editingItem}
+                    onAddGoal={(goal) => handleAddOrUpdate(goals, setGoals, goal)}
+                    onUpdateGoal={(goal) => handleAddOrUpdate(goals, setGoals, goal)}
+                    onClose={closeModal}
+                    goalToEdit={itemToEdit}
                     t={t}
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
-             <VoiceInputModal 
-                isOpen={modal === 'voice'} 
-                onClose={() => setModal(null)} 
-                onTranscriptReady={handleTranscriptReady}
-                t={t}
-            />
-            <ConfirmationModal
+
+            <ConfirmationModal 
                 isOpen={!!itemToRemove}
                 onClose={() => setItemToRemove(null)}
-                onConfirm={handleRemove}
-                title={`Delete ${itemToRemove?.type}`}
-                message={`Are you sure you want to delete this ${itemToRemove?.type}? This action cannot be undone.`}
+                onConfirm={() => itemToRemove && handleRemove(itemToRemove.type, itemToRemove.id)}
+                title={t('confirm_delete_title')}
+                message={t('confirm_delete_message')}
+                t={t}
             />
+            
              <MobileMenu 
-                isOpen={isMobileMenuOpen} 
+                isOpen={isMobileMenuOpen}
                 onClose={() => setIsMobileMenuOpen(false)}
-                setActiveTab={setActiveTab}
+                setActiveTab={(tab) => { setActiveTab(tab); setIsMobileMenuOpen(false); }}
                 t={t}
                 userName={userName}
                 avatar={avatar}
             />
 
-            {/* Floating Action Buttons */}
-            <div className="fixed bottom-20 right-5 md:bottom-8 md:right-8 z-40 flex flex-col items-center gap-4">
-                {/* Desktop-only voice button */}
+            <VoiceInputModal 
+                isOpen={isVoiceModalOpen}
+                onClose={() => setIsVoiceModalOpen(false)}
+                onTranscriptReady={handleTranscriptReady}
+                t={t}
+                lang={language}
+            />
+            
+            <DynamicIsland 
+                isOpen={isIslandOpen}
+                status={islandStatus}
+                message={islandMessage}
+                onClose={() => setIsIslandOpen(false)}
+            />
+
+            <FollowUpModal
+                isOpen={isFollowUpModalOpen}
+                onClose={() => setIsFollowUpModalOpen(false)}
+                onAsk={(q) => console.log('Follow up:', q)}
+                t={t}
+            />
+
+            {/* FABs for adding transaction */}
+            <div role="group" aria-label={t('quick_actions')}>
+                {/* Voice Input FAB */}
                 <button
-                    onClick={() => openModal('voice')}
-                    className="hidden md:flex items-center justify-center bg-accent text-primary dark:bg-secondary-dark dark:text-accent rounded-full p-4 shadow-lg hover:bg-opacity-80 transition-transform hover:scale-105"
-                    aria-label={t('voice_input_title')}
+                    onClick={() => setIsVoiceModalOpen(true)}
+                    className="fixed bottom-36 right-5 md:bottom-24 md:right-9 bg-accent hover:opacity-90 text-primary rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-transform transform active:scale-90"
+                    title={t('voice_input_title')}
                 >
                     <MicIcon className="w-6 h-6" />
                 </button>
-                {/* Main FAB: Click for transaction, Long press for voice (on mobile) */}
+                {/* Add Transaction FAB */}
                 <button
-                    {...longPressHandlers}
-                    className="flex items-center justify-center bg-primary hover:bg-primary-focus text-white rounded-full p-4 shadow-lg transition-transform hover:scale-105"
-                    aria-label={t('add') + ' ' + t('transaction')}
+                    onClick={() => openModal('transaction')}
+                    className="fixed bottom-20 right-4 md:bottom-8 md:right-8 bg-primary hover:bg-primary-focus text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg transition-transform transform active:scale-90"
+                    title={t('add_transaction')}
                 >
                     <PlusIcon className="w-8 h-8" />
                 </button>
             </div>
         </div>
     );
-};
+}
 
 export default App;

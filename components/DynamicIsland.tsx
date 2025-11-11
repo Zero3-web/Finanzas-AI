@@ -39,7 +39,7 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ isOpen, status, message, 
             case 'success':
                 return (
                     <div className="animate-checkmark-pop">
-                        <svg className="w-6 h-6 text-green-400" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <svg className="w-6 h-6 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
@@ -62,7 +62,7 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ isOpen, status, message, 
         }
     }
 
-    const islandWidth = status === 'processing' ? 'w-48' : 'w-64';
+    const islandWidth = status === 'processing' ? 'w-64' : 'w-72';
 
     return (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : '-translate-y-12 opacity-0'}`}>
