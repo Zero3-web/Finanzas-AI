@@ -1,176 +1,148 @@
 import React, { useMemo, useState } from 'react';
-import { ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
-import { Transaction, TransactionType, ColorTheme, Account } from '../types';
-import Card from '../components/Card';
-import ViewSwitcher from '../components/ViewSwitcher';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, TooltipProps } from 'recharts';
+import { Transaction, Account, TransactionType, ColorTheme } from '../types';
 import { themes } from '../hooks/useColorTheme';
-import { ArrowUpIcon, ChartPieIcon } from '../components/icons';
+import Card from '../components/Card';
+import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 
 interface AnalysisProps {
-    transactions: Transaction[];
-    accounts: Account[];
-    formatCurrency: (amount: number, currency: string) => string;
-    t: (key: string) => string;
-    colorTheme: ColorTheme;
-    primaryCurrency: string;
+  transactions: Transaction[];
+  accounts: Account[];
+  formatCurrency: (amount: number, currency: string) => string;
+  t: (key: string) => string;
+  colorTheme: ColorTheme;
+  primaryCurrency: string;
 }
 
-type AnalysisType = 'expense' | 'income';
+interface CustomTooltipProps extends TooltipProps<ValueType, NameType> {
+    // FIX: Add missing properties passed by recharts Tooltip component to resolve destructuring error.
+    active?: boolean;
+    payload?: any[];
+    label?: string;
+    formatCurrency: (amount: number, currency: string) => string;
+    currency: string;
+}
 
-const toHex = (rgb: string) => '#' + rgb.split(',').map(c => parseInt(c).toString(16).padStart(2, '0')).join('');
+const CustomTooltip = ({ active, payload, label, formatCurrency, currency }: CustomTooltipProps) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-surface dark:bg-secondary-dark p-2 border border-secondary dark:border-border-dark rounded-md shadow-lg text-sm">
+          <p className="label text-text-main dark:text-text-main-dark font-semibold">{`${label}`}</p>
+          {payload.map((pld, index) => (
+             <p key={index} style={{ color: pld.color }} className="intro">{`${pld.name}: ${formatCurrency(pld.value as number, currency)}`}</p>
+          ))}
+        </div>
+      );
+    }
+  
+    return null;
+};
 
 const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurrency, t, colorTheme, primaryCurrency }) => {
-    const [analysisType, setAnalysisType] = useState<AnalysisType>('expense');
-    
-    const availableCurrencies = useMemo(() => [...new Set(accounts.map(a => a.currency))], [accounts]);
-    const [selectedCurrency, setSelectedCurrency] = useState(availableCurrencies.includes(primaryCurrency) ? primaryCurrency : availableCurrencies[0] || 'USD');
-    
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM format
 
-    const currentPalette = themes[colorTheme];
-    const primaryColor = toHex(currentPalette['--color-primary']);
-    const accentColor = toHex(currentPalette['--color-accent']);
-    const COLORS = [primaryColor, accentColor, '#22c55e', '#ef4444', '#f59e0b', '#3b82f6'];
+  const currentPalette = themes[colorTheme];
+  const toHex = (rgb: string) => '#' + rgb.split(',').map(c => parseInt(c).toString(16).padStart(2, '0')).join('');
+  const primaryColor = toHex(currentPalette['--color-primary']);
+  const accentColor = toHex(currentPalette['--color-accent']);
+  const categoryColors = [primaryColor, accentColor, '#FFC107', '#E91E63', '#4CAF50', '#9C27B0', '#00BCD4', '#FF5722'];
 
-    const dataByCategory = useMemo(() => {
-        const type = analysisType === 'expense' ? TransactionType.EXPENSE : TransactionType.INCOME;
-        const accountCurrencyMap = new Map(accounts.map(acc => [acc.id, acc.currency]));
+  const accountCurrencyMap = useMemo(() => new Map(accounts.map(acc => [acc.id, acc.currency])), [accounts]);
 
-        const filteredTransactions = transactions.filter(t => t.type === type && accountCurrencyMap.get(t.accountId) === selectedCurrency);
-        
-        const categoryMap: Record<string, number> = {};
-        for (const t of filteredTransactions) {
-            categoryMap[t.category] = (categoryMap[t.category] || 0) + t.amount;
-        }
+  const monthlyTransactions = useMemo(() => {
+    return transactions.filter(tr => {
+      const transactionMonth = tr.date.slice(0, 7);
+      return transactionMonth === selectedMonth && accountCurrencyMap.get(tr.accountId) === primaryCurrency;
+    });
+  }, [transactions, selectedMonth, primaryCurrency, accountCurrencyMap]);
 
-        return Object.entries(categoryMap)
-            .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => b.value - a.value);
-    }, [transactions, analysisType, selectedCurrency, accounts]);
+  const spendingByCategory = useMemo(() => {
+    const categories: { [key: string]: number } = {};
+    monthlyTransactions
+      .filter(t => t.type === TransactionType.EXPENSE)
+      .forEach(t => {
+        categories[t.category] = (categories[t.category] || 0) + t.amount;
+      });
+    return Object.entries(categories)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [monthlyTransactions]);
 
-    const totalAmount = useMemo(() => {
-        return dataByCategory.reduce((sum, cat) => sum + cat.value, 0);
-    }, [dataByCategory]);
+  const monthlyOverviewData = useMemo(() => {
+    const income = monthlyTransactions
+      .filter(t => t.type === TransactionType.INCOME)
+      .reduce((sum, t) => sum + t.amount, 0);
+    const expense = monthlyTransactions
+      .filter(t => t.type === TransactionType.EXPENSE)
+      .reduce((sum, t) => sum + t.amount, 0);
+    return [{ name: t('monthly_overview'), [t('income')]: income, [t('expense')]: expense }];
+  }, [monthlyTransactions, t]);
+  
+  const availableMonths = useMemo(() => {
+      const months = new Set<string>();
+      transactions.forEach(t => months.add(t.date.slice(0, 7)));
+      return Array.from(months).sort().reverse();
+  }, [transactions]);
+  
+  const hasData = monthlyTransactions.length > 0;
 
-    const title = analysisType === 'expense' ? t('spendingAnalysis') : t('incomeAnalysis');
-    const totalTitle = analysisType === 'expense' ? t('totalSpent') : t('totalEarned');
-    const noDataMessage = analysisType === 'expense' ? t('noExpenseData') : t('noIncomeData');
-    const inputClasses = "bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
-
-    const getCategoryTranslation = (category: string) => {
-        return t(`category_${category.toLowerCase()}`);
-    }
-
-    return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('analysis')}</h1>
-                {availableCurrencies.length > 0 && (
-                     <select value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value)} className={inputClasses}>
-                        {availableCurrencies.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                )}
-            </div>
-
-            {/* Mobile View Switcher */}
-            <div className="md:hidden">
-                <ViewSwitcher
-                    value={analysisType}
-                    onChange={(val) => setAnalysisType(val as AnalysisType)}
-                    options={[
-                        { value: 'expense', icon: <ChartPieIcon className="w-6 h-6" /> },
-                        { value: 'income', icon: <ArrowUpIcon className="w-6 h-6" /> }
-                    ]}
-                />
-            </div>
-            
-            {/* Desktop Tabs */}
-            <div className="hidden md:block border-b border-secondary dark:border-border-dark">
-                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-                    <button
-                        onClick={() => setAnalysisType('expense')}
-                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                            analysisType === 'expense'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-main dark:hover:text-text-main-dark hover:border-gray-300 dark:hover:border-border-dark'
-                        }`}
-                    >
-                        {t('spendingAnalysis')}
-                    </button>
-                    <button
-                        onClick={() => setAnalysisType('income')}
-                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                            analysisType === 'income'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-main dark:hover:text-text-main-dark hover:border-gray-300 dark:hover:border-border-dark'
-                        }`}
-                    >
-                        {t('incomeAnalysis')}
-                    </button>
-                </nav>
-            </div>
-
-            <Card>
-                <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{title} ({selectedCurrency})</h2>
-                {dataByCategory.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                        <div>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <PieChart>
-                                    <Pie
-                                        data={dataByCategory}
-                                        cx="50%"
-                                        cy="50%"
-                                        labelLine={false}
-                                        outerRadius={120}
-                                        innerRadius={70}
-                                        fill="#8884d8"
-                                        dataKey="value"
-                                        paddingAngle={5}
-                                    >
-                                        {dataByCategory.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip formatter={(value: number) => formatCurrency(value, selectedCurrency)} />
-                                    <Legend formatter={(value) => getCategoryTranslation(value)} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-baseline pb-2 border-b-2 border-primary">
-                                <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark">{t('category')}</h3>
-                                <h3 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark">{totalTitle}</h3>
-                            </div>
-                            {dataByCategory.map((category, index) => (
-                                <div key={category.name}>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                                            <span className="font-medium text-text-main dark:text-text-main-dark">{getCategoryTranslation(category.name)}</span>
-                                        </div>
-                                        <span className="font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(category.value, selectedCurrency)}</span>
-                                    </div>
-                                    <div className="w-full bg-secondary dark:bg-secondary-dark rounded-full h-2">
-                                        <div
-                                            className="h-2 rounded-full"
-                                            style={{
-                                                width: `${(category.value / totalAmount) * 100}%`,
-                                                backgroundColor: COLORS[index % COLORS.length]
-                                            }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    <div className="text-center py-10">
-                        <p className="text-text-secondary dark:text-text-secondary-dark">{noDataMessage}</p>
-                    </div>
-                )}
-            </Card>
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('analysis_title')}</h1>
+        <div className="flex items-center gap-2">
+            <label htmlFor="month-select" className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('select_month')}:</label>
+            <select
+                id="month-select"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-surface dark:bg-surface-dark border border-secondary dark:border-border-dark rounded-md p-2 text-sm focus:ring-primary focus:border-primary"
+            >
+                {availableMonths.map(month => (
+                    <option key={month} value={month}>{new Date(month + '-02').toLocaleString('default', { month: 'long', year: 'numeric' })}</option>
+                ))}
+            </select>
         </div>
-    );
+      </div>
+      
+      {!hasData ? (
+          <Card className="flex items-center justify-center h-64">
+              <p className="text-text-secondary dark:text-text-secondary-dark">{t('no_data_for_charts')}</p>
+          </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('spending_by_category')}</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={spendingByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                  {spendingByCategory.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} currency={primaryCurrency} />} />
+                <Legend iconSize={10} formatter={(value) => t(`category_${value.toLowerCase()}`)} />
+              </PieChart>
+            </ResponsiveContainer>
+          </Card>
+
+          <Card>
+            <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('income_vs_expense')}</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={monthlyOverviewData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="name" hide />
+                <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} currency={primaryCurrency} />} />
+                <Legend wrapperStyle={{fontSize: "14px"}}/>
+                <Bar dataKey={t('income')} fill={primaryColor} radius={[0, 10, 10, 0]} barSize={30} />
+                <Bar dataKey={t('expense')} fill={accentColor} radius={[0, 10, 10, 0]} barSize={30} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default Analysis;

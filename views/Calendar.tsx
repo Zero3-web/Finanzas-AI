@@ -11,6 +11,15 @@ interface CalendarProps {
   t: (key: string) => string;
 }
 
+const getDaysUntil = (dateString: string): number => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDate = new Date(dateString);
+    eventDate.setHours(0, 0, 0, 0);
+    const diffTime = eventDate.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
 const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, formatCurrency, t }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -76,6 +85,66 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
     return events;
   }, [accounts, debts, subscriptions, currentDate, t]);
 
+  const upcomingEventsIn5Days = useMemo(() => {
+    const allUpcoming: (CalendarEvent & { daysUntil: number })[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const fiveDaysFromNow = new Date(today);
+    fiveDaysFromNow.setDate(today.getDate() + 5);
+
+    debts.forEach(debt => {
+      const eventDate = new Date(debt.nextPaymentDate);
+      if (eventDate >= today && eventDate <= fiveDaysFromNow) {
+        allUpcoming.push({
+          id: `debt-${debt.id}`,
+          date: debt.nextPaymentDate,
+          description: `${t('paymentFor')} ${debt.name}`,
+          amount: debt.totalAmount - debt.amountPaid,
+          currency: debt.currency,
+          type: 'debt',
+          daysUntil: getDaysUntil(debt.nextPaymentDate),
+        });
+      }
+    });
+
+    const recurringItems = [
+      ...subscriptions.map(s => ({ ...s, type: 'subscription' as const, day: s.paymentDay, amount: s.amount })),
+      ...accounts.filter(a => a.type === 'credit' && a.paymentDueDate).map(a => ({ ...a, type: 'credit_card' as const, day: a.paymentDueDate!, amount: a.balance }))
+    ];
+
+    recurringItems.forEach(item => {
+      const dayOfMonth = parseInt(item.day);
+      if (isNaN(dayOfMonth)) return;
+
+      let nextPaymentDateThisMonth = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
+      let nextPaymentDateNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, dayOfMonth);
+
+      const checkAndAdd = (date: Date) => {
+        if (date >= today && date <= fiveDaysFromNow) {
+          const dateStr = date.toISOString().split('T')[0];
+          allUpcoming.push({
+            id: `${item.type}-${item.id}-${dateStr}`,
+            date: dateStr,
+            description: item.type === 'subscription' ? item.name : `${t('paymentFor')} ${item.name}`,
+            amount: item.amount,
+            currency: item.currency,
+            type: item.type,
+            daysUntil: getDaysUntil(dateStr),
+          });
+        }
+      };
+
+      checkAndAdd(nextPaymentDateThisMonth);
+      if(nextPaymentDateThisMonth < today) {
+         checkAndAdd(nextPaymentDateNextMonth);
+      }
+    });
+
+    return allUpcoming
+      .filter((event, index, self) => index === self.findIndex(e => e.id === event.id)) // Remove duplicates
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [accounts, debts, subscriptions, t]);
+
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
   const startDay = startOfMonth.getDay();
@@ -91,14 +160,12 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
   
-  const selectedDateKey = selectedDate ? selectedDate.toISOString().split('T')[0] : null;
-  const eventsForSelectedDate = selectedDateKey ? eventsMap.get(selectedDateKey) || [] : [];
-  const today = new Date();
+  const todayDate = new Date();
 
   const getDayClass = (day: number) => {
     const d = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     const dateKey = d.toISOString().split('T')[0];
-    const isToday = d.toDateString() === today.toDateString();
+    const isToday = d.toDateString() === todayDate.toDateString();
     const isSelected = d.toDateString() === selectedDate?.toDateString();
     const hasEvent = eventsMap.has(dateKey);
 
@@ -124,6 +191,13 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
           default:
               return { bar: 'bg-gray-400', text: 'text-text-secondary' };
       }
+  };
+  
+  const getDaysUntilText = (days: number) => {
+      if (days < 0) return '';
+      if (days === 0) return t('days_until_today');
+      if (days === 1) return t('days_until_tomorrow');
+      return t('days_until_in_days', { days });
   };
 
   return (
@@ -161,24 +235,25 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, subscriptions, for
 
         <Card>
             <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('upcoming_payments')}</h2>
-            <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-4">{selectedDate ? selectedDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : ''}</p>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-                {eventsForSelectedDate.length > 0 ? (
-                    eventsForSelectedDate.map(event => {
+            <div className="space-y-3 max-h-[28rem] overflow-y-auto pr-2">
+                {upcomingEventsIn5Days.length > 0 ? (
+                    upcomingEventsIn5Days.map(event => {
                         const styling = getEventTypeStyling(event.type);
+                        const daysText = getDaysUntilText(event.daysUntil);
                         return (
                             <div key={event.id} className="flex items-center p-3 rounded-lg bg-secondary dark:bg-secondary-dark/50">
-                                <div className={`w-2 h-10 rounded-full mr-4 ${styling.bar}`}></div>
-                                <div>
-                                    <p className="font-semibold text-text-main dark:text-text-main-dark">{event.description}</p>
-                                    <p className={`font-medium ${styling.text}`}>{formatCurrency(event.amount, event.currency)}</p>
+                                <div className={`w-1.5 h-10 rounded-full mr-3 ${styling.bar}`}></div>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-text-main dark:text-text-main-dark text-sm">{event.description}</p>
+                                    <p className={`font-medium text-xs ${styling.text}`}>{formatCurrency(event.amount, event.currency)}</p>
                                 </div>
+                                {daysText && <span className="text-xs font-bold text-primary ml-2">{daysText}</span>}
                             </div>
                         )
                     })
                 ) : (
                     <div className="text-center py-10 text-text-secondary dark:text-text-secondary-dark">
-                       <p>{t('no_events_selected_date')}</p>
+                       <p className="text-sm">{t('no_upcoming_payments_5_days')}</p>
                     </div>
                 )}
             </div>
