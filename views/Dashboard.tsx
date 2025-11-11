@@ -58,7 +58,7 @@ const CreditCardVisual: React.FC<{
         }
     }
     const fakeCardNumber = `**** **** **** ${account.id.slice(-4)}`;
-    const selectionClasses = isSelected ? (theme === 'dark' ? 'border-white' : 'dark:border-accent border-accent') : 'border-transparent';
+    const selectionClasses = isSelected ? (theme === 'dark' ? 'border-white' : 'border-accent') : 'border-transparent';
 
     return (
         <div 
@@ -79,7 +79,7 @@ const CreditCardVisual: React.FC<{
 };
 
 const AllAccountsCard: React.FC<{ isSelected: boolean; onClick: () => void; t: (key: string) => string; theme: Theme }> = ({ isSelected, onClick, t, theme }) => {
-    const selectionClasses = isSelected ? (theme === 'dark' ? 'border-white' : 'dark:border-accent border-accent') : 'border-transparent';
+    const selectionClasses = isSelected ? (theme === 'dark' ? 'border-white' : 'border-accent') : 'border-transparent';
     return (
         <div
             className={`w-36 h-36 rounded-xl p-4 flex flex-col justify-center items-center shrink-0 cursor-pointer transition-all bg-surface dark:bg-surface-dark border-2 ${selectionClasses}`}

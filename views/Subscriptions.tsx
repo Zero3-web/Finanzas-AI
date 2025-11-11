@@ -35,7 +35,7 @@ const SubscriptionCard: React.FC<{
       <div>
         <div className="flex justify-between items-start mb-2">
             <div>
-                <h3 className="text-xl font-bold text-text-main dark:text-brand-white">{subscription.name}</h3>
+                <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">{subscription.name}</h3>
                 <p className="text-xs text-text-secondary dark:text-gray-400 capitalize">{t(`category_${subscription.category.toLowerCase()}`)}</p>
             </div>
             <div className="flex space-x-2">
@@ -79,7 +79,7 @@ const Subscriptions: React.FC<SubscriptionsProps> = ({ subscriptions, formatCurr
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-text-main dark:text-brand-white">{t('subscriptions')}</h1>
+        <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('subscriptions')}</h1>
         <button onClick={onAddSubscription} className="flex items-center bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors">
           <PlusIcon className="w-5 h-5 mr-2" />
           {t('addSubscription')}
