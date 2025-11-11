@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -9,8 +9,10 @@ interface State {
   error?: any;
 }
 
-class ErrorBoundary extends Component<Props, State> {
-  // FIX: Switched to a constructor for state initialization to ensure `this.props` is correctly typed.
+class ErrorBoundary extends React.Component<Props, State> {
+  // FIX: Reverted state initialization to use a constructor for better toolchain compatibility.
+  public state: State;
+
   constructor(props: Props) {
     super(props);
     this.state = {

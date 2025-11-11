@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tab } from '../types';
-import { HomeIcon, DocumentTextIcon, ChartPieIcon, CardIcon } from './icons';
+import { HomeIcon, DocumentTextIcon, ChartPieIcon, CalendarIcon } from './icons';
 
 interface MobileBottomNavProps {
   activeTab: Tab;
@@ -13,7 +13,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, setActiveT
     { tab: 'dashboard', labelKey: 'dashboard', icon: HomeIcon },
     { tab: 'history', labelKey: 'history', icon: DocumentTextIcon },
     { tab: 'analysis', labelKey: 'analysis', icon: ChartPieIcon },
-    { tab: 'accounts', labelKey: 'accounts', icon: CardIcon },
+    { tab: 'calendar', labelKey: 'calendar', icon: CalendarIcon },
   ];
 
   return (

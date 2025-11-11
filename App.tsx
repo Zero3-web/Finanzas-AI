@@ -161,7 +161,59 @@ const App: React.FC = () => {
         return upcoming.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
     }, [debts, accounts, t]);
 
-    // CRUD Handlers
+    // Transaction-specific CRUD handlers
+    const handleAddTransaction = (transactionData: Omit<Transaction, 'id'>): Transaction => {
+        const newTransaction: Transaction = {
+            ...transactionData,
+            id: `${new Date().toISOString()}-${Math.random().toString(36).substr(2, 9)}`,
+        };
+
+        setTransactions(prev => [...prev, newTransaction]);
+
+        setAccounts(prevAccounts => 
+            prevAccounts.map(acc => {
+                if (acc.id === newTransaction.accountId) {
+                    const newBalance = newTransaction.type === TransactionType.INCOME
+                        ? acc.balance + newTransaction.amount
+                        : acc.balance - newTransaction.amount;
+                    return { ...acc, balance: newBalance };
+                }
+                return acc;
+            })
+        );
+        return newTransaction;
+    };
+
+    const handleUpdateTransaction = (updatedTransaction: Transaction) => {
+        const originalTransaction = transactions.find(t => t.id === updatedTransaction.id);
+        if (!originalTransaction) return;
+
+        setTransactions(prev => prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
+
+        setAccounts(prevAccounts => 
+            prevAccounts.map(acc => {
+                let newBalance = acc.balance;
+
+                // Revert old transaction if account matches
+                if (acc.id === originalTransaction.accountId) {
+                    newBalance = originalTransaction.type === TransactionType.INCOME
+                        ? newBalance - originalTransaction.amount
+                        : newBalance + originalTransaction.amount;
+                }
+
+                // Apply new transaction if account matches
+                if (acc.id === updatedTransaction.accountId) {
+                    newBalance = updatedTransaction.type === TransactionType.INCOME
+                        ? newBalance + updatedTransaction.amount
+                        : newBalance - updatedTransaction.amount;
+                }
+                
+                return { ...acc, balance: newBalance };
+            })
+        );
+    };
+
+    // Generic CRUD Handlers
     const handleAddOrUpdate = <T extends { id: string }>(items: T[], setItems: (items: T[]) => void, newItem: Omit<T, 'id'> | T): T => {
         let result: T;
         if ('id' in newItem) { // Update
@@ -191,7 +243,25 @@ const App: React.FC = () => {
             limit: limits,
             goal: goals
         };
-        if (setters[type]) {
+        
+        if (type === 'transaction') {
+            const transactionToRemove = transactions.find(t => t.id === id);
+            if (transactionToRemove) {
+                // Revert account balance
+                setAccounts(prevAccounts => prevAccounts.map(acc => {
+                    if (acc.id === transactionToRemove.accountId) {
+                        const newBalance = transactionToRemove.type === TransactionType.INCOME
+                            ? acc.balance - transactionToRemove.amount
+                            : acc.balance + transactionToRemove.amount;
+                        return { ...acc, balance: newBalance };
+                    }
+                    return acc;
+                }));
+
+                // Remove transaction
+                setTransactions(prev => prev.filter(t => t.id !== id));
+            }
+        } else if (setters[type]) {
             setters[type](items[type].filter((item: any) => item.id !== id));
             // Cascade delete transactions if account is removed
             if (type === 'account') {
@@ -298,7 +368,7 @@ const App: React.FC = () => {
                 if (!accounts.length) {
                     throw new Error("No account available to add transaction to.");
                 }
-                const newTransactionWithId = handleAddOrUpdate(transactions, setTransactions, newTransaction);
+                const newTransactionWithId = handleAddTransaction(newTransaction);
                 setIslandStatus('success');
                 setIslandMessage(t('voice_success'));
                 playTone('success');
@@ -369,8 +439,8 @@ const App: React.FC = () => {
             <Modal isOpen={modal === 'transaction'} onClose={closeModal} title={itemToEdit ? t('edit_transaction') : t('add_transaction')}>
                 <TransactionForm
                     accounts={accounts}
-                    onAddTransaction={(tr) => handleAddOrUpdate(transactions, setTransactions, tr)}
-                    onUpdateTransaction={(tr) => handleAddOrUpdate(transactions, setTransactions, tr)}
+                    onAddTransaction={handleAddTransaction}
+                    onUpdateTransaction={handleUpdateTransaction}
                     onClose={closeModal}
                     transactionToEdit={itemToEdit}
                     t={t}

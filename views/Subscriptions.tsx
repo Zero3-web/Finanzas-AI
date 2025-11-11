@@ -91,13 +91,8 @@ const Subscriptions: React.FC<SubscriptionsProps> = ({ subscriptions, formatCurr
         ))}
         <AddNewCard 
             onClick={onAddSubscription}
-            title={t('add_fixed_expense')}
-            examples={t('fixed_expense_examples')}
-        />
-        <AddNewCard 
-            onClick={onAddSubscription}
             title={t('addSubscription')}
-            examples={t('subscription_examples')}
+            examples={t('recurring_expense_examples')}
         />
       </div>
     </div>
