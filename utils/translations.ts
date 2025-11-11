@@ -210,6 +210,20 @@ export const translations = {
         overspent_this_month: 'overspent this month',
         category_edit_warning: 'Category cannot be changed after creation.',
 
+        // Export
+        analysis_export: 'Analysis & Export',
+        export_pdf: 'Export to PDF',
+        export_report: 'Export Report',
+        select_date_range: 'Select a date range to export.',
+        start_date: 'Start Date',
+        end_date: 'End Date',
+        report_for: 'Report for',
+        generated_on: 'Generated on',
+        period: 'Period',
+        income_transactions: 'Income Transactions',
+        expense_transactions: 'Expense Transactions',
+        no_transactions_in_period: 'No transactions found for the selected period.',
+        summary: 'Summary',
     },
     es: {
         // General
@@ -419,5 +433,20 @@ export const translations = {
         remaining_this_month: 'restante este mes',
         overspent_this_month: 'de gasto excesivo este mes',
         category_edit_warning: 'La categoría no se puede cambiar después de crearla.',
+        
+        // Export
+        analysis_export: 'Análisis y Exportación',
+        export_pdf: 'Exportar a PDF',
+        export_report: 'Exportar Reporte',
+        select_date_range: 'Seleccione un rango de fechas para exportar.',
+        start_date: 'Fecha de Inicio',
+        end_date: 'Fecha de Fin',
+        report_for: 'Reporte para',
+        generated_on: 'Generado el',
+        period: 'Periodo',
+        income_transactions: 'Transacciones de Ingresos',
+        expense_transactions: 'Transacciones de Gastos',
+        no_transactions_in_period: 'No se encontraron transacciones para el período seleccionado.',
+        summary: 'Resumen',
     }
 };

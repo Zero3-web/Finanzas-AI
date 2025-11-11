@@ -11,6 +11,7 @@ import Subscriptions from './views/Subscriptions';
 import History from './views/History';
 import Settings from './views/Settings';
 import Analysis from './views/Analysis';
+import Export from './views/Export';
 import Calendar from './views/Calendar';
 import Limits from './views/Limits';
 import Modal from './components/Modal';
@@ -349,6 +350,8 @@ const App: React.FC = () => {
         return <History transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onEditTransaction={(t) => openModal('transaction', t)} onRemoveTransaction={handleRemoveTransaction} t={t} />;
       case 'analysis':
         return <Analysis transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} primaryCurrency={currency} />;
+      case 'export':
+        return <Export transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} userName={userName} colorTheme={colorTheme} />;
       case 'calendar':
         return <Calendar accounts={accounts} debts={debts} subscriptions={subscriptions} formatCurrency={formatCurrency} t={t} />;
       case 'settings':

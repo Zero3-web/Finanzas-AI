@@ -60,7 +60,7 @@ export interface Goal {
   deadline: string;
 }
 
-export type Tab = 'dashboard' | 'accounts' | 'debts' | 'subscriptions' | 'limits' | 'history' | 'analysis' | 'settings' | 'calendar';
+export type Tab = 'dashboard' | 'accounts' | 'debts' | 'subscriptions' | 'limits' | 'history' | 'analysis' | 'settings' | 'calendar' | 'export';
 
 export type Language = 'en' | 'es';
 
