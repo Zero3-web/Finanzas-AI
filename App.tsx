@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useTheme } from './hooks/useTheme';
 import { useColorTheme } from './hooks/useColorTheme';
 import useLocalStorage from './hooks/useLocalStorage';
-import { Transaction, Account, Debt, Tab, TransactionType, Language, Notification, Subscription } from './types';
+import { Transaction, Account, Debt, Tab, TransactionType, Language, Notification, Subscription, Budget, Goal } from './types';
 import Navigation from './components/Navigation';
 import Dashboard from './views/Dashboard';
 import Accounts from './views/Accounts';
@@ -12,6 +12,8 @@ import History from './views/History';
 import Settings from './views/Settings';
 import Analysis from './views/Analysis';
 import Calendar from './views/Calendar';
+import Budgets from './views/Budgets';
+import Goals from './views/Goals';
 import Modal from './components/Modal';
 import ConfirmationModal from './components/ConfirmationModal';
 import TransactionForm from './components/TransactionForm';
@@ -41,6 +43,8 @@ const App: React.FC = () => {
   const [accounts, setAccounts] = useLocalStorage<Account[]>('accounts', []);
   const [debts, setDebts] = useLocalStorage<Debt[]>('debts', []);
   const [subscriptions, setSubscriptions] = useLocalStorage<Subscription[]>('subscriptions', []);
+  const [budgets, setBudgets] = useLocalStorage<Budget[]>('budgets', []);
+  const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
   
   const [currency, setCurrency] = useLocalStorage<string>('currency', 'USD');
   const [language, setLanguage] = useLocalStorage<Language>('language', 'en');
@@ -300,6 +304,10 @@ const App: React.FC = () => {
                 />;
       case 'accounts':
         return <Accounts accounts={accounts} transactions={transactions} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={handleRemoveAccount} t={t} />;
+      case 'budgets':
+        return <Budgets t={t} />;
+      case 'goals':
+        return <Goals t={t} />;
       case 'debts':
         return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onEditDebt={(debt) => openModal('debt', debt)} onRemoveDebt={handleRemoveDebt} t={t} />;
       case 'subscriptions':
@@ -309,7 +317,7 @@ const App: React.FC = () => {
       case 'analysis':
         return <Analysis transactions={transactions} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} />;
       case 'settings':
-        return <Settings theme={theme} toggleTheme={toggleTheme} currency={currency} setCurrency={setCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} t={t} />;
+        return <Settings theme={theme} toggleTheme={toggleTheme} currency={currency} setCurrency={setCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} userName={userName} setUserName={setUserName} t={t} />;
       case 'calendar':
         return <Calendar accounts={accounts} debts={debts} subscriptions={subscriptions} formatCurrency={formatCurrency} t={t} />;
       default:

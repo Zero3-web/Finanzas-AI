@@ -17,10 +17,12 @@ interface SettingsProps {
   setColorTheme: (theme: ColorTheme) => void;
   avatar: string;
   setAvatar: (avatarUrl: string) => void;
+  userName: string;
+  setUserName: (name: string) => void;
   t: (key: string) => string;
 }
 
-const Settings: React.FC<SettingsProps> = ({ theme, toggleTheme, currency, setCurrency, language, setLanguage, colorTheme, setColorTheme, avatar, setAvatar, t }) => {
+const Settings: React.FC<SettingsProps> = ({ theme, toggleTheme, currency, setCurrency, language, setLanguage, colorTheme, setColorTheme, avatar, setAvatar, userName, setUserName, t }) => {
   const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'PEN', 'MXN'];
 
   const inputClasses = "mt-1 block bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
@@ -33,7 +35,23 @@ const Settings: React.FC<SettingsProps> = ({ theme, toggleTheme, currency, setCu
 
       <Card>
         <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('profile')}</h2>
-        <AvatarGrid selectedAvatar={avatar} onSelectAvatar={setAvatar} />
+        <div className="space-y-6">
+            <div>
+                <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">{t('tour_avatar_title')}</label>
+                <AvatarGrid selectedAvatar={avatar} onSelectAvatar={setAvatar} />
+            </div>
+            <div>
+                <label htmlFor="userName" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('your_name')}</label>
+                <input
+                    type="text"
+                    id="userName"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    className={`${inputClasses} w-full`}
+                    placeholder={t('tour_name_placeholder')}
+                />
+            </div>
+        </div>
       </Card>
       
       <Card>

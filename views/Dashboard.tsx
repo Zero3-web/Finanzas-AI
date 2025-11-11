@@ -47,7 +47,8 @@ const CreditCardVisual: React.FC<{
     isSelected: boolean,
     onClick: () => void,
     userName: string,
-}> = ({ account, formatCurrency, variant, isSelected, onClick, userName }) => {
+    theme: Theme,
+}> = ({ account, formatCurrency, variant, isSelected, onClick, userName, theme }) => {
     const getCardClasses = () => {
         switch(variant) {
             case 'purple': return 'bg-primary text-white';
@@ -57,11 +58,11 @@ const CreditCardVisual: React.FC<{
         }
     }
     const fakeCardNumber = `**** **** **** ${account.id.slice(-4)}`;
-    const selectionClasses = isSelected ? 'ring-2 ring-primary' : '';
+    const selectionClasses = isSelected ? (theme === 'dark' ? 'border-white' : 'dark:border-accent border-accent') : 'border-transparent';
 
     return (
         <div 
-            className={`w-64 h-40 rounded-xl p-4 flex flex-col justify-between shrink-0 cursor-pointer transition-all ${getCardClasses()} ${selectionClasses}`}
+            className={`w-64 h-40 rounded-xl p-4 flex flex-col justify-between shrink-0 cursor-pointer transition-all border-2 ${getCardClasses()} ${selectionClasses}`}
             onClick={onClick}
         >
             <div>
@@ -77,15 +78,15 @@ const CreditCardVisual: React.FC<{
     );
 };
 
-const AllAccountsCard: React.FC<{ isSelected: boolean; onClick: () => void; t: (key: string) => string }> = ({ isSelected, onClick, t }) => {
-    const selectionClasses = isSelected ? 'ring-2 ring-primary' : '';
+const AllAccountsCard: React.FC<{ isSelected: boolean; onClick: () => void; t: (key: string) => string; theme: Theme }> = ({ isSelected, onClick, t, theme }) => {
+    const selectionClasses = isSelected ? (theme === 'dark' ? 'border-white' : 'dark:border-accent border-accent') : 'border-transparent';
     return (
         <div
-            className={`w-40 h-40 rounded-xl p-4 flex flex-col justify-center items-center shrink-0 cursor-pointer transition-all bg-surface dark:bg-surface-dark ${selectionClasses}`}
+            className={`w-36 h-36 rounded-xl p-4 flex flex-col justify-center items-center shrink-0 cursor-pointer transition-all bg-surface dark:bg-surface-dark border-2 ${selectionClasses}`}
             onClick={onClick}
         >
-            <CollectionIcon className="w-10 h-10 text-primary mb-2" />
-            <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark">{t('all_accounts')}</h3>
+            <CollectionIcon className="w-8 h-8 text-primary mb-2" />
+            <h3 className="text-base font-bold text-text-main dark:text-text-main-dark">{t('all_accounts')}</h3>
         </div>
     );
 };
@@ -210,12 +211,12 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                         {t('add')}
                     </button>
                 </div>
-                <div className="flex space-x-4 overflow-x-auto pb-4 custom-scrollbar">
-                    <AllAccountsCard isSelected={selectedAccountId === null} onClick={() => setSelectedAccountId(null)} t={t} />
+                <div className="flex items-center space-x-4 overflow-x-auto pb-4 custom-scrollbar">
+                    <AllAccountsCard isSelected={selectedAccountId === null} onClick={() => setSelectedAccountId(null)} t={t} theme={theme} />
                     {accounts.map((acc, index) => {
                         const cardVariants: Array<'purple' | 'cyan' | 'dark'> = ['purple', 'cyan', 'dark'];
                         const variant = cardVariants[index % cardVariants.length];
-                        return <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={variant} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} userName={userName} />;
+                        return <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={variant} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} userName={userName} theme={theme} />;
                     })}
                 </div>
                  <style>{`.custom-scrollbar::-webkit-scrollbar{height:6px;}.custom-scrollbar::-webkit-scrollbar-track{background:transparent;}.custom-scrollbar::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:10px;}.dark .custom-scrollbar::-webkit-scrollbar-thumb{background:#4b5563;}`}</style>

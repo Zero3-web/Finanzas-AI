@@ -21,6 +21,22 @@ interface OnboardingTourProps {
   setAvatar: (avatarUrl: string) => void;
 }
 
+const AnimatedText: React.FC<{ text: string }> = ({ text }) => {
+    return (
+        <p className="text-text-secondary dark:text-text-secondary-dark">
+            {text.split('').map((char, index) => (
+                <span 
+                    key={index} 
+                    className="animate-char" 
+                    style={{ animationDelay: `${index * 0.03}s` }}
+                >
+                    {char === ' ' ? '\u00A0' : char}
+                </span>
+            ))}
+        </p>
+    );
+};
+
 const OnboardingTour: React.FC<OnboardingTourProps> = ({ 
     onFinish, 
     colorTheme, 
@@ -57,7 +73,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
         return (
           <div className="text-center">
             <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2">{t('tour_welcome_title')}</h2>
-            <p className="text-text-secondary dark:text-text-secondary-dark">{t('tour_welcome_desc')}</p>
+            <AnimatedText text={t('tour_welcome_desc')} />
           </div>
         );
       case 2: // Regional Settings
@@ -219,6 +235,22 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
           to { opacity: 1; transform: scale(1); }
         }
         .animate-modal-in { animation: modal-in 0.2s ease-out forwards; }
+
+        @keyframes fadeInFromBottom {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-char {
+            display: inline-block;
+            opacity: 0;
+            animation: fadeInFromBottom 0.5s ease forwards;
+        }
       `}</style>
     </div>
   );

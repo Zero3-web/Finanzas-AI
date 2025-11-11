@@ -41,7 +41,7 @@ export interface Subscription {
   category: string;
 }
 
-export type Tab = 'dashboard' | 'accounts' | 'debts' | 'subscriptions' | 'history' | 'analysis' | 'settings' | 'calendar';
+export type Tab = 'dashboard' | 'accounts' | 'budgets' | 'goals' | 'debts' | 'subscriptions' | 'history' | 'analysis' | 'settings' | 'calendar';
 
 export type Language = 'en' | 'es';
 
@@ -67,3 +67,18 @@ export interface CalendarEvent {
 }
 
 export type ColorTheme = 'default' | 'ocean' | 'sunset' | 'forest';
+
+export interface Budget {
+  id: string;
+  category: string;
+  limit: number;
+  period: 'monthly' | 'weekly';
+}
+
+export interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: string;
+}

@@ -24,6 +24,8 @@ export const translations = {
         dashboard: 'Dashboard',
         calendar: 'Calendar',
         subscriptions: 'Subscriptions',
+        budgets: 'Budgets',
+        goals: 'Goals',
         fillAllFields: 'Please fill in all required fields.',
 
         // Navigation
@@ -85,6 +87,14 @@ export const translations = {
         add_fixed_expense: 'Add Fixed Expense',
         fixed_expense_examples: 'Electricity, water, phone...',
         subscription_examples: 'Netflix, Spotify...',
+        
+        // Budgets & Goals
+        add_budget: 'Add Budget',
+        no_budgets_yet: 'No Budgets Created Yet',
+        create_budget_prompt: 'Create your first budget to start tracking your spending limits.',
+        add_goal: 'Add Goal',
+        no_goals_yet: 'No Savings Goals Yet',
+        create_goal_prompt: 'Create your first goal to start saving for something important.',
 
 
         // Transactions
@@ -123,6 +133,7 @@ export const translations = {
         currency: 'Currency',
         language: 'Language',
         profile: 'Profile',
+        your_name: 'Your Name',
         
         // Modal Titles
         addTransactionTitle: 'Add Transaction',
@@ -210,6 +221,8 @@ export const translations = {
         dashboard: 'Tablero',
         calendar: 'Calendario',
         subscriptions: 'Suscripciones',
+        budgets: 'Presupuestos',
+        goals: 'Metas',
         fillAllFields: 'Por favor, complete todos los campos requeridos.',
 
         // Navigation
@@ -271,6 +284,14 @@ export const translations = {
         add_fixed_expense: 'Añadir Gasto Fijo',
         fixed_expense_examples: 'Luz, agua, teléfono...',
         subscription_examples: 'Netflix, Spotify...',
+        
+        // Budgets & Goals
+        add_budget: 'Añadir Presupuesto',
+        no_budgets_yet: 'Aún no has creado presupuestos',
+        create_budget_prompt: 'Crea tu primer presupuesto para empezar a controlar tus límites de gasto.',
+        add_goal: 'Añadir Meta',
+        no_goals_yet: 'Aún no tienes metas de ahorro',
+        create_goal_prompt: 'Crea tu primera meta para empezar a ahorrar para algo importante.',
 
         // Transactions
         transactionType: 'Tipo de Transacción',
@@ -307,6 +328,7 @@ export const translations = {
         currency: 'Moneda',
         language: 'Idioma',
         profile: 'Perfil',
+        your_name: 'Tu Nombre',
         
         // Modal Titles
         addTransactionTitle: 'Añadir Transacción',
