@@ -82,12 +82,15 @@ const App: React.FC = () => {
   }
 
   const formatCurrency = (amount: number, currencyCode: string) => {
+    // Fallback to the primary currency if the provided code is missing or invalid.
+    // This handles legacy data in localStorage that was created before multi-currency support was added.
+    const validCurrencyCode = currencyCode || currency;
     const locales: { [key: string]: string } = {
         'USD': 'en-US', 'EUR': 'de-DE', 'GBP': 'en-GB', 'JPY': 'ja-JP', 'PEN': 'es-PE', 'MXN': 'es-MX'
     }
-    return new Intl.NumberFormat(locales[currencyCode] || 'en-US', {
+    return new Intl.NumberFormat(locales[validCurrencyCode] || 'en-US', {
       style: 'currency',
-      currency: currencyCode,
+      currency: validCurrencyCode,
     }).format(amount);
   };
   

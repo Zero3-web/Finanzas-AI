@@ -4,13 +4,13 @@
   "description": "Una aplicación web para rastrear tus ingresos, gastos y deudas con un panel visual y gráficos.",
   "icons": [
     {
-      "src": "https://uxwing.com/wp-content/themes/uxwing/download/finance-banking-money/wallet-icon.png",
+      "src": "https://www.gstatic.com/android/keyboard/emojikit/20181023/1f4b3/1f4b3_512.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "https://uxwing.com/wp-content/themes/uxwing/download/finance-banking-money/wallet-icon.png",
+      "src": "https://www.gstatic.com/android/keyboard/emojikit/20181023/1f4b3/1f4b3_512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
