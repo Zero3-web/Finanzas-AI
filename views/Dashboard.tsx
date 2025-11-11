@@ -43,7 +43,7 @@ const Header: React.FC<{ t: (key: string) => string; notifications: Notification
 const CreditCardVisual: React.FC<{ 
     account: Account, 
     formatCurrency: (amount: number) => string, 
-    variant: 'purple' | 'dark' | 'cyan',
+    variant: 'purple' | 'neutral' | 'cyan',
     isSelected: boolean,
     onClick: () => void,
     userName: string,
@@ -53,7 +53,7 @@ const CreditCardVisual: React.FC<{
         switch(variant) {
             case 'purple': return 'bg-primary text-white';
             case 'cyan': return 'bg-accent text-text-main';
-            case 'dark': return 'bg-surface-dark text-white';
+            case 'neutral': return 'bg-gray-700 dark:bg-secondary-dark text-white';
             default: return 'bg-primary text-white';
         }
     }
@@ -214,7 +214,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, su
                 <div className="flex items-center space-x-4 overflow-x-auto pb-4 custom-scrollbar">
                     <AllAccountsCard isSelected={selectedAccountId === null} onClick={() => setSelectedAccountId(null)} t={t} theme={theme} />
                     {accounts.map((acc, index) => {
-                        const cardVariants: Array<'purple' | 'cyan' | 'dark'> = ['purple', 'cyan', 'dark'];
+                        const cardVariants: Array<'purple' | 'cyan' | 'neutral'> = ['purple', 'cyan', 'neutral'];
                         const variant = cardVariants[index % cardVariants.length];
                         return <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={variant} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} userName={userName} theme={theme} />;
                     })}
