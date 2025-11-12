@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 // FIX: Consolidate type imports and get Theme from the central types file.
 import { Transaction, Account, TransactionType, Debt, Notification, ColorTheme, RecurringTransaction, Theme } from '../types';
 import { themes } from '../hooks/useColorTheme';
@@ -30,10 +30,29 @@ interface DashboardProps {
 }
 
 const Header: React.FC<{ t: (key: string, params?: { [key: string]: string | number }) => string; notifications: Notification[], userName: string, theme: Theme, toggleTheme: () => void }> = ({ t, notifications, userName, theme, toggleTheme }) => {
+    const [isShimmering, setIsShimmering] = useState(true);
+
+    useEffect(() => {
+        setIsShimmering(true);
+        const timer = setTimeout(() => setIsShimmering(false), 2000);
+        return () => clearTimeout(timer);
+    }, [userName]);
+
+    const welcomeString = t('welcome_back');
+    const parts = welcomeString.split('{userName}');
+    const welcomeTextStart = parts[0];
+    const welcomeTextEnd = parts[1];
+
     return (
         <div className="hidden md:flex justify-between items-center mb-6">
             <div>
-                <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('welcome_back', { userName })}</h1>
+                 <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">
+                    {welcomeTextStart}
+                    <span className={isShimmering ? 'shimmer-text-anim' : 'text-primary'}>
+                        {userName}
+                    </span>
+                    {welcomeTextEnd}
+                </h1>
             </div>
             <div className="flex items-center space-x-2 md:space-x-4">
                 <Notifications notifications={notifications} t={t} />

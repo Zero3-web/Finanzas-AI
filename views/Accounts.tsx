@@ -1,7 +1,7 @@
 import React from 'react';
 import { Account, Transaction, TransactionType } from '../types';
 import Card from '../components/Card';
-import { PlusIcon, TrashIcon, PencilIcon } from '../components/icons';
+import { PlusIcon, TrashIcon, PencilIcon, CardIcon } from '../components/icons';
 
 interface AccountsProps {
   accounts: Account[];
@@ -66,17 +66,25 @@ const Accounts: React.FC<AccountsProps> = ({ accounts, formatCurrency, onAddAcco
           {t('addAccount')}
         </button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {accounts.map(account => (
-          <AccountCard key={account.id} account={account} formatCurrency={formatCurrency} onEdit={onEditAccount} onRemove={onRemoveAccount} t={t} />
-        ))}
-        <Card className="flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-border-dark bg-transparent shadow-none hover:border-primary dark:hover:border-primary cursor-pointer transition-colors" onClick={onAddAccount}>
-            <div className="text-center text-text-secondary dark:text-text-secondary-dark">
-                <PlusIcon className="w-8 h-8 mx-auto mb-2" />
-                <p>{t('addAccount')}</p>
-            </div>
+      {accounts.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {accounts.map(account => (
+            <AccountCard key={account.id} account={account} formatCurrency={formatCurrency} onEdit={onEditAccount} onRemove={onRemoveAccount} t={t} />
+          ))}
+        </div>
+      ) : (
+         <Card className="flex flex-col items-center justify-center text-center p-8 md:p-12 mt-4">
+          <div className="bg-primary/10 text-primary p-4 rounded-full mb-4">
+            <CardIcon className="w-12 h-12" />
+          </div>
+          <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2">{t('empty_state_accounts_title')}</h2>
+          <p className="text-text-secondary dark:text-text-secondary-dark mb-6 max-w-sm">{t('empty_state_accounts_desc')}</p>
+          <button onClick={onAddAccount} className="flex items-center bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-primary-focus transition-colors">
+            <PlusIcon className="w-5 h-5 mr-2" />
+            {t('addAccount')}
+          </button>
         </Card>
-      </div>
+      )}
     </div>
   );
 };

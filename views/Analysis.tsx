@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, Fragment } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, TooltipProps } from 'recharts';
 import { Transaction, Account, TransactionType, ColorTheme } from '../types';
 import { themes } from '../hooks/useColorTheme';
@@ -9,7 +9,7 @@ interface AnalysisProps {
   transactions: Transaction[];
   accounts: Account[];
   formatCurrency: (amount: number, currency: string) => string;
-  t: (key: string) => string;
+  t: (key: string, params?: { [key: string]: string | number }) => string;
   colorTheme: ColorTheme;
   primaryCurrency: string;
   onOpenDetailModal: (title: string, transactions: Transaction[]) => void;
@@ -41,6 +41,7 @@ const CustomTooltip = ({ active, payload, label, formatCurrency, currency }: Cus
 
 const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurrency, t, colorTheme, primaryCurrency, onOpenDetailModal }) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM format
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const currentPalette = themes[colorTheme];
   const toHex = (rgb: string) => '#' + rgb.split(',').map(c => parseInt(c).toString(16).padStart(2, '0')).join('');
@@ -81,6 +82,13 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
       .sort((a, b) => b.value - a.value);
   }, [monthlyTransactions]);
 
+  const filteredTransactionsByCategory = useMemo(() => {
+    if (!selectedCategory) {
+        return [];
+    }
+    return monthlyTransactions.filter(t => t.type === TransactionType.EXPENSE && t.category === selectedCategory).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [selectedCategory, monthlyTransactions]);
+
   const monthlyOverviewData = useMemo(() => {
     return [{ name: t('monthly_overview'), [t('income')]: currentMonthIncome, [t('expense')]: currentMonthExpenses }];
   }, [currentMonthIncome, currentMonthExpenses, t]);
@@ -100,9 +108,8 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
   
   const handleCategoryClick = (data: any) => {
     const category = data.name;
-    const categoryTransactions = monthlyTransactions.filter(t => t.type === TransactionType.EXPENSE && t.category === category);
-    const translatedCategory = getCategoryTranslation(category);
-    onOpenDetailModal(t('transactions_for_category', { category: translatedCategory }), categoryTransactions);
+    // Toggle selection
+    setSelectedCategory(prev => prev === category ? null : category);
   };
 
   const formattedMonth = new Date(selectedMonth + '-02').toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -157,36 +164,63 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
               <p className="text-text-secondary dark:text-text-secondary-dark">{t('no_data_for_charts')}</p>
           </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('spending_by_category')}</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie data={spendingByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label onClick={handleCategoryClick} style={{cursor: 'pointer'}}>
-                  {spendingByCategory.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} currency={primaryCurrency} />} />
-                <Legend iconSize={10} formatter={(value) => getCategoryTranslation(value)} />
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
+        <Fragment>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('spending_by_category')}</h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie data={spendingByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label onClick={handleCategoryClick} style={{cursor: 'pointer'}}>
+                    {spendingByCategory.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} currency={primaryCurrency} />} />
+                  <Legend iconSize={10} formatter={(value) => getCategoryTranslation(value)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
 
-          <Card>
-            <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('income_vs_expense')}</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyOverviewData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" hide />
-                <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} currency={primaryCurrency} />} />
-                <Legend wrapperStyle={{fontSize: "14px"}}/>
-                <Bar dataKey={t('income')} fill={primaryColor} radius={[0, 10, 10, 0]} barSize={30} onClick={handleBarClick} style={{cursor: 'pointer'}} />
-                <Bar dataKey={t('expense')} fill={accentColor} radius={[0, 10, 10, 0]} barSize={30} onClick={handleBarClick} style={{cursor: 'pointer'}} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </div>
+            <Card>
+              <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('income_vs_expense')}</h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={monthlyOverviewData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" hide />
+                  <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} currency={primaryCurrency} />} />
+                  <Legend wrapperStyle={{fontSize: "14px"}}/>
+                  <Bar dataKey={t('income')} fill={primaryColor} radius={[0, 10, 10, 0]} barSize={30} onClick={handleBarClick} style={{cursor: 'pointer'}} />
+                  <Bar dataKey={t('expense')} fill={accentColor} radius={[0, 10, 10, 0]} barSize={30} onClick={handleBarClick} style={{cursor: 'pointer'}} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+          {selectedCategory && (
+            <Card className="animate-view-fade-in">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark">
+                        {t('transactions_for_category', { category: getCategoryTranslation(selectedCategory) })}
+                    </h2>
+                    <button onClick={() => setSelectedCategory(null)} className="text-sm font-semibold text-primary hover:underline">{t('cancel')}</button>
+                </div>
+                <div className="max-h-80 overflow-y-auto pr-2 space-y-2">
+                  {filteredTransactionsByCategory.length > 0 ? (
+                    filteredTransactionsByCategory.map(transaction => {
+                      const account = accountCurrencyMap.get(transaction.accountId);
+                      return (
+                        <div key={transaction.id} className="flex justify-between items-center p-2 bg-secondary dark:bg-secondary-dark rounded-md">
+                          <p className="text-sm text-text-main dark:text-text-main-dark">{transaction.description}</p>
+                          <p className="font-semibold text-expense text-sm">-{formatCurrency(transaction.amount, account?.currency || primaryCurrency)}</p>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <p className="text-center text-text-secondary dark:text-text-secondary-dark py-4">{t('noTransactionsFound')}</p>
+                  )}
+                </div>
+            </Card>
+          )}
+        </Fragment>
       )}
     </div>
   );

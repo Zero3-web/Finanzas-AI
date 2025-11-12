@@ -1,7 +1,7 @@
 import React from 'react';
 import { Goal } from '../types';
 import Card from '../components/Card';
-import { PlusIcon, TrashIcon, PencilIcon } from '../components/icons';
+import { PlusIcon, TrashIcon, PencilIcon, BullseyeIcon } from '../components/icons';
 
 interface GoalsProps {
   goals: Goal[];
@@ -74,23 +74,31 @@ const Goals: React.FC<GoalsProps> = ({ goals, formatCurrency, onAddGoal, onEditG
           {t('addGoal')}
         </button>
       </div>
-      {goals.length > 0 && (
-          <Card>
-            <h2 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark">{t('total_saved_for_goals')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></h2>
-            <p className="text-3xl font-bold text-primary">{formatCurrency(totalSaved, primaryCurrency)} / {formatCurrency(totalTarget, primaryCurrency)}</p>
-          </Card>
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {goals.map(goal => (
-            <GoalCard key={goal.id} goal={goal} formatCurrency={formatCurrency} onEdit={onEditGoal} onRemove={onRemoveGoal} t={t} />
-        ))}
-         <Card className="flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-border-dark bg-transparent shadow-none hover:border-primary dark:hover:border-primary cursor-pointer transition-colors min-h-[190px]" onClick={onAddGoal}>
-            <div className="text-center text-text-secondary dark:text-text-secondary-dark">
-                <PlusIcon className="w-8 h-8 mx-auto mb-2" />
-                <p>{t('addGoal')}</p>
+      {goals.length > 0 ? (
+        <>
+            <Card>
+              <h2 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark">{t('total_saved_for_goals')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></h2>
+              <p className="text-3xl font-bold text-primary">{formatCurrency(totalSaved, primaryCurrency)} / {formatCurrency(totalTarget, primaryCurrency)}</p>
+            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {goals.map(goal => (
+                  <GoalCard key={goal.id} goal={goal} formatCurrency={formatCurrency} onEdit={onEditGoal} onRemove={onRemoveGoal} t={t} />
+              ))}
             </div>
+        </>
+      ) : (
+        <Card className="flex flex-col items-center justify-center text-center p-8 md:p-12 mt-4">
+          <div className="bg-primary/10 text-primary p-4 rounded-full mb-4">
+            <BullseyeIcon className="w-12 h-12" />
+          </div>
+          <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2">{t('empty_state_goals_title')}</h2>
+          <p className="text-text-secondary dark:text-text-secondary-dark mb-6 max-w-sm">{t('empty_state_goals_desc')}</p>
+          <button onClick={onAddGoal} className="flex items-center bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-primary-focus transition-colors">
+            <PlusIcon className="w-5 h-5 mr-2" />
+            {t('addGoal')}
+          </button>
         </Card>
-      </div>
+      )}
     </div>
   );
 };

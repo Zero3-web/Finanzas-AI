@@ -294,6 +294,17 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     income_for_month: 'Income for {month}',
     expense_for_month: 'Expenses for {month}',
     expenses_on_date: 'Expenses on {date}',
+    // Empty States
+    empty_state_accounts_title: 'Ready to start?',
+    empty_state_accounts_desc: 'Add your first account to start tracking your finances.',
+    empty_state_debts_title: 'Debt-free? Great!',
+    empty_state_debts_desc: 'If you have loans or credit to track, add them here to manage your payments.',
+    empty_state_goals_title: 'What are you saving for?',
+    empty_state_goals_desc: 'Set up a financial goal, like a vacation or a new car, and track your progress.',
+    empty_state_limits_title: 'Keep your spending in check',
+    empty_state_limits_desc: 'Set monthly spending limits for categories to better manage your budget.',
+    empty_state_recurring_title: 'Track your subscriptions',
+    empty_state_recurring_desc: 'Add recurring payments and income like Netflix, rent, or your salary to never miss a due date.',
   },
   es: {
     // General
@@ -590,5 +601,16 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     income_for_month: 'Ingresos de {month}',
     expense_for_month: 'Gastos de {month}',
     expenses_on_date: 'Gastos del {date}',
+    // Empty States
+    empty_state_accounts_title: '¿Listo para empezar?',
+    empty_state_accounts_desc: 'Añade tu primera cuenta para empezar a hacer seguimiento de tus finanzas.',
+    empty_state_debts_title: '¿Libre de deudas? ¡Genial!',
+    empty_state_debts_desc: 'Si tienes préstamos o créditos que seguir, añádelos aquí para gestionar tus pagos.',
+    empty_state_goals_title: '¿Para qué estás ahorrando?',
+    empty_state_goals_desc: 'Establece una meta financiera, como unas vacaciones o un coche nuevo, y sigue tu progreso.',
+    empty_state_limits_title: 'Mantén tus gastos a raya',
+    empty_state_limits_desc: 'Define límites de gasto mensuales por categoría para gestionar mejor tu presupuesto.',
+    empty_state_recurring_title: 'Sigue tus suscripciones',
+    empty_state_recurring_desc: 'Añade pagos e ingresos recurrentes como Netflix, el alquiler o tu salario para no olvidar ninguna fecha de vencimiento.',
   },
 };

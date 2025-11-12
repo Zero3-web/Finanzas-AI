@@ -1,7 +1,7 @@
 import React from 'react';
 import { Debt } from '../types';
 import Card from '../components/Card';
-import { PlusIcon, TrashIcon, PencilIcon } from '../components/icons';
+import { PlusIcon, TrashIcon, PencilIcon, ScaleIcon } from '../components/icons';
 
 interface DebtsProps {
   debts: Debt[];
@@ -54,9 +54,6 @@ const DebtCard: React.FC<{ debt: Debt; formatCurrency: (amount: number, currency
 };
 
 const Debts: React.FC<DebtsProps> = ({ debts, formatCurrency, onAddDebt, onEditDebt, onRemoveDebt, t }) => {
-  // Note: Aggregating debts of different currencies is complex. This view shows them separately.
-  // A total summary would require currency conversion.
-  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -67,17 +64,25 @@ const Debts: React.FC<DebtsProps> = ({ debts, formatCurrency, onAddDebt, onEditD
         </button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {debts.map(debt => (
-            <DebtCard key={debt.id} debt={debt} formatCurrency={formatCurrency} onEdit={onEditDebt} onRemove={onRemoveDebt} t={t} />
-        ))}
-         <Card className="flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-border-dark bg-transparent shadow-none hover:border-primary dark:hover:border-primary cursor-pointer transition-colors" onClick={onAddDebt}>
-            <div className="text-center text-text-secondary dark:text-text-secondary-dark">
-                <PlusIcon className="w-8 h-8 mx-auto mb-2" />
-                <p>{t('addDebt')}</p>
-            </div>
+      {debts.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {debts.map(debt => (
+                <DebtCard key={debt.id} debt={debt} formatCurrency={formatCurrency} onEdit={onEditDebt} onRemove={onRemoveDebt} t={t} />
+            ))}
+        </div>
+      ) : (
+        <Card className="flex flex-col items-center justify-center text-center p-8 md:p-12 mt-4">
+          <div className="bg-primary/10 text-primary p-4 rounded-full mb-4">
+            <ScaleIcon className="w-12 h-12" />
+          </div>
+          <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2">{t('empty_state_debts_title')}</h2>
+          <p className="text-text-secondary dark:text-text-secondary-dark mb-6 max-w-sm">{t('empty_state_debts_desc')}</p>
+          <button onClick={onAddDebt} className="flex items-center bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-primary-focus transition-colors">
+            <PlusIcon className="w-5 h-5 mr-2" />
+            {t('addDebt')}
+          </button>
         </Card>
-      </div>
+      )}
     </div>
   );
 };

@@ -53,6 +53,7 @@ const App: React.FC = () => {
     const [theme, toggleTheme] = useTheme();
     const [colorTheme, setColorTheme] = useColorTheme();
     const [isFinishedOnboarding, setIsFinishedOnboarding] = useLocalStorage('onboarding-finished', false);
+    const [hasShownWelcomeConfetti, setHasShownWelcomeConfetti] = useLocalStorage('welcome-confetti-shown', false);
     const [coupleLink, setCoupleLink] = useLocalStorage<CoupleLink>('couple-link', { linked: false, partnerName: null, linkId: null });
 
     // Main App State
@@ -99,6 +100,14 @@ const App: React.FC = () => {
         const timer = setTimeout(() => setIsLoading(false), 1200);
         return () => clearTimeout(timer);
     }, []);
+
+    useEffect(() => {
+        if (isFinishedOnboarding && !hasShownWelcomeConfetti) {
+            setShowConfetti(true);
+            setHasShownWelcomeConfetti(true);
+            setTimeout(() => setShowConfetti(false), 8000); // Confetti lasts 8 seconds
+        }
+    }, [isFinishedOnboarding, hasShownWelcomeConfetti, setHasShownWelcomeConfetti]);
 
     const t = useCallback((key: string, params?: { [key: string]: string | number }) => {
         let translation = translations[language][key] || key;

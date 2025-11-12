@@ -132,6 +132,32 @@
         box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2);
     }
 
+    @keyframes shimmer-reveal {
+      from { background-position: -200% center; }
+      to { background-position: 200% center; }
+    }
+    .shimmer-text-anim {
+        display: inline-block;
+        background: linear-gradient(90deg, 
+            rgb(var(--color-primary)) 20%, 
+            #ffffff 50%, 
+            rgb(var(--color-primary)) 80%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: shimmer-reveal 2s ease-out;
+    }
+    .dark .shimmer-text-anim {
+        background: linear-gradient(90deg, 
+            rgb(var(--color-primary)) 20%, 
+            #fcfcfc 50%, 
+            rgb(var(--color-primary)) 80%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+
     @keyframes item-fade-in {
         from { opacity: 0; transform: scale(0.95) translateY(10px); }
         to { opacity: 1; transform: scale(1) translateY(0); }
