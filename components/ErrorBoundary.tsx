@@ -10,10 +10,8 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Switched to class property for state initialization. This is a more modern and robust
-  // way to initialize state in React class components, resolving issues where `this.state` and
-  // `this.props` were not being correctly recognized by TypeScript.
-  public state: State = {
+  // FIX: Switched to class property for state initialization to resolve TS errors.
+  state: State = {
     hasError: false,
     error: undefined,
   };

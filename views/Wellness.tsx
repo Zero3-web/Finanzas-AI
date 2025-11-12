@@ -28,13 +28,37 @@ const Wellness: React.FC<WellnessProps> = ({ transactions, accounts, debts, t, c
 
     if (!hasEnoughData) {
         return (
-             <div className="space-y-6">
-                 <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('wellness_score_title')}</h1>
-                 <Card className="flex items-center justify-center h-64">
-                    <p className="text-text-secondary dark:text-text-secondary-dark text-center max-w-sm">{t('no_data_for_wellness')}</p>
-                 </Card>
-             </div>
-        )
+            <div className="space-y-6">
+                <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('wellness_score_title')}</h1>
+                <Card className="text-center p-4 md:p-6 opacity-70">
+                    <div className="relative w-full h-56 md:h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RadialBarChart
+                                innerRadius="70%"
+                                outerRadius="100%"
+                                data={[{ value: 0 }]}
+                                startAngle={180}
+                                endAngle={0}
+                                barSize={30}
+                            >
+                                <PolarAngleAxis type="number" domain={[0, 1000]} angleAxisId={0} tick={false} />
+                                <RadialBar
+                                    background={{ fill: 'rgba(128, 128, 128, 0.2)' }}
+                                    dataKey="value"
+                                    cornerRadius={15}
+                                    fill={primaryColor}
+                                />
+                            </RadialBarChart>
+                        </ResponsiveContainer>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-5xl md:text-6xl font-bold text-text-secondary dark:text-text-secondary-dark">0</span>
+                            <span className="text-text-secondary dark:text-text-secondary-dark font-semibold">/ 1000</span>
+                        </div>
+                    </div>
+                    <h2 className="text-lg font-semibold mt-2 text-text-secondary dark:text-text-secondary-dark max-w-sm mx-auto">{t('no_data_for_wellness')}</h2>
+                </Card>
+            </div>
+        );
     }
 
     return (

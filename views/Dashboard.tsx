@@ -251,7 +251,14 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         return `${formatter.format(minDate)} - ${formatter.format(maxDate)}`;
     }, [displayedTransactions]);
 
-    const recentActivity = useMemo(() => [...displayedTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5), [displayedTransactions]);
+    const recentActivity = useMemo(() => 
+        [...displayedTransactions].sort((a, b) => {
+            const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+            if (dateComparison !== 0) return dateComparison;
+            // Fallback to ID sorting for same-day transactions to ensure newest appears first.
+            return b.id.localeCompare(a.id);
+        }).slice(0, 5), 
+    [displayedTransactions]);
     
     const { totalIncome, totalExpenses, profit } = useMemo(() => {
         const accountCurrencyMap = new Map(accounts.map(acc => [acc.id, acc.currency]));

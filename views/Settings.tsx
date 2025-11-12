@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Account, ColorTheme, CoupleLink, Debt, Language, Tab, Theme, Transaction } from '../types';
 import { themes } from '../hooks/useColorTheme';
+import { calculateWellnessScore, getScoreTitle } from '../utils/wellness';
+import { ResponsiveContainer, RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts';
 import Card from '../components/Card';
 import AvatarGrid from '../components/AvatarGrid';
 import Switch from '../components/Switch';
@@ -26,6 +28,7 @@ interface SettingsProps {
     coupleLink: CoupleLink;
     setCoupleLink: (l: CoupleLink) => void;
     onOpenModal: (modal: string) => void;
+    setActiveTab: (tab: Tab) => void;
 }
 
 const Settings: React.FC<SettingsProps> = ({
@@ -42,8 +45,12 @@ const Settings: React.FC<SettingsProps> = ({
     userName,
     setUserName,
     t,
+    accounts,
+    transactions,
+    debts,
     coupleLink,
     setCoupleLink,
+    setActiveTab,
 }) => {
     const [isCoupleModalOpen, setIsCoupleModalOpen] = useState(false);
     
@@ -58,9 +65,51 @@ const Settings: React.FC<SettingsProps> = ({
         }
     };
 
+    const { totalScore, hasEnoughData } = calculateWellnessScore(transactions, accounts, debts, t);
+
+    const currentPalette = themes[colorTheme];
+    const toHex = (rgb: string) => '#' + rgb.split(',').map(c => parseInt(c).toString(16).padStart(2, '0')).join('');
+    const primaryColor = toHex(currentPalette['--color-primary']);
+    const scoreData = [{ value: hasEnoughData ? totalScore : 0 }];
+
     return (
         <div className="space-y-6 max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('settings')}</h1>
+
+            {/* Wellness Score Card - Mobile Only */}
+            <div className="md:hidden">
+                <Card className="text-center p-4" onClick={() => setActiveTab('wellness')}>
+                    <h2 className="text-xl font-bold mb-2 text-text-main dark:text-text-main-dark">{t('wellness_score_title')}</h2>
+                    <div className="relative w-full h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RadialBarChart
+                                innerRadius="70%"
+                                outerRadius="100%"
+                                data={scoreData}
+                                startAngle={180}
+                                endAngle={0}
+                                barSize={20}
+                            >
+                                <PolarAngleAxis type="number" domain={[0, 1000]} angleAxisId={0} tick={false} />
+                                <RadialBar
+                                    background={{ fill: 'rgba(128, 128, 128, 0.1)' }}
+                                    dataKey="value"
+                                    cornerRadius={10}
+                                    fill={primaryColor}
+                                />
+                            </RadialBarChart>
+                        </ResponsiveContainer>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-4xl font-bold text-text-main dark:text-text-main-dark">{scoreData[0].value}</span>
+                            <span className="text-text-secondary dark:text-text-secondary-dark font-semibold">/ 1000</span>
+                        </div>
+                    </div>
+                    <h3 className="text-lg font-semibold mt-2 text-text-main dark:text-text-main-dark">
+                        {hasEnoughData ? getScoreTitle(totalScore, t) : t('no_data_for_wellness')}
+                    </h3>
+                    <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">{t('tap_for_details')}</p>
+                </Card>
+            </div>
 
             {/* Profile Section */}
             <Card>

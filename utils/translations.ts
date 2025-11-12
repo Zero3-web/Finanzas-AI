@@ -283,6 +283,7 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     follow_up_placeholder: 'Ask anything about your finances...',
     ask: 'Ask',
     analysis_export: 'Analysis & Export',
+    tap_for_details: 'Tap for details',
     beta: 'Beta',
     // Auto-generated transactions
     auto_recurring_payment: 'Recurring: {name}',
@@ -578,6 +579,7 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     follow_up_placeholder: 'Pregunta cualquier cosa sobre tus finanzas...',
     ask: 'Preguntar',
     analysis_export: 'Análisis y Exportación',
+    tap_for_details: 'Toca para ver detalles',
     beta: 'Beta',
     // Auto-generated transactions
     auto_recurring_payment: 'Recurrente: {name}',
