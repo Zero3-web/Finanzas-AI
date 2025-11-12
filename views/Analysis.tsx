@@ -57,6 +57,18 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
     });
   }, [transactions, selectedMonth, primaryCurrency, accountCurrencyMap]);
 
+  const { currentMonthIncome, currentMonthExpenses } = useMemo(() => {
+    const income = monthlyTransactions
+      .filter(t => t.type === TransactionType.INCOME)
+      .reduce((sum, t) => sum + t.amount, 0);
+    const expense = monthlyTransactions
+      .filter(t => t.type === TransactionType.EXPENSE)
+      .reduce((sum, t) => sum + t.amount, 0);
+    return { currentMonthIncome: income, currentMonthExpenses: expense };
+  }, [monthlyTransactions]);
+
+  const currentMonthProfit = currentMonthIncome - currentMonthExpenses;
+
   const spendingByCategory = useMemo(() => {
     const categories: { [key: string]: number } = {};
     monthlyTransactions
@@ -70,14 +82,8 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
   }, [monthlyTransactions]);
 
   const monthlyOverviewData = useMemo(() => {
-    const income = monthlyTransactions
-      .filter(t => t.type === TransactionType.INCOME)
-      .reduce((sum, t) => sum + t.amount, 0);
-    const expense = monthlyTransactions
-      .filter(t => t.type === TransactionType.EXPENSE)
-      .reduce((sum, t) => sum + t.amount, 0);
-    return [{ name: t('monthly_overview'), [t('income')]: income, [t('expense')]: expense }];
-  }, [monthlyTransactions, t]);
+    return [{ name: t('monthly_overview'), [t('income')]: currentMonthIncome, [t('expense')]: currentMonthExpenses }];
+  }, [currentMonthIncome, currentMonthExpenses, t]);
   
   const availableMonths = useMemo(() => {
       const months = new Set<string>();
@@ -85,7 +91,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
       return Array.from(months).sort().reverse();
   }, [transactions]);
   
-  const hasData = monthlyTransactions.length > 0;
+  const hasDataForCharts = monthlyTransactions.length > 0;
 
   const getCategoryTranslation = (category: string) => {
     const key = `category_${category.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`;
@@ -131,7 +137,22 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
         </div>
       </div>
       
-      {!hasData ? (
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+                <p className="text-text-secondary dark:text-text-secondary-dark">{t('total_income')}</p>
+                <p className="text-2xl font-bold text-income">{formatCurrency(currentMonthIncome, primaryCurrency)}</p>
+            </Card>
+            <Card>
+                <p className="text-text-secondary dark:text-text-secondary-dark">{t('expense')}</p>
+                <p className="text-2xl font-bold text-expense">{formatCurrency(currentMonthExpenses, primaryCurrency)}</p>
+            </Card>
+            <Card>
+                <p className="text-text-secondary dark:text-text-secondary-dark">{t('net_profit')}</p>
+                <p className={`text-2xl font-bold ${currentMonthProfit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(currentMonthProfit, primaryCurrency)}</p>
+            </Card>
+        </div>
+
+      {!hasDataForCharts ? (
           <Card className="flex items-center justify-center h-64">
               <p className="text-text-secondary dark:text-text-secondary-dark">{t('no_data_for_charts')}</p>
           </Card>

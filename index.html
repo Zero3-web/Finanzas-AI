@@ -84,6 +84,63 @@
   }
 }
 </script>
+<style>
+    @keyframes shimmer {
+      100% {
+        transform: translateX(100%);
+      }
+    }
+    .animate-shimmer {
+      position: relative;
+      overflow: hidden;
+      background-color: #e5e7eb; /* Light mode skeleton base */
+    }
+    .dark .animate-shimmer {
+        background-color: #3A3A3A; /* Dark mode skeleton base */
+    }
+    .animate-shimmer::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      transform: translateX(-100%);
+      background-image: linear-gradient(90deg, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.5) 60%, rgba(255, 255, 255, 0));
+      animation: shimmer 2s infinite;
+    }
+    .dark .animate-shimmer::after {
+      background-image: linear-gradient(90deg, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0.1) 20%, rgba(0, 0, 0, 0.2) 60%, rgba(0, 0, 0, 0));
+    }
+
+    @keyframes view-fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-view-fade-in {
+      animation: view-fade-in 0.4s ease-out forwards;
+    }
+
+    .card-hover-effect {
+        transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    }
+    .card-hover-effect:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+    }
+    .dark .card-hover-effect:hover {
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    }
+
+    @keyframes item-fade-in {
+        from { opacity: 0; transform: scale(0.95) translateY(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-item-fade-in {
+        opacity: 0; /* Start hidden */
+        animation: item-fade-in 0.4s ease-out forwards;
+    }
+</style>
 </head>
 <body class="bg-background text-text-main dark:bg-background-dark dark:text-text-main-dark font-sans">
     <div id="root"></div>

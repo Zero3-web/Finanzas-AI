@@ -4,7 +4,7 @@ import { Transaction, Account, TransactionType, Debt, Notification, ColorTheme, 
 import { themes } from '../hooks/useColorTheme';
 import Card from '../components/Card';
 import { PlusIcon, ArrowUpIcon, VisaIcon, StripeIcon, PaypalIcon, ApplePayIcon, CalendarIcon, ArrowDownIcon, CollectionIcon, GripVerticalIcon } from '../components/icons';
-import { AccountBalancePieChart, ActivityChart } from '../components/Charts';
+import { AccountBalancePieChart, ActivityChart, WeeklySpendingChart } from '../components/Charts';
 import Notifications from '../components/Notifications';
 import ThemeToggle from '../components/ThemeToggle';
 import useLocalStorage from '../hooks/useLocalStorage';
@@ -129,7 +129,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
     // Drag and Drop State
     const [sectionOrder, setSectionOrder] = useLocalStorage<string[]>(
         'dashboard-layout',
-        ['balances', 'activity', 'monthlySummary', 'totalSummary']
+        ['balances', 'activity', 'totalSummary']
     );
     const dragItem = useRef<string | null>(null);
     const dragOverItem = useRef<string | null>(null);
@@ -208,6 +208,14 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
 
     const sortedAccounts = useMemo(() => [...accounts].sort((a, b) => b.balance - a.balance), [accounts]);
     
+    const displayedBalanceCards = useMemo(() => {
+        if (selectedAccountId) {
+            const selectedAccount = accounts.find(acc => acc.id === selectedAccountId);
+            return selectedAccount ? [selectedAccount] : [];
+        }
+        return sortedAccounts;
+    }, [selectedAccountId, accounts, sortedAccounts]);
+
     const selectedAccount = useMemo(() => {
         return accounts.find(acc => acc.id === selectedAccountId) || null;
     }, [accounts, selectedAccountId]);
@@ -261,31 +269,6 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         return { totalIncome: income, totalExpenses: expenses, profit: income - expenses };
     }, [displayedTransactions, primaryCurrency, accounts]);
 
-    const { currentMonthIncome, currentMonthExpenses, currentMonthProfit } = useMemo(() => {
-        const today = new Date();
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
-    
-        const transactionsInCurrentMonth = displayedTransactions.filter(t => {
-            const transactionDate = new Date(t.date);
-            return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
-        });
-
-        const accountCurrencyMap = new Map(accounts.map(acc => [acc.id, acc.currency]));
-
-        const transactionsInPrimaryCurrency = transactionsInCurrentMonth.filter(t => accountCurrencyMap.get(t.accountId) === primaryCurrency);
-
-        const income = transactionsInPrimaryCurrency
-            .filter(t => t.type === TransactionType.INCOME)
-            .reduce((sum, t) => sum + t.amount, 0);
-        
-        const expenses = transactionsInPrimaryCurrency
-            .filter(t => t.type === TransactionType.EXPENSE)
-            .reduce((sum, t) => sum + t.amount, 0);
-
-        return { currentMonthIncome: income, currentMonthExpenses: expenses, currentMonthProfit: income - expenses };
-    }, [displayedTransactions, primaryCurrency, accounts]);
-    
     const upcomingRecurring = useMemo(() => {
         const today = new Date();
         return recurringTransactions
@@ -303,16 +286,24 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
             .slice(0, 4);
     }, [recurringTransactions]);
 
-    const handleChartDayClick = (dateString: string) => { // dateString is 'YYYY-MM-DD'
-        const dailyTransactions = transactions.filter(t => t.date === dateString);
-        // Use a timezone-neutral way to create the date for formatting
-        const displayDate = new Date(dateString + 'T00:00:00').toLocaleDateString(t.length > 0 ? t('en') : 'en', { // A bit of a hack to get language code
+    const handleChartDayClick = (dateString: string, filterType?: TransactionType) => { // dateString is 'YYYY-MM-DD'
+        let dailyTransactions = transactions.filter(t => t.date === dateString);
+        
+        const displayDate = new Date(dateString + 'T00:00:00').toLocaleDateString(t.length > 0 ? 'en' : 'en', { // A bit of a hack to get language code
             month: 'long',
             day: 'numeric',
             year: 'numeric',
             timeZone: 'UTC'
         });
-        onOpenDetailModal(t('transactions_on_date', { date: displayDate }), dailyTransactions);
+
+        let modalTitle = t('transactions_on_date', { date: displayDate });
+
+        if (filterType === TransactionType.EXPENSE) {
+            dailyTransactions = dailyTransactions.filter(t => t.type === TransactionType.EXPENSE);
+            modalTitle = t('expenses_on_date', { date: displayDate });
+        }
+    
+        onOpenDetailModal(modalTitle, dailyTransactions);
     };
     
     const getAccountGridClasses = (count: number) => {
@@ -323,13 +314,14 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
 
     const sections: { [key: string]: React.ReactNode } = {
         balances: (
-            <div className={getAccountGridClasses(sortedAccounts.length)}>
-                {sortedAccounts.length > 0 ? (
-                    sortedAccounts.map((account, index) => {
+            <div className={getAccountGridClasses(displayedBalanceCards.length)}>
+                {accounts.length > 0 ? (
+                    displayedBalanceCards.map((account) => {
                         const change = accountBalanceChanges.get(account.id) ?? 0;
                         const isPositive = change >= 0;
+                        const originalIndex = sortedAccounts.findIndex(a => a.id === account.id);
                         return (
-                            <Card key={account.id} className={`${sortedAccounts.length === 1 ? 'md:col-span-2' : ''}`}>
+                            <Card key={account.id} className={`${displayedBalanceCards.length === 1 ? 'md:col-span-2 lg:col-span-2' : ''}`}>
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <p className="text-text-secondary dark:text-text-secondary-dark">{account.name}</p>
@@ -340,7 +332,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                                         {Math.abs(change).toFixed(1)}%
                                     </div>
                                 </div>
-                                <div className="-ml-6 -mb-6 mt-2"><AccountBalancePieChart balance={account.balance} color={index % 2 === 0 ? primaryColor : accentColor} /></div>
+                                <div className="-ml-6 -mb-6 mt-2"><AccountBalancePieChart balance={account.balance} color={originalIndex % 2 === 0 ? primaryColor : accentColor} /></div>
                             </Card>
                         )
                     })
@@ -456,43 +448,38 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                 </div>
             </div>
         ),
-        monthlySummary: (
-             <div>
-                <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark mb-4">{t('current_month_summary')}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card>
-                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('total_income')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                        <p className="text-2xl font-bold text-income">{formatCurrency(currentMonthIncome, primaryCurrency)}</p>
-                    </Card>
-                    <Card>
-                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('expense')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                        <p className="text-2xl font-bold text-expense">{formatCurrency(currentMonthExpenses, primaryCurrency)}</p>
-                    </Card>
-                    <Card>
-                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('net_profit')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                        <p className={`text-2xl font-bold ${currentMonthProfit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(currentMonthProfit, primaryCurrency)}</p>
-                    </Card>
-                </div>
-             </div>
-        ),
         totalSummary: (
-             <div>
-                <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark mb-4">{t('overall_summary')}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card>
-                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('total_income')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                        <p className="text-2xl font-bold text-income">{formatCurrency(totalIncome, primaryCurrency)}</p>
-                    </Card>
-                    <Card>
-                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('expense')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                        <p className="text-2xl font-bold text-expense">{formatCurrency(totalExpenses, primaryCurrency)}</p>
-                    </Card>
-                    <Card>
-                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('net_profit')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                        <p className={`text-2xl font-bold ${profit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(profit, primaryCurrency)}</p>
-                    </Card>
-                </div>
-             </div>
+             <Card>
+                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center">
+                    <div className="lg:col-span-2 space-y-4">
+                         <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark">{t('overall_summary')}</h2>
+                        <div>
+                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('total_income')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                            <p className="text-2xl font-bold text-income">{formatCurrency(totalIncome, primaryCurrency)}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('expense')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                            <p className="text-2xl font-bold text-expense">{formatCurrency(totalExpenses, primaryCurrency)}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('net_profit')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                            <p className={`text-2xl font-bold ${profit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(profit, primaryCurrency)}</p>
+                        </div>
+                    </div>
+                    <div className="lg:col-span-3">
+                         <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark mb-2 text-center lg:text-left">{t('weekly_spending')}</h3>
+                        <WeeklySpendingChart 
+                            transactions={transactions}
+                            accounts={accounts}
+                            primaryCurrency={primaryCurrency}
+                            accentColor={accentColor}
+                            formatCurrency={formatCurrency}
+                            t={t}
+                            onBarClick={(date) => handleChartDayClick(date, TransactionType.EXPENSE)}
+                        />
+                    </div>
+                 </div>
+             </Card>
         )
     };
 

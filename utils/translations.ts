@@ -68,6 +68,12 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     confirm_delete_message: 'Are you sure you want to delete this item? This action cannot be undone.',
     quick_actions: 'Quick Actions',
     collapse: 'Collapse Navigation',
+    item_added_successfully: '{item} added successfully!',
+    item_updated_successfully: '{item} updated successfully!',
+    debt: 'Debt',
+    recurring_item: 'Recurring Item',
+    limit: 'Limit',
+    goal: 'Goal',
     // Color Themes
     default_theme: 'Default',
     ocean_theme: 'Ocean',
@@ -97,6 +103,7 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     add_account_prompt: 'Add your first bank account to get started.',
     current_month_summary: 'Current Month Summary',
     overall_summary: 'Overall Summary',
+    weekly_spending: 'Weekly Spending',
     // Accounts
     addAccount: 'Add Account',
     edit_account: 'Edit Account',
@@ -285,6 +292,7 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     transactions_on_date: 'Transactions on {date}',
     income_for_month: 'Income for {month}',
     expense_for_month: 'Expenses for {month}',
+    expenses_on_date: 'Expenses on {date}',
   },
   es: {
     // General
@@ -355,6 +363,12 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     confirm_delete_message: '¿Estás seguro de que quieres eliminar este elemento? Esta acción no se puede deshacer.',
     quick_actions: 'Acciones rápidas',
     collapse: 'Contraer Navegación',
+    item_added_successfully: '¡{item} añadido con éxito!',
+    item_updated_successfully: '¡{item} actualizado con éxito!',
+    debt: 'Deuda',
+    recurring_item: 'Elemento Recurrente',
+    limit: 'Límite',
+    goal: 'Meta',
     // Color Themes
     default_theme: 'Predeterminado',
     ocean_theme: 'Océano',
@@ -384,6 +398,7 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     add_account_prompt: 'Añade tu primera cuenta bancaria para empezar.',
     current_month_summary: 'Resumen del Mes Actual',
     overall_summary: 'Resumen General',
+    weekly_spending: 'Gasto Semanal',
     // Accounts
     addAccount: 'Añadir Cuenta',
     edit_account: 'Editar Cuenta',
@@ -572,5 +587,6 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     transactions_on_date: 'Transacciones del {date}',
     income_for_month: 'Ingresos de {month}',
     expense_for_month: 'Gastos de {month}',
+    expenses_on_date: 'Gastos del {date}',
   },
 };

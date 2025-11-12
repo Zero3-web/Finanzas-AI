@@ -107,10 +107,14 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredAndSortedTransactions.map(transaction => {
+                    {filteredAndSortedTransactions.map((transaction, index) => {
                         const account = accountMap[transaction.accountId];
                         return (
-                        <tr key={transaction.id} className="border-b border-secondary dark:border-border-dark last:border-b-0 hover:bg-secondary dark:hover:bg-secondary-dark/50">
+                        <tr 
+                            key={transaction.id} 
+                            className="border-b border-secondary dark:border-border-dark last:border-b-0 hover:bg-secondary dark:hover:bg-secondary-dark/50 animate-item-fade-in"
+                            style={{ animationDelay: `${index * 30}ms` }}
+                        >
                             <td className="p-3">{new Date(transaction.date).toLocaleDateString()}</td>
                             <td className="p-3">{transaction.description}</td>
                             <td className="p-3">{getCategoryTranslation(transaction.category)}</td>
@@ -141,10 +145,15 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
       {/* Mobile Card List View */}
       <div className="md:hidden space-y-3">
         {filteredAndSortedTransactions.length > 0 ? (
-          filteredAndSortedTransactions.map(transaction => {
+          filteredAndSortedTransactions.map((transaction, index) => {
             const account = accountMap[transaction.accountId];
             return (
-            <Card key={transaction.id} className="p-4" id={`transaction-${transaction.id}`}>
+            <Card 
+                key={transaction.id} 
+                className="p-4 animate-item-fade-in" 
+                id={`transaction-${transaction.id}`}
+                style={{ animationDelay: `${index * 50}ms` }}
+            >
               <div className="flex justify-between items-start mb-2">
                 <span className="text-sm bg-secondary dark:bg-secondary-dark px-2 py-1 rounded-md">{getCategoryTranslation(transaction.category)}</span>
                 <p className={`font-semibold text-lg ${transaction.type === TransactionType.INCOME ? 'text-income' : 'text-expense'}`}>

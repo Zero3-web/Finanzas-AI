@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, TooltipProps, LineChart, Line, CartesianGrid } from 'recharts';
-import { Transaction, TransactionType } from '../types';
+import { Transaction, TransactionType, Account } from '../types';
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 
 interface CustomTooltipProps extends TooltipProps<ValueType, NameType> {
@@ -93,3 +93,62 @@ export const ActivityChart: React.FC<{
         </ResponsiveContainer>
     );
 }
+
+export const WeeklySpendingChart: React.FC<{
+    transactions: Transaction[];
+    accounts: Account[];
+    primaryCurrency: string;
+    accentColor: string;
+    formatCurrency: (amount: number, currency: string) => string;
+    t: (key: string) => string;
+    onBarClick: (date: string) => void;
+}> = ({ transactions, accounts, primaryCurrency, accentColor, formatCurrency, t, onBarClick }) => {
+
+    const data = useMemo(() => {
+        const accountCurrencyMap = new Map(accounts.map(acc => [acc.id, acc.currency]));
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        const sevenDaysAgo = new Date(today);
+        sevenDaysAgo.setDate(today.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+        const weekData: { [key: string]: { name: string, Gastos: number, fullDate: string }} = {};
+
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(sevenDaysAgo);
+            date.setDate(sevenDaysAgo.getDate() + i);
+            const dayKey = date.toISOString().split('T')[0];
+            weekData[dayKey] = { name: t(days[date.getDay()]), Gastos: 0, fullDate: dayKey };
+        }
+
+        transactions.forEach(t => {
+            const transactionDate = new Date(t.date);
+            if (
+                t.type === TransactionType.EXPENSE &&
+                accountCurrencyMap.get(t.accountId) === primaryCurrency &&
+                transactionDate >= sevenDaysAgo &&
+                transactionDate <= today
+            ) {
+                const dayKey = transactionDate.toISOString().split('T')[0];
+                if (weekData[dayKey]) {
+                    weekData[dayKey].Gastos += t.amount;
+                }
+            }
+        });
+        
+        return Object.values(weekData);
+
+    }, [transactions, accounts, primaryCurrency, t]);
+
+    return (
+        <ResponsiveContainer width="100%" height={150}>
+            <BarChart data={data} margin={{ top: 5, right: 0, left: -25, bottom: 5 }}>
+                <XAxis dataKey="name" stroke="#6b7280" fontSize={12} className="dark:stroke-text-secondary-dark" tickLine={false} axisLine={false} />
+                <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(value) => formatCurrency(Number(value), primaryCurrency).replace(/(\.\d*|,\d*)/, '')} className="dark:stroke-text-secondary-dark" tickLine={false} axisLine={false} />
+                <Tooltip content={<CustomTooltip formatCurrency={(val) => formatCurrency(val, primaryCurrency)} />} cursor={{ fill: 'rgba(114, 63, 235, 0.05)' }}/>
+                <Bar dataKey="Gastos" fill={accentColor} radius={[4, 4, 0, 0]} onClick={(data) => onBarClick(data.fullDate)} style={{ cursor: 'pointer' }} />
+            </BarChart>
+        </ResponsiveContainer>
+    );
+};

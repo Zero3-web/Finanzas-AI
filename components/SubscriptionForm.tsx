@@ -52,8 +52,6 @@ const RecurringTransactionForm: React.FC<RecurringTransactionFormProps> = ({ onA
     } else {
         onAddRecurring(recurringData);
     }
-    
-    onClose();
   };
   
   const expenseCategories = ['Entertainment', 'Utilities', 'Software', 'Health', 'Housing', 'Other'];

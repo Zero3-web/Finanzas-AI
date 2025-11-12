@@ -41,6 +41,7 @@ import Settings from './views/Settings';
 import Wellness from './views/Wellness';
 import FollowUpModal from './components/FollowUpModal';
 import { MicIcon, PlusIcon } from './components/icons';
+import DashboardSkeleton from './components/DashboardSkeleton';
 
 
 const App: React.FC = () => {
@@ -58,6 +59,8 @@ const App: React.FC = () => {
     const [isNavCollapsed, setIsNavCollapsed] = useLocalStorage('nav-collapsed', false);
     const [activeTab, setActiveTab] = useLocalStorage<Tab>('active-tab', 'dashboard');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
 
     // Data State
     const [accounts, setAccounts] = useLocalStorage<Account[]>('accounts', []);
@@ -91,6 +94,11 @@ const App: React.FC = () => {
     // Goal Completion State
     const [showConfetti, setShowConfetti] = useState(false);
     const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setIsLoading(false), 1200);
+        return () => clearTimeout(timer);
+    }, []);
 
     const t = useCallback((key: string, params?: { [key: string]: string | number }) => {
         let translation = translations[language][key] || key;
@@ -369,6 +377,25 @@ const App: React.FC = () => {
         return result;
     };
 
+    const handleGenericSubmit = <T extends { id: string }>(
+        items: T[],
+        setItems: (items: T[]) => void,
+        newItem: Omit<T, 'id'> | T,
+        entityNameKey: 'account' | 'debt' | 'recurring_item' | 'limit' | 'goal'
+    ) => {
+        setIsFormSubmitting(true);
+        const isEditing = 'id' in newItem;
+        
+        handleAddOrUpdate(items, setItems, newItem);
+
+        setIslandStatus('success');
+        const successMessageKey = isEditing ? 'item_updated_successfully' : 'item_added_successfully';
+        setIslandMessage(t(successMessageKey, { item: t(entityNameKey) }));
+        playTone('success');
+        setIsIslandOpen(true);
+    };
+
+
     const handleRemove = (type: string, id: string) => {
         const setters: { [key: string]: React.Dispatch<any> } = {
             account: setAccounts,
@@ -592,8 +619,8 @@ const App: React.FC = () => {
             <Navigation activeTab={activeTab} setActiveTab={setActiveTab} isCollapsed={isNavCollapsed} toggleCollapse={() => setIsNavCollapsed(!isNavCollapsed)} t={t} userName={userName} avatar={avatar} />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <MobileHeader activeTab={activeTab} t={t} notifications={notifications} onAvatarClick={() => setIsMobileMenuOpen(true)} userName={userName} avatar={avatar} />
-                <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 mt-16 md:mt-0 pb-20 md:pb-8">
-                    {renderView()}
+                <main key={activeTab} className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 mt-16 md:mt-0 pb-20 md:pb-8 animate-view-fade-in">
+                    {isLoading && activeTab === 'dashboard' ? <DashboardSkeleton t={t} /> : renderView()}
                 </main>
                 <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} t={t} />
             </div>
@@ -615,40 +642,64 @@ const App: React.FC = () => {
                     t={t}
                 />
             </Modal>
-            <Modal isOpen={modal === 'account'} onClose={closeModal} title={itemToEdit ? t('edit_account') : t('addAccount')}>
+            <Modal 
+                isOpen={modal === 'account'} 
+                onClose={closeModal} 
+                title={itemToEdit ? t('edit_account') : t('addAccount')}
+                isExiting={isFormSubmitting}
+                onExitComplete={handleModalExitComplete}
+            >
                 <AccountForm
-                    onAddAccount={(acc) => handleAddOrUpdate(accounts, setAccounts, acc)}
-                    onUpdateAccount={(acc) => handleAddOrUpdate(accounts, setAccounts, acc)}
+                    onAddAccount={(acc) => handleGenericSubmit(accounts, setAccounts, acc, 'account')}
+                    onUpdateAccount={(acc) => handleGenericSubmit(accounts, setAccounts, acc, 'account')}
                     onClose={closeModal}
                     accountToEdit={itemToEdit}
                     t={t}
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
-            <Modal isOpen={modal === 'debt'} onClose={closeModal} title={itemToEdit ? t('edit_debt') : t('addDebt')}>
+            <Modal 
+                isOpen={modal === 'debt'} 
+                onClose={closeModal} 
+                title={itemToEdit ? t('edit_debt') : t('addDebt')}
+                isExiting={isFormSubmitting}
+                onExitComplete={handleModalExitComplete}
+            >
                  <DebtForm
-                    onAddDebt={(debt) => handleAddOrUpdate(debts, setDebts, debt)}
-                    onUpdateDebt={(debt) => handleAddOrUpdate(debts, setDebts, debt)}
+                    onAddDebt={(debt) => handleGenericSubmit(debts, setDebts, debt, 'debt')}
+                    onUpdateDebt={(debt) => handleGenericSubmit(debts, setDebts, debt, 'debt')}
                     onClose={closeModal}
                     debtToEdit={itemToEdit}
                     t={t}
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
-            <Modal isOpen={modal === 'recurring'} onClose={closeModal} title={itemToEdit ? t('edit_recurring') : t('addRecurring')}>
+            <Modal 
+                isOpen={modal === 'recurring'} 
+                onClose={closeModal} 
+                title={itemToEdit ? t('edit_recurring') : t('addRecurring')}
+                isExiting={isFormSubmitting}
+                onExitComplete={handleModalExitComplete}
+            >
                 <RecurringTransactionForm
-                    onAddRecurring={(rec) => handleAddOrUpdate(recurringTransactions, setRecurringTransactions, rec)}
-                    onUpdateRecurring={(rec) => handleAddOrUpdate(recurringTransactions, setRecurringTransactions, rec)}
+                    onAddRecurring={(rec) => handleGenericSubmit(recurringTransactions, setRecurringTransactions, rec, 'recurring_item')}
+                    onUpdateRecurring={(rec) => handleGenericSubmit(recurringTransactions, setRecurringTransactions, rec, 'recurring_item')}
                     onClose={closeModal}
                     recurringToEdit={itemToEdit}
                     t={t}
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
-             <Modal isOpen={modal === 'limit'} onClose={closeModal} title={itemToEdit ? t('edit_limit') : t('addLimit')}>
+             <Modal 
+                isOpen={modal === 'limit'} 
+                onClose={closeModal} 
+                title={itemToEdit ? t('edit_limit') : t('addLimit')}
+                isExiting={isFormSubmitting}
+                onExitComplete={handleModalExitComplete}
+            >
                 <LimitForm
-                    onAddLimit={(limit) => handleAddOrUpdate(limits, setLimits, limit)}
-                    onUpdateLimit={(limit) => handleAddOrUpdate(limits, setLimits, limit)}
+                    onAddLimit={(limit) => handleGenericSubmit(limits, setLimits, limit, 'limit')}
+                    onUpdateLimit={(limit) => handleGenericSubmit(limits, setLimits, limit, 'limit')}
                     onClose={closeModal}
                     limitToEdit={itemToEdit}
                     t={t}
@@ -656,10 +707,16 @@ const App: React.FC = () => {
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
-             <Modal isOpen={modal === 'goal'} onClose={closeModal} title={itemToEdit ? t('edit_goal') : t('addGoal')}>
+             <Modal 
+                isOpen={modal === 'goal'} 
+                onClose={closeModal} 
+                title={itemToEdit ? t('edit_goal') : t('addGoal')}
+                isExiting={isFormSubmitting}
+                onExitComplete={handleModalExitComplete}
+            >
                 <GoalForm
-                    onAddGoal={(goal) => handleAddOrUpdate(goals, setGoals, goal)}
-                    onUpdateGoal={(goal) => handleAddOrUpdate(goals, setGoals, goal)}
+                    onAddGoal={(goal) => handleGenericSubmit(goals, setGoals, goal, 'goal')}
+                    onUpdateGoal={(goal) => handleGenericSubmit(goals, setGoals, goal, 'goal')}
                     onClose={closeModal}
                     goalToEdit={itemToEdit}
                     t={t}

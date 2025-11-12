@@ -49,8 +49,6 @@ const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, g
     } else {
       onAddGoal(goalData);
     }
-    
-    onClose();
   };
   
   const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'PEN', 'MXN'];

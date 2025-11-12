@@ -50,8 +50,6 @@ const LimitForm: React.FC<LimitFormProps> = ({ onAddLimit, onUpdateLimit, onClos
     } else {
         onAddLimit(limitData);
     }
-    
-    onClose();
   };
 
   const inputClasses = "mt-1 block w-full bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";

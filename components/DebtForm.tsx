@@ -59,8 +59,6 @@ const DebtForm: React.FC<DebtFormProps> = ({ onAddDebt, onUpdateDebt, onClose, d
     } else {
       onAddDebt(debtData);
     }
-    
-    onClose();
   };
   
   const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'PEN', 'MXN'];

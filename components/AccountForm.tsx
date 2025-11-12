@@ -55,7 +55,6 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount
     }
     
     onSuccess?.();
-    onClose();
   };
   
   const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'PEN', 'MXN'];
