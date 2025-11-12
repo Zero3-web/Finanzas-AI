@@ -84,6 +84,18 @@ export const BullseyeIcon: React.FC<IconProps> = ({ className }) => (
     </IconWrapper>
 );
 
+export const GaugeIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path d="M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M12 15v5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M15.5 11.5 12 13" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M22 12h-2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M4 12H2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M19.07 19.07 17.66 17.66" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M6.34 6.34 4.93 4.93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </IconWrapper>
+);
+
 export const XIcon: React.FC<IconProps> = ({ className }) => (
     <IconWrapper className={className}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -181,5 +193,22 @@ export const StopCircleIcon: React.FC<IconProps> = ({ className }) => (
     <IconWrapper className={className}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 9.563C9 9.253 9.253 9 9.563 9h4.874c.31 0 .563.253.563.563v4.874c0 .31-.253.563-.563.563H9.563C9.253 15 9 14.747 9 14.437V9.563z" />
+    </IconWrapper>
+);
+
+export const SparklesIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m1-15l1.06 1.06M17 7l1.06-1.06M7 17l-1.06 1.06M18.06 18.06L17 17M12 2l1.062 1.062L12 5.124 10.938 4.062 12 3.001zM12 21l-1.062-1.062L12 18.876l1.062 1.062L12 21.001zM21 12l-1.062-1.062L21 12l-1.062 1.062L21 12zM3 12l1.062 1.062L3 12l1.062-1.062L3 12z" />
+    </IconWrapper>
+);
+
+export const GripVerticalIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+      <path d="M9 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
+      <path d="M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
+      <path d="M9 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
+      <path d="M15 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
+      <path d="M15 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
+      <path d="M15 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
     </IconWrapper>
 );

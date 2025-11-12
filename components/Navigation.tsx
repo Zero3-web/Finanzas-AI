@@ -12,7 +12,8 @@ import {
     ShieldCheckIcon,
     CalendarIcon,
     DocumentArrowDownIcon,
-    BullseyeIcon
+    BullseyeIcon,
+    GaugeIcon
 } from './icons';
 
 interface NavigationProps {

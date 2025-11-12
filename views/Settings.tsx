@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Theme } from '../hooks/useTheme';
 import { themes } from '../hooks/useColorTheme';
 import ThemeToggle from '../components/ThemeToggle';
 import Card from '../components/Card';
 import AvatarGrid from '../components/AvatarGrid';
-import { Language, ColorTheme } from '../types';
+import Modal from '../components/Modal';
+import { Language, ColorTheme, Account, Transaction, Debt } from '../types';
+import Wellness from './Wellness';
 
 interface SettingsProps {
   theme: Theme;
@@ -20,85 +22,116 @@ interface SettingsProps {
   userName: string;
   setUserName: (name: string) => void;
   t: (key: string) => string;
+  accounts: Account[];
+  transactions: Transaction[];
+  debts: Debt[];
 }
 
-const Settings: React.FC<SettingsProps> = ({ theme, toggleTheme, currency, setCurrency, language, setLanguage, colorTheme, setColorTheme, avatar, setAvatar, userName, setUserName, t }) => {
+const Settings: React.FC<SettingsProps> = ({ 
+    theme, toggleTheme, currency, setCurrency, language, setLanguage, 
+    colorTheme, setColorTheme, avatar, setAvatar, userName, setUserName, 
+    t, accounts, transactions, debts 
+}) => {
+  const [isAvatarGridOpen, setIsAvatarGridOpen] = useState(false);
   const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'PEN', 'MXN'];
 
-  const inputClasses = "mt-1 block bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
+  const inputClasses = "mt-1 block w-full bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
 
   const themeOptions = Object.keys(themes) as ColorTheme[];
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-text-main dark:text-text-main-dark">{t('settings')}</h1>
 
-      <Card>
-        <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('profile')}</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
-            <div>
-                <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">{t('tour_avatar_title')}</label>
-                <AvatarGrid selectedAvatar={avatar} onSelectAvatar={setAvatar} />
-            </div>
-            <div>
-                <label htmlFor="userName" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('your_name')}</label>
-                <input
-                    type="text"
-                    id="userName"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    className={`${inputClasses} w-full`}
-                    placeholder={t('tour_name_placeholder')}
-                />
-            </div>
-        </div>
-      </Card>
-      
-      <Card>
-        <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('appearance')}</h2>
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <span className="text-text-secondary dark:text-text-secondary-dark">{t('theme')}</span>
-                <div className="flex items-center space-x-2">
-                    <span className="text-sm capitalize text-text-main dark:text-text-main-dark">{t(theme)}</span>
-                    <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+            <Card>
+                <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('profile')}</h2>
+                <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                        <img src={avatar} alt="User Avatar" className="w-16 h-16 rounded-full" />
+                        <div className="flex-grow">
+                             <label htmlFor="userName" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('your_name')}</label>
+                            <input
+                                type="text"
+                                id="userName"
+                                value={userName}
+                                onChange={(e) => setUserName(e.target.value)}
+                                className={`${inputClasses}`}
+                                placeholder={t('tour_name_placeholder')}
+                            />
+                        </div>
+                        <button onClick={() => setIsAvatarGridOpen(true)} className="bg-secondary dark:bg-secondary-dark text-sm font-semibold py-2 px-3 rounded-lg hover:bg-gray-200 dark:hover:bg-opacity-80">{t('change_avatar')}</button>
+                    </div>
                 </div>
-            </div>
-            <div>
-                <span className="block text-text-secondary dark:text-text-secondary-dark mb-2">{t('color_theme')}</span>
-                <div className="flex flex-wrap gap-4">
-                    {themeOptions.map((themeName) => (
-                         <button key={themeName} onClick={() => setColorTheme(themeName)} className={`p-2 rounded-lg border-2 ${colorTheme === themeName ? 'border-primary' : 'border-transparent'}`}>
-                             <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full" style={{ backgroundColor: `rgb(${themes[themeName]['--color-primary']})`}}></div>
-                                <div className="w-6 h-6 rounded-full" style={{ backgroundColor: `rgb(${themes[themeName]['--color-accent']})`}}></div>
-                                <span className="capitalize ml-1 text-text-main dark:text-text-main-dark">{t(`${themeName}_theme`)}</span>
-                             </div>
-                         </button>
-                    ))}
+            </Card>
+            
+            <Card>
+                <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('appearance')}</h2>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <span className="text-text-secondary dark:text-text-secondary-dark">{t('theme')}</span>
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm capitalize text-text-main dark:text-text-main-dark">{t(theme)}</span>
+                            <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+                        </div>
+                    </div>
+                    <div>
+                        <span className="block text-text-secondary dark:text-text-secondary-dark mb-2">{t('color_theme')}</span>
+                        <div className="flex flex-wrap gap-4">
+                            {themeOptions.map((themeName) => (
+                                <button key={themeName} onClick={() => setColorTheme(themeName)} className={`p-2 rounded-lg border-2 ${colorTheme === themeName ? 'border-primary' : 'border-transparent'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: `rgb(${themes[themeName]['--color-primary']})`}}></div>
+                                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: `rgb(${themes[themeName]['--color-accent']})`}}></div>
+                                        <span className="capitalize ml-1 text-text-main dark:text-text-main-dark">{t(`${themeName}_theme`)}</span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </Card>
+            
+            <Card>
+                <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('regional')}</h2>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <label htmlFor="currency" className="text-text-secondary dark:text-text-secondary-dark">{t('currency')}</label>
+                        <select id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClasses}>
+                            {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <label htmlFor="language" className="text-text-secondary dark:text-text-secondary-dark">{t('language')}</label>
+                        <select id="language" value={language} onChange={(e) => setLanguage(e.target.value as Language)} className={inputClasses}>
+                            <option value="en">English</option>
+                            <option value="es">Español</option>
+                        </select>
+                    </div>
+                </div>
+            </Card>
         </div>
-      </Card>
-      
-      <Card>
-        <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('regional')}</h2>
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <label htmlFor="currency" className="text-text-secondary dark:text-text-secondary-dark">{t('currency')}</label>
-                <select id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClasses}>
-                    {currencies.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-            </div>
-             <div className="flex items-center justify-between">
-                <label htmlFor="language" className="text-text-secondary dark:text-text-secondary-dark">{t('language')}</label>
-                <select id="language" value={language} onChange={(e) => setLanguage(e.target.value as Language)} className={inputClasses}>
-                    <option value="en">English</option>
-                    <option value="es">Español</option>
-                </select>
-            </div>
+        <div className="lg:col-span-1">
+            <Wellness 
+                accounts={accounts}
+                transactions={transactions}
+                debts={debts}
+                t={t}
+                colorTheme={colorTheme}
+            />
         </div>
-      </Card>
+      </div>
+
+       <Modal isOpen={isAvatarGridOpen} onClose={() => setIsAvatarGridOpen(false)} title={t('tour_avatar_title')}>
+        <AvatarGrid
+          selectedAvatar={avatar}
+          onSelectAvatar={(avatarUrl) => {
+            setAvatar(avatarUrl);
+            setIsAvatarGridOpen(false);
+          }}
+        />
+      </Modal>
 
     </div>
   );

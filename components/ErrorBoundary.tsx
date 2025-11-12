@@ -1,4 +1,4 @@
-import React, { ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -9,12 +9,15 @@ interface State {
   error?: any;
 }
 
-class ErrorBoundary extends React.Component<Props, State> {
-  // FIX: Refactored state initialization to a class property to resolve errors where `this.state` and `this.props` were not recognized.
-  state: State = {
-    hasError: false,
-    error: undefined,
-  };
+class ErrorBoundary extends Component<Props, State> {
+  // Reverted to constructor for state initialization to fix props-related type error.
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: undefined,
+    };
+  }
 
   static getDerivedStateFromError(error: any): State {
     return { hasError: true, error };

@@ -22,6 +22,7 @@ import GoalForm from './components/GoalForm';
 import ConfirmationModal from './components/ConfirmationModal';
 import OnboardingTour from './components/OnboardingTour';
 import VoiceInputModal from './components/VoiceInputModal';
+import VoiceTour from './components/VoiceTour';
 import DynamicIsland from './components/DynamicIsland';
 import Confetti from './components/Confetti';
 
@@ -36,6 +37,7 @@ import Analysis from './views/Analysis';
 import Calendar from './views/Calendar';
 import Export from './views/Export';
 import Settings from './views/Settings';
+import Wellness from './views/Wellness';
 import FollowUpModal from './components/FollowUpModal';
 import { MicIcon, PlusIcon } from './components/icons';
 
@@ -69,6 +71,8 @@ const App: React.FC = () => {
     const [itemToRemove, setItemToRemove] = useState<{ type: string, id: string } | null>(null);
 
     // Voice Input State
+    const [isVoiceTourFinished, setIsVoiceTourFinished] = useLocalStorage('voice-tour-finished', false);
+    const [isVoiceTourOpen, setIsVoiceTourOpen] = useState(false);
     const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
     const [isIslandOpen, setIsIslandOpen] = useState(false);
     const [islandStatus, setIslandStatus] = useState<'processing' | 'success' | 'error'>('processing');
@@ -403,6 +407,20 @@ const App: React.FC = () => {
         }
     };
 
+    const handleVoiceClick = () => {
+        if (!isVoiceTourFinished) {
+            setIsVoiceTourOpen(true);
+        } else {
+            setIsVoiceModalOpen(true);
+        }
+    };
+
+    const handleFinishVoiceTour = () => {
+        setIsVoiceTourFinished(true);
+        setIsVoiceTourOpen(false);
+        setIsVoiceModalOpen(true); // Open the real modal right after the tour.
+    };
+
 
     const renderView = () => {
         switch (activeTab) {
@@ -416,7 +434,7 @@ const App: React.FC = () => {
             case 'analysis': return <Analysis transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} primaryCurrency={primaryCurrency} />;
             case 'calendar': return <Calendar accounts={accounts} debts={debts} recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} t={t} />;
             case 'export': return <Export transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} userName={userName} colorTheme={colorTheme} />;
-            case 'settings': return <Settings theme={theme} toggleTheme={toggleTheme} currency={primaryCurrency} setCurrency={setPrimaryCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} userName={userName} setUserName={setUserName} t={t} />;
+            case 'settings': return <Settings theme={theme} toggleTheme={toggleTheme} currency={primaryCurrency} setCurrency={setPrimaryCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} userName={userName} setUserName={setUserName} t={t} accounts={accounts} transactions={transactions} debts={debts} />;
             default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} />;
         }
     };
@@ -532,6 +550,12 @@ const App: React.FC = () => {
                 avatar={avatar}
             />
 
+            <VoiceTour 
+                isOpen={isVoiceTourOpen}
+                onFinish={handleFinishVoiceTour}
+                t={t}
+            />
+
             <VoiceInputModal 
                 isOpen={isVoiceModalOpen}
                 onClose={() => setIsVoiceModalOpen(false)}
@@ -558,7 +582,7 @@ const App: React.FC = () => {
             <div role="group" aria-label={t('quick_actions')}>
                 {/* Voice Input FAB */}
                 <button
-                    onClick={() => setIsVoiceModalOpen(true)}
+                    onClick={handleVoiceClick}
                     className="fixed bottom-36 right-5 md:bottom-24 md:right-9 bg-accent hover:opacity-90 text-primary rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-transform transform active:scale-90"
                     title={t('voice_input_title')}
                 >

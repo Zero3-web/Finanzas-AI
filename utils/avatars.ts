@@ -1,10 +1,4 @@
-export const avatars = [
-  'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-  'https://i.pravatar.cc/150?u=a042581f4e29026704e',
-  'https://i.pravatar.cc/150?u=a042581f4e29026704f',
-  'https://i.pravatar.cc/150?u=a042581f4e29026704a',
-  'https://i.pravatar.cc/150?u=a042581f4e29026704b',
-  'https://i.pravatar.cc/150?u=a042581f4e29026704c',
-  'https://i.pravatar.cc/150?u=a042581f4e29026703d',
-  'https://i.pravatar.cc/150?u=a042581f4e29026703e',
-];
+// Using DiceBear for fun, deterministic avatars based on seeds.
+// The 'bottts-neutral' style provides pleasant, cartoonish robot avatars.
+const seeds = ['Milo', 'Luna', 'Leo', 'Zoe', 'Max', 'Ruby', 'Oliver', 'Chloe'];
+export const avatars = seeds.map(seed => `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${seed}&radius=50`);

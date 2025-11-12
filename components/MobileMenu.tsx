@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tab } from '../types';
-import { ScaleIcon, CogIcon, CollectionIcon, XIcon, CardIcon, ShieldCheckIcon, DocumentArrowDownIcon, BullseyeIcon } from './icons';
+import { ScaleIcon, CogIcon, CollectionIcon, XIcon, CardIcon, ShieldCheckIcon, DocumentArrowDownIcon, BullseyeIcon, GaugeIcon } from './icons';
 
 interface MobileMenuProps {
   isOpen: boolean;

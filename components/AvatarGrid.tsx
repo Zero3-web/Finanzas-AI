@@ -13,7 +13,7 @@ const AvatarGrid: React.FC<AvatarGridProps> = ({ selectedAvatar, onSelectAvatar 
         <button
           key={avatarUrl}
           onClick={() => onSelectAvatar(avatarUrl)}
-          className={`rounded-full transition-all duration-200 ${
+          className={`rounded-full transition-all duration-200 transform hover:scale-110 ${
             selectedAvatar === avatarUrl
               ? 'ring-4 ring-primary'
               : 'ring-2 ring-transparent hover:ring-primary/50'

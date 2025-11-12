@@ -70,12 +70,14 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({ isOpen, onClose, onTr
     const [isRecording, setIsRecording] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [status, setStatus] = useState<Status>('idle');
+    const [errorMessage, setErrorMessage] = useState('');
     const recognitionRef = useRef<any | null>(null);
     
     const resetState = () => {
         setIsRecording(false);
         setTranscript('');
         setStatus('idle');
+        setErrorMessage('');
     }
 
     useEffect(() => {
@@ -109,15 +111,22 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({ isOpen, onClose, onTr
 
             recognitionRef.current.onerror = (event: any) => {
                 console.error("Speech recognition error", event.error);
-                setIsRecording(false);
-                setStatus('idle');
-                onClose();
+                if (event.error === 'aborted') {
+                    return; // User intentionally closed the modal
+                }
+                playTone('error');
+                if (event.error === 'not-allowed') {
+                    setErrorMessage(t('voice_error_permission'));
+                } else {
+                    setErrorMessage(t('voice_error'));
+                }
             };
         }
-    }, [isOpen, onClose, lang]);
+    }, [isOpen, onClose, lang, t]);
 
     const startRecording = () => {
         if (recognitionRef.current) {
+            setErrorMessage('');
             playTone('start');
             setTranscript('');
             setIsRecording(true);
@@ -144,7 +153,7 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({ isOpen, onClose, onTr
 
     const handleClose = () => {
         if (recognitionRef.current) {
-            recognitionRef.current.stop();
+            recognitionRef.current.abort();
         }
         onClose();
     }
@@ -172,7 +181,9 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({ isOpen, onClose, onTr
                 <div className="p-6 flex flex-col items-center justify-center space-y-6 min-h-[250px]">
                     <FuturisticOrb status={status === 'recording' ? 'recording' : 'idle'} onClick={isRecording ? stopRecording : startRecording} />
                     <div className="text-center h-12">
-                        { isRecording ? (
+                        { errorMessage ? (
+                            <p className="text-red-400">{errorMessage}</p>
+                        ) : isRecording ? (
                             <p className="text-white/70 animate-pulse">{t('voice_input_listening')}</p>
                         ) : transcript && status !== 'transitioning' ? (
                             <p className="text-white/90 italic">"{transcript}"</p>
