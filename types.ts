@@ -91,3 +91,6 @@ export interface CalendarEvent {
 }
 
 export type ColorTheme = 'default' | 'ocean' | 'sunset' | 'forest';
+
+// FIX: Added Theme type to centralize type definitions.
+export type Theme = 'light' | 'dark';

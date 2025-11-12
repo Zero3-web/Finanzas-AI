@@ -1,6 +1,7 @@
 import React from 'react';
 import { SunIcon, MoonIcon } from './icons';
-import { Theme } from '../hooks/useTheme';
+// FIX: Import Theme from the central types file.
+import { Theme } from '../types';
 
 interface ThemeToggleProps {
   theme: Theme;

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import useLocalStorage from './useLocalStorage';
-
-export type Theme = 'light' | 'dark';
+// FIX: Import Theme from the central types file.
+import { Theme } from '../types';
 
 export const useTheme = (): [Theme, () => void] => {
   const [theme, setTheme] = useLocalStorage<Theme>('theme', 'light');

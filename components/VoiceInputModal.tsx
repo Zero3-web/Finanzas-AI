@@ -117,6 +117,12 @@ const VoiceInputModal: React.FC<VoiceInputModalProps> = ({ isOpen, onClose, onTr
                 playTone('error');
                 if (event.error === 'not-allowed') {
                     setErrorMessage(t('voice_error_permission'));
+                } else if (event.error === 'network') {
+                    setErrorMessage(t('voice_error_network'));
+                } else if (event.error === 'no-speech') {
+                    setErrorMessage(t('voice_error_no_speech'));
+                } else if (event.error === 'audio-capture') {
+                    setErrorMessage(t('voice_error_audio_capture'));
                 } else {
                     setErrorMessage(t('voice_error'));
                 }

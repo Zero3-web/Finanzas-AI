@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useRef } from 'react';
-import { Transaction, Account, TransactionType, Debt, Notification, ColorTheme, RecurringTransaction } from '../types';
-import { Theme } from '../hooks/useTheme';
+// FIX: Consolidate type imports and get Theme from the central types file.
+import { Transaction, Account, TransactionType, Debt, Notification, ColorTheme, RecurringTransaction, Theme } from '../types';
 import { themes } from '../hooks/useColorTheme';
 import Card from '../components/Card';
 import { PlusIcon, ArrowUpIcon, VisaIcon, StripeIcon, PaypalIcon, ApplePayIcon, CalendarIcon, ArrowDownIcon, CollectionIcon, GripVerticalIcon } from '../components/icons';
@@ -187,6 +187,32 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         return transactions.filter(t => t.accountId === selectedAccountId);
     }, [transactions, selectedAccountId]);
 
+    const dateRangeText = useMemo(() => {
+        if (displayedTransactions.length < 1) {
+            return null;
+        }
+
+        const dates = displayedTransactions.map(t => new Date(t.date).getTime());
+        const minTimestamp = Math.min(...dates);
+        const maxTimestamp = Math.max(...dates);
+        
+        if (!isFinite(minTimestamp) || !isFinite(maxTimestamp)) {
+            return null;
+        }
+
+        const minDate = new Date(minTimestamp);
+        const maxDate = new Date(maxTimestamp);
+        
+        const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+        const formatter = new Intl.DateTimeFormat(undefined, options);
+
+        if (minDate.toDateString() === maxDate.toDateString()) {
+            return formatter.format(minDate);
+        }
+        
+        return `${formatter.format(minDate)} - ${formatter.format(maxDate)}`;
+    }, [displayedTransactions]);
+
     const recentActivity = useMemo(() => [...displayedTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5), [displayedTransactions]);
     
     const { totalIncome, totalExpenses, profit } = useMemo(() => {
@@ -276,7 +302,12 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                             <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">
                                 {t('activity')} <span className="text-base font-medium text-text-secondary dark:text-text-secondary-dark">{selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</span>
                             </h3>
-                            <div className="text-text-secondary dark:text-text-secondary-dark text-sm flex items-center border border-secondary dark:border-border-dark rounded-lg px-2 py-1"><CalendarIcon className="w-5 h-5 mr-2"/> Jan 6, 2024 - Jan 11, 2024</div>
+                            {dateRangeText && (
+                                <div className="text-text-secondary dark:text-text-secondary-dark text-sm flex items-center border border-secondary dark:border-border-dark rounded-lg px-2 py-1">
+                                    <CalendarIcon className="w-5 h-5 mr-2"/>
+                                    {dateRangeText}
+                                </div>
+                            )}
                         </div>
                         <ActivityChart transactions={displayedTransactions} primaryColor={primaryColor} accentColor={accentColor} formatCurrency={(amount) => formatCurrency(amount, primaryCurrency)} />
                     </Card>
