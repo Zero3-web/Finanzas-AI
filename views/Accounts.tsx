@@ -68,8 +68,10 @@ const Accounts: React.FC<AccountsProps> = ({ accounts, formatCurrency, onAddAcco
       </div>
       {accounts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {accounts.map(account => (
-            <AccountCard key={account.id} account={account} formatCurrency={formatCurrency} onEdit={onEditAccount} onRemove={onRemoveAccount} t={t} />
+          {accounts.map((account, index) => (
+            <div key={account.id} className="animate-item-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                <AccountCard account={account} formatCurrency={formatCurrency} onEdit={onEditAccount} onRemove={onRemoveAccount} t={t} />
+            </div>
           ))}
         </div>
       ) : (

@@ -35,14 +35,14 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
         <div className="bg-secondary dark:bg-secondary-dark/50 px-4 py-3 sm:px-6 flex flex-row-reverse rounded-b-2xl">
             <button
                 type="button"
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-expense text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-expense text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm transition-all transform active:scale-95"
                 onClick={handleConfirm}
             >
                 {t('delete')}
             </button>
             <button
                 type="button"
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-border-dark shadow-sm px-4 py-2 bg-surface dark:bg-surface-dark text-base font-medium text-text-main dark:text-text-main-dark hover:bg-gray-50 dark:hover:bg-secondary-dark sm:mt-0 sm:w-auto sm:text-sm transition-colors"
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-border-dark shadow-sm px-4 py-2 bg-surface dark:bg-surface-dark text-base font-medium text-text-main dark:text-text-main-dark hover:bg-gray-50 dark:hover:bg-secondary-dark sm:mt-0 sm:w-auto sm:text-sm transition-all transform active:scale-95"
                 onClick={onClose}
             >
                 {t('cancel')}

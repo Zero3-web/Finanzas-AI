@@ -107,10 +107,12 @@ const Limits: React.FC<LimitsProps> = ({ limits, transactions, accounts, formatC
       </div>
       {limits.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {limits.map(limit => {
+          {limits.map((limit, index) => {
             const spentAmount = getSpentAmountForCategoryAndCurrency(limit.category, limit.currency, transactions, accounts);
             return (
-              <LimitCard key={limit.id} limit={limit} spentAmount={spentAmount} formatCurrency={formatCurrency} onEdit={onEditLimit} onRemove={onRemoveLimit} t={t} />
+              <div key={limit.id} className="animate-item-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                <LimitCard limit={limit} spentAmount={spentAmount} formatCurrency={formatCurrency} onEdit={onEditLimit} onRemove={onRemoveLimit} t={t} />
+              </div>
             )
           })}
         </div>

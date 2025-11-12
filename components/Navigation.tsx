@@ -4,14 +4,12 @@ import {
     HomeIcon, 
     CardIcon, 
     ScaleIcon, 
-    DocumentTextIcon, 
     CogIcon, 
     ChevronDoubleLeftIcon, 
     ChartPieIcon,
     CollectionIcon,
     ShieldCheckIcon,
     CalendarIcon,
-    DocumentArrowDownIcon,
     BullseyeIcon,
     GaugeIcon
 } from './icons';
@@ -42,11 +40,9 @@ const Navigation: React.FC<NavigationProps> = ({
     { tab: 'recurring', labelKey: 'recurring', icon: CollectionIcon },
     { tab: 'limits', labelKey: 'limits', icon: ShieldCheckIcon },
     { tab: 'goals', labelKey: 'goals', icon: BullseyeIcon },
-    { tab: 'history', labelKey: 'history', icon: DocumentTextIcon },
     { tab: 'analysis', labelKey: 'analysis', icon: ChartPieIcon },
     { tab: 'wellness', labelKey: 'wellness', icon: GaugeIcon },
     { tab: 'calendar', labelKey: 'calendar', icon: CalendarIcon },
-    { tab: 'export', labelKey: 'export', icon: DocumentArrowDownIcon },
     { tab: 'settings', labelKey: 'settings', icon: CogIcon },
   ];
 

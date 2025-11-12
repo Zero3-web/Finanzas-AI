@@ -81,8 +81,10 @@ const Goals: React.FC<GoalsProps> = ({ goals, formatCurrency, onAddGoal, onEditG
               <p className="text-3xl font-bold text-primary">{formatCurrency(totalSaved, primaryCurrency)} / {formatCurrency(totalTarget, primaryCurrency)}</p>
             </Card>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {goals.map(goal => (
-                  <GoalCard key={goal.id} goal={goal} formatCurrency={formatCurrency} onEdit={onEditGoal} onRemove={onRemoveGoal} t={t} />
+              {goals.map((goal, index) => (
+                  <div key={goal.id} className="animate-item-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                    <GoalCard goal={goal} formatCurrency={formatCurrency} onEdit={onEditGoal} onRemove={onRemoveGoal} t={t} />
+                  </div>
               ))}
             </div>
         </>

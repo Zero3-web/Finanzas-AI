@@ -21,7 +21,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, setActiveTab, 
     { tab: 'limits', labelKey: 'limits', icon: ShieldCheckIcon },
     { tab: 'goals', labelKey: 'goals', icon: BullseyeIcon },
     { tab: 'wellness', labelKey: 'wellness', icon: GaugeIcon },
-    { tab: 'export', labelKey: 'analysis_export', icon: DocumentArrowDownIcon },
     { tab: 'settings', labelKey: 'settings', icon: CogIcon },
   ];
   

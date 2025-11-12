@@ -78,8 +78,10 @@ const Recurring: React.FC<RecurringProps> = ({ recurringTransactions, formatCurr
       </div>
       {recurringTransactions.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recurringTransactions.map(rec => (
-            <RecurringTransactionCard key={rec.id} recurring={rec} formatCurrency={formatCurrency} onEdit={onEditRecurring} onRemove={onRemoveRecurring} t={t} />
+          {recurringTransactions.map((rec, index) => (
+            <div key={rec.id} className="animate-item-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                <RecurringTransactionCard recurring={rec} formatCurrency={formatCurrency} onEdit={onEditRecurring} onRemove={onRemoveRecurring} t={t} />
+            </div>
           ))}
         </div>
       ) : (

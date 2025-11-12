@@ -3,11 +3,12 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Transaction, Account, TransactionType, Debt, Notification, ColorTheme, RecurringTransaction, Theme } from '../types';
 import { themes } from '../hooks/useColorTheme';
 import Card from '../components/Card';
-import { PlusIcon, ArrowUpIcon, VisaIcon, StripeIcon, PaypalIcon, ApplePayIcon, CalendarIcon, ArrowDownIcon, CollectionIcon, GripVerticalIcon } from '../components/icons';
+import { PlusIcon, ArrowUpIcon, VisaIcon, StripeIcon, PaypalIcon, ApplePayIcon, CalendarIcon, ArrowDownIcon, CollectionIcon, GripVerticalIcon, ArrowPathIcon, CogIcon, XIcon, LightningBoltIcon } from '../components/icons';
 import { AccountBalancePieChart, ActivityChart, WeeklySpendingChart } from '../components/Charts';
 import Notifications from '../components/Notifications';
 import ThemeToggle from '../components/ThemeToggle';
 import useLocalStorage from '../hooks/useLocalStorage';
+import Switch from '../components/Switch';
 
 interface DashboardProps {
   accounts: Account[];
@@ -27,9 +28,10 @@ interface DashboardProps {
   onAddRecurring: () => void;
   primaryCurrency: string;
   onOpenDetailModal: (title: string, transactions: Transaction[]) => void;
+  onEnterFocusMode: () => void;
 }
 
-const Header: React.FC<{ t: (key: string, params?: { [key: string]: string | number }) => string; notifications: Notification[], userName: string, theme: Theme, toggleTheme: () => void }> = ({ t, notifications, userName, theme, toggleTheme }) => {
+const Header: React.FC<{ t: (key: string, params?: { [key: string]: string | number }) => string; notifications: Notification[], userName: string, theme: Theme, toggleTheme: () => void, onCustomize: () => void, onEnterFocusMode: () => void }> = ({ t, notifications, userName, theme, toggleTheme, onCustomize, onEnterFocusMode }) => {
     const [isShimmering, setIsShimmering] = useState(true);
 
     useEffect(() => {
@@ -55,6 +57,12 @@ const Header: React.FC<{ t: (key: string, params?: { [key: string]: string | num
                 </h1>
             </div>
             <div className="flex items-center space-x-2 md:space-x-4">
+                <button onClick={onEnterFocusMode} className="p-2 rounded-full text-text-secondary dark:text-gray-400 hover:bg-secondary dark:hover:bg-gray-700" title={t('focus_mode_title')}>
+                    <LightningBoltIcon className="w-6 h-6" />
+                </button>
+                <button onClick={onCustomize} className="p-2 rounded-full text-text-secondary dark:text-gray-400 hover:bg-secondary dark:hover:bg-gray-700" title={t('customize_dashboard')}>
+                    <CogIcon className="w-6 h-6" />
+                </button>
                 <Notifications notifications={notifications} t={t} />
                 <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
             </div>
@@ -111,8 +119,9 @@ const AllAccountsCard: React.FC<{ isSelected: boolean; onClick: () => void; t: (
 };
 
 
-const RecentActivityItem: React.FC<{ transaction: Transaction, account: Account | undefined, formatCurrency: (amount: number, currency: string) => string }> = ({ transaction, account, formatCurrency }) => {
+const RecentActivityItem: React.FC<{ transaction: Transaction, accounts: Map<string, Account>, formatCurrency: (amount: number, currency: string) => string }> = ({ transaction, accounts, formatCurrency }) => {
     const isIncome = transaction.type === TransactionType.INCOME;
+    const isTransfer = transaction.type === TransactionType.TRANSFER;
     const iconKey = transaction.description.split(' ')[0].toLowerCase();
     
     const depositIcons: { [key: string]: React.ReactNode } = {
@@ -121,38 +130,60 @@ const RecentActivityItem: React.FC<{ transaction: Transaction, account: Account 
     };
 
     const getIcon = () => {
+        if (isTransfer) return <ArrowPathIcon className="w-6 h-6 text-primary"/>;
         if (isIncome) return depositIcons[iconKey] || <ArrowUpIcon className="w-6 h-6 text-income"/>
         return <ArrowDownIcon className="w-6 h-6 text-expense"/>
     }
 
+    const account = accounts.get(transaction.accountId);
+    const destAccount = isTransfer ? accounts.get(transaction.destinationAccountId!) : null;
+
     return (
         <div className="flex items-center justify-between">
             <div className="flex items-center">
-                <div className={`p-2 rounded-lg mr-4 ${isIncome ? 'bg-green-100 dark:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/50'}`}>{getIcon()}</div>
+                <div className={`p-2 rounded-lg mr-4 ${isIncome ? 'bg-green-100 dark:bg-green-900/50' : isTransfer ? 'bg-primary/10 dark:bg-primary/20' : 'bg-red-100 dark:bg-red-900/50'}`}>{getIcon()}</div>
                 <div>
                     <p className="font-semibold text-text-main dark:text-text-main-dark">{transaction.description}</p>
-                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{transaction.category}</p>
+                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                        {isTransfer ? `${account?.name} → ${destAccount?.name}` : transaction.category}
+                    </p>
                 </div>
             </div>
-            <p className={`font-semibold ${isIncome ? 'text-income' : 'text-expense'}`}>
-                {isIncome ? '+' : '-'}{formatCurrency(transaction.amount, account?.currency || 'USD')}
+            <p className={`font-semibold ${isIncome ? 'text-income' : isTransfer ? 'text-text-main dark:text-text-main-dark' : 'text-expense'}`}>
+                {isIncome ? '+' : isTransfer ? '' : '-'}{formatCurrency(transaction.amount, account?.currency || 'USD')}
             </p>
         </div>
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, recurringTransactions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddRecurring, primaryCurrency, onOpenDetailModal }) => {
+const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, recurringTransactions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddRecurring, primaryCurrency, onOpenDetailModal, onEnterFocusMode }) => {
     const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
     const accountMap = useMemo(() => new Map(accounts.map(acc => [acc.id, acc])), [accounts]);
     
-    // Drag and Drop State
     const [sectionOrder, setSectionOrder] = useLocalStorage<string[]>(
         'dashboard-layout',
         ['balances', 'activity', 'totalSummary']
     );
+    const [visibleSections, setVisibleSections] = useLocalStorage<string[]>(
+        'dashboard-visible-sections',
+        ['balances', 'activity', 'totalSummary']
+    );
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const settingsRef = useRef<HTMLDivElement>(null);
+
     const dragItem = useRef<string | null>(null);
     const dragOverItem = useRef<string | null>(null);
     const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (isSettingsOpen && settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+                setIsSettingsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isSettingsOpen]);
 
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, key: string) => {
         dragItem.current = key;
@@ -189,12 +220,21 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         setDragOverKey(null);
     };
 
+    const handleVisibilityChange = (sectionKey: string, isVisible: boolean) => {
+        if (isVisible) {
+            setVisibleSections(prev => [...prev, sectionKey]);
+        } else {
+            setVisibleSections(prev => prev.filter(key => key !== sectionKey));
+        }
+    };
 
     const currentPalette = themes[colorTheme];
     const toHex = (rgb: string) => '#' + rgb.split(',').map(c => parseInt(c).toString(16).padStart(2, '0')).join('');
     
     const primaryColor = toHex(currentPalette['--color-primary']);
     const accentColor = toHex(currentPalette['--color-accent']);
+    
+    const nonTransferTransactions = useMemo(() => transactions.filter(t => t.type !== TransactionType.TRANSFER), [transactions]);
 
     const accountBalanceChanges = useMemo(() => {
         const changes = new Map<string, number>();
@@ -203,14 +243,17 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
     
         accounts.forEach(account => {
             const relevantTransactions = transactions.filter(t => 
-                t.accountId === account.id && new Date(t.date) >= thirtyDaysAgo
+                (t.accountId === account.id || t.destinationAccountId === account.id) && new Date(t.date) >= thirtyDaysAgo
             );
     
             const netChange = relevantTransactions.reduce((acc, t) => {
-                if (t.type === TransactionType.INCOME) {
-                    return acc + t.amount;
+                if (t.type === TransactionType.INCOME && t.accountId === account.id) return acc + t.amount;
+                if (t.type === TransactionType.EXPENSE && t.accountId === account.id) return acc - t.amount;
+                if (t.type === TransactionType.TRANSFER) {
+                    if (t.accountId === account.id) return acc - t.amount; // Source
+                    if (t.destinationAccountId === account.id) return acc + t.amount; // Destination
                 }
-                return acc - t.amount;
+                return acc;
             }, 0);
     
             const balance30DaysAgo = account.balance - netChange;
@@ -241,7 +284,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
 
     const displayedTransactions = useMemo(() => {
         if (!selectedAccountId) return transactions;
-        return transactions.filter(t => t.accountId === selectedAccountId);
+        return transactions.filter(t => t.accountId === selectedAccountId || t.destinationAccountId === selectedAccountId);
     }, [transactions, selectedAccountId]);
 
     const dateRangeText = useMemo(() => {
@@ -274,7 +317,6 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         [...displayedTransactions].sort((a, b) => {
             const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
             if (dateComparison !== 0) return dateComparison;
-            // Fallback to ID sorting for same-day transactions to ensure newest appears first.
             return b.id.localeCompare(a.id);
         }).slice(0, 5), 
     [displayedTransactions]);
@@ -282,7 +324,9 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
     const { totalIncome, totalExpenses, profit } = useMemo(() => {
         const accountCurrencyMap = new Map(accounts.map(acc => [acc.id, acc.currency]));
 
-        const transactionsInPrimaryCurrency = displayedTransactions.filter(t => accountCurrencyMap.get(t.accountId) === primaryCurrency);
+        const transactionsInPrimaryCurrency = displayedTransactions
+            .filter(t => t.type !== TransactionType.TRANSFER)
+            .filter(t => accountCurrencyMap.get(t.accountId) === primaryCurrency);
 
         const income = transactionsInPrimaryCurrency
             .filter(t => t.type === TransactionType.INCOME)
@@ -315,7 +359,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
     const handleChartDayClick = (dateString: string, filterType?: TransactionType) => { // dateString is 'YYYY-MM-DD'
         let dailyTransactions = transactions.filter(t => t.date === dateString);
         
-        const displayDate = new Date(dateString + 'T00:00:00').toLocaleDateString(t.length > 0 ? 'en' : 'en', { // A bit of a hack to get language code
+        const displayDate = new Date(dateString + 'T00:00:00').toLocaleDateString(t.length > 0 ? 'en' : 'en', {
             month: 'long',
             day: 'numeric',
             year: 'numeric',
@@ -338,36 +382,41 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
     }
 
-    const sections: { [key: string]: React.ReactNode } = {
-        balances: (
-            <div className={getAccountGridClasses(displayedBalanceCards.length)}>
-                {accounts.length > 0 ? (
-                    displayedBalanceCards.map((account) => {
-                        const change = accountBalanceChanges.get(account.id) ?? 0;
-                        const isPositive = change >= 0;
-                        const originalIndex = sortedAccounts.findIndex(a => a.id === account.id);
-                        return (
-                            <Card key={account.id} className={`${displayedBalanceCards.length === 1 ? 'md:col-span-2 lg:col-span-2' : ''}`}>
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="text-text-secondary dark:text-text-secondary-dark">{account.name}</p>
-                                        <p className="text-3xl font-bold text-text-main dark:text-text-main-dark">{formatCurrency(account.balance, account.currency)}</p>
+    const sections: { [key: string]: { nameKey: string, content: React.ReactNode } } = {
+        balances: {
+            nameKey: 'section_balances',
+            content: (
+                <div className={getAccountGridClasses(displayedBalanceCards.length)}>
+                    {accounts.length > 0 ? (
+                        displayedBalanceCards.map((account) => {
+                            const change = accountBalanceChanges.get(account.id) ?? 0;
+                            const isPositive = change >= 0;
+                            const originalIndex = sortedAccounts.findIndex(a => a.id === account.id);
+                            return (
+                                <Card key={account.id} className={`${displayedBalanceCards.length === 1 ? 'md:col-span-2 lg:col-span-2' : ''}`}>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-text-secondary dark:text-text-secondary-dark">{account.name}</p>
+                                            <p className="text-3xl font-bold text-text-main dark:text-text-main-dark">{formatCurrency(account.balance, account.currency)}</p>
+                                        </div>
+                                        <div className={`flex items-center text-sm font-semibold ${isPositive ? 'text-income' : 'text-expense'}`}>
+                                            {isPositive ? <ArrowUpIcon className="w-4 h-4 mr-1"/> : <ArrowDownIcon className="w-4 h-4 mr-1"/>}
+                                            {Math.abs(change).toFixed(1)}%
+                                        </div>
                                     </div>
-                                    <div className={`flex items-center text-sm font-semibold ${isPositive ? 'text-income' : 'text-expense'}`}>
-                                        {isPositive ? <ArrowUpIcon className="w-4 h-4 mr-1"/> : <ArrowDownIcon className="w-4 h-4 mr-1"/>}
-                                        {Math.abs(change).toFixed(1)}%
-                                    </div>
-                                </div>
-                                <div className="-ml-6 -mb-6 mt-2"><AccountBalancePieChart balance={account.balance} color={originalIndex % 2 === 0 ? primaryColor : accentColor} /></div>
-                            </Card>
-                        )
-                    })
-                ) : (
-                    <Card className="flex items-center justify-center min-h-[140px] md:col-span-2 lg:col-span-3"><div className="text-center text-text-secondary dark:text-text-secondary-dark"><p>{t('add_account_prompt')}</p></div></Card>
-                )}
-            </div>
-        ),
-        activity: (
+                                    <div className="-ml-6 -mb-6 mt-2"><AccountBalancePieChart balance={account.balance} color={originalIndex % 2 === 0 ? primaryColor : accentColor} /></div>
+                                </Card>
+                            )
+                        })
+                    ) : (
+                        <Card className="flex items-center justify-center min-h-[140px] md:col-span-2 lg:col-span-3"><div className="text-center text-text-secondary dark:text-text-secondary-dark"><p>{t('add_account_prompt')}</p></div></Card>
+                    )}
+                </div>
+            )
+        },
+        activity: {
+            nameKey: 'section_activity',
+            content: (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                     <Card className="p-4 dark:bg-surface-dark">
@@ -401,7 +450,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                                 </div>
                             )}
                         </div>
-                        <ActivityChart transactions={displayedTransactions} primaryColor={primaryColor} accentColor={accentColor} formatCurrency={(amount) => formatCurrency(amount, primaryCurrency)} onDayClick={handleChartDayClick} />
+                        <ActivityChart transactions={nonTransferTransactions} primaryColor={primaryColor} accentColor={accentColor} formatCurrency={(amount) => formatCurrency(amount, primaryCurrency)} onDayClick={handleChartDayClick} />
                     </Card>
                 </div>
 
@@ -414,7 +463,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                         </div>
                         <div className="space-y-4">
                             {recentActivity.map(transaction => (
-                                <RecentActivityItem key={transaction.id} transaction={transaction} account={accountMap.get(transaction.accountId)} formatCurrency={formatCurrency} />
+                                <RecentActivityItem key={transaction.id} transaction={transaction} accounts={accountMap} formatCurrency={formatCurrency} />
                             ))}
                             {recentActivity.length === 0 && <p className="text-sm text-center py-4 text-text-secondary dark:text-text-secondary-dark">{t('noTransactionsFound')}</p>}
                         </div>
@@ -473,8 +522,11 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                     </Card>
                 </div>
             </div>
-        ),
-        totalSummary: (
+            )
+        },
+        totalSummary: {
+            nameKey: 'section_totalSummary',
+            content: (
              <Card>
                  <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center">
                     <div className="lg:col-span-2 space-y-4">
@@ -506,8 +558,11 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                     </div>
                  </div>
              </Card>
-        )
+            )
+        }
     };
+    
+    const sectionsToRender = sectionOrder.filter(key => visibleSections.includes(key));
 
     return (
         <>
@@ -525,9 +580,30 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                 }
             `}</style>
             <div className="space-y-6">
-                <Header t={t} notifications={notifications} userName={userName} theme={theme} toggleTheme={toggleTheme} />
+                <Header t={t} notifications={notifications} userName={userName} theme={theme} toggleTheme={toggleTheme} onCustomize={() => setIsSettingsOpen(true)} onEnterFocusMode={onEnterFocusMode} />
+
+                {isSettingsOpen && (
+                    <div ref={settingsRef} className="absolute top-20 right-8 bg-surface dark:bg-surface-dark p-4 rounded-lg shadow-lg border border-secondary dark:border-border-dark z-20 w-72">
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-bold">{t('customize_dashboard')}</h3>
+                            <button onClick={() => setIsSettingsOpen(false)} className="p-1 rounded-full hover:bg-secondary dark:hover:bg-secondary-dark"><XIcon className="w-4 h-4" /></button>
+                        </div>
+                        <div className="space-y-2">
+                            {Object.keys(sections).map(key => (
+                                <div key={key} className="flex items-center justify-between">
+                                    <label htmlFor={`switch-${key}`} className="text-sm">{t(sections[key].nameKey)}</label>
+                                    <Switch
+                                        id={`switch-${key}`}
+                                        checked={visibleSections.includes(key)}
+                                        onChange={(isChecked) => handleVisibilityChange(key, isChecked)}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 
-                {sectionOrder.map(key => {
+                {sectionsToRender.map(key => {
                     const isDraggingOver = dragOverKey === key && dragItem.current !== key;
                     return (
                         <div
@@ -544,7 +620,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                                 <div className="absolute top-4 right-4 text-text-secondary cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-50 transition-opacity z-10">
                                     <GripVerticalIcon className="w-6 h-6" />
                                 </div>
-                                {sections[key]}
+                                {sections[key].content}
                             </div>
                         </div>
                     );

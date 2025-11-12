@@ -66,8 +66,10 @@ const Debts: React.FC<DebtsProps> = ({ debts, formatCurrency, onAddDebt, onEditD
       
       {debts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {debts.map(debt => (
-                <DebtCard key={debt.id} debt={debt} formatCurrency={formatCurrency} onEdit={onEditDebt} onRemove={onRemoveDebt} t={t} />
+            {debts.map((debt, index) => (
+                <div key={debt.id} className="animate-item-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                    <DebtCard debt={debt} formatCurrency={formatCurrency} onEdit={onEditDebt} onRemove={onRemoveDebt} t={t} />
+                </div>
             ))}
         </div>
       ) : (

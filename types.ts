@@ -1,6 +1,7 @@
 export enum TransactionType {
   INCOME = 'income',
   EXPENSE = 'expense',
+  TRANSFER = 'transfer',
 }
 
 export interface Transaction {
@@ -11,6 +12,7 @@ export interface Transaction {
   category: string;
   type: TransactionType;
   date: string;
+  destinationAccountId?: string;
 }
 
 export type AccountType = 'checking' | 'savings' | 'credit';
@@ -63,7 +65,7 @@ export interface Goal {
   currency: string;
 }
 
-export type Tab = 'dashboard' | 'accounts' | 'debts' | 'recurring' | 'limits' | 'history' | 'analysis' | 'settings' | 'calendar' | 'export' | 'goals' | 'wellness';
+export type Tab = 'dashboard' | 'accounts' | 'debts' | 'recurring' | 'limits' | 'analysis' | 'settings' | 'calendar' | 'goals' | 'wellness';
 
 export type Language = 'en' | 'es';
 
@@ -99,4 +101,12 @@ export interface CoupleLink {
   linked: boolean;
   partnerName: string | null;
   linkId: string | null;
+}
+
+export type FocusWidgetType = 'goal' | 'limit' | 'upcoming' | 'quickAdd' | 'tip';
+
+export interface FocusModeConfig {
+  activeWidgets: FocusWidgetType[];
+  selectedGoalId?: string;
+  selectedLimitId?: string;
 }

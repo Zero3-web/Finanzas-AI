@@ -80,8 +80,8 @@ const LimitForm: React.FC<LimitFormProps> = ({ onAddLimit, onUpdateLimit, onClos
         </div>
       </div>
       <div className="flex justify-end pt-4">
-        <button type="button" onClick={onClose} className="bg-secondary hover:bg-gray-200 dark:bg-secondary-dark dark:hover:bg-opacity-80 text-text-main dark:text-text-main-dark font-bold py-2 px-4 rounded mr-2">{t('cancel')}</button>
-        <button type="submit" className="bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded">{isEditing ? t('update') : t('addLimit')}</button>
+        <button type="button" onClick={onClose} className="bg-secondary hover:bg-gray-200 dark:bg-secondary-dark dark:hover:bg-opacity-80 text-text-main dark:text-text-main-dark font-bold py-2 px-4 rounded mr-2 transition-transform transform active:scale-95">{t('cancel')}</button>
+        <button type="submit" className="bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded transition-transform transform active:scale-95">{isEditing ? t('update') : t('addLimit')}</button>
       </div>
     </form>
   );
