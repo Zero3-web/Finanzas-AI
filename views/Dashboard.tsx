@@ -176,6 +176,35 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
     const primaryColor = toHex(currentPalette['--color-primary']);
     const accentColor = toHex(currentPalette['--color-accent']);
 
+    const accountBalanceChanges = useMemo(() => {
+        const changes = new Map<string, number>();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+        accounts.forEach(account => {
+            const relevantTransactions = transactions.filter(t => 
+                t.accountId === account.id && new Date(t.date) >= thirtyDaysAgo
+            );
+    
+            const netChange = relevantTransactions.reduce((acc, t) => {
+                if (t.type === TransactionType.INCOME) {
+                    return acc + t.amount;
+                }
+                return acc - t.amount;
+            }, 0);
+    
+            const balance30DaysAgo = account.balance - netChange;
+    
+            if (balance30DaysAgo === 0) {
+                changes.set(account.id, netChange > 0 ? 100.0 : 0);
+            } else {
+                const percentageChange = (netChange / Math.abs(balance30DaysAgo)) * 100;
+                changes.set(account.id, isFinite(percentageChange) ? percentageChange : 0);
+            }
+        });
+        return changes;
+    }, [accounts, transactions]);
+
     const sortedAccounts = useMemo(() => [...accounts].sort((a, b) => b.balance - a.balance), [accounts]);
     
     const selectedAccount = useMemo(() => {
@@ -258,18 +287,25 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         balances: (
             <div className={getAccountGridClasses(sortedAccounts.length)}>
                 {sortedAccounts.length > 0 ? (
-                    sortedAccounts.map((account, index) => (
-                        <Card key={account.id} className={`${sortedAccounts.length === 1 ? 'md:col-span-2' : ''}`}>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-text-secondary dark:text-text-secondary-dark">{account.name}</p>
-                                    <p className="text-3xl font-bold text-text-main dark:text-text-main-dark">{formatCurrency(account.balance, account.currency)}</p>
+                    sortedAccounts.map((account, index) => {
+                        const change = accountBalanceChanges.get(account.id) ?? 0;
+                        const isPositive = change >= 0;
+                        return (
+                            <Card key={account.id} className={`${sortedAccounts.length === 1 ? 'md:col-span-2' : ''}`}>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="text-text-secondary dark:text-text-secondary-dark">{account.name}</p>
+                                        <p className="text-3xl font-bold text-text-main dark:text-text-main-dark">{formatCurrency(account.balance, account.currency)}</p>
+                                    </div>
+                                    <div className={`flex items-center text-sm font-semibold ${isPositive ? 'text-income' : 'text-expense'}`}>
+                                        {isPositive ? <ArrowUpIcon className="w-4 h-4 mr-1"/> : <ArrowDownIcon className="w-4 h-4 mr-1"/>}
+                                        {Math.abs(change).toFixed(1)}%
+                                    </div>
                                 </div>
-                                <div className="flex items-center text-sm text-income font-semibold"><ArrowUpIcon className="w-4 h-4 mr-1"/> {index % 2 === 0 ? '3.4%' : '2.0%'}</div>
-                            </div>
-                            <div className="-ml-6 -mb-6 mt-2"><AccountBalancePieChart balance={account.balance} color={index % 2 === 0 ? primaryColor : accentColor} /></div>
-                        </Card>
-                    ))
+                                <div className="-ml-6 -mb-6 mt-2"><AccountBalancePieChart balance={account.balance} color={index % 2 === 0 ? primaryColor : accentColor} /></div>
+                            </Card>
+                        )
+                    })
                 ) : (
                     <Card className="flex items-center justify-center min-h-[140px] md:col-span-2 lg:col-span-3"><div className="text-center text-text-secondary dark:text-text-secondary-dark"><p>{t('add_account_prompt')}</p></div></Card>
                 )}

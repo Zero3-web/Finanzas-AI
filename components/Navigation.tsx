@@ -44,6 +44,7 @@ const Navigation: React.FC<NavigationProps> = ({
     { tab: 'goals', labelKey: 'goals', icon: BullseyeIcon },
     { tab: 'history', labelKey: 'history', icon: DocumentTextIcon },
     { tab: 'analysis', labelKey: 'analysis', icon: ChartPieIcon },
+    { tab: 'wellness', labelKey: 'wellness', icon: GaugeIcon },
     { tab: 'calendar', labelKey: 'calendar', icon: CalendarIcon },
     { tab: 'export', labelKey: 'export', icon: DocumentArrowDownIcon },
     { tab: 'settings', labelKey: 'settings', icon: CogIcon },

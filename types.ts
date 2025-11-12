@@ -63,7 +63,7 @@ export interface Goal {
   currency: string;
 }
 
-export type Tab = 'dashboard' | 'accounts' | 'debts' | 'recurring' | 'limits' | 'history' | 'analysis' | 'settings' | 'calendar' | 'export' | 'goals';
+export type Tab = 'dashboard' | 'accounts' | 'debts' | 'recurring' | 'limits' | 'history' | 'analysis' | 'settings' | 'calendar' | 'export' | 'goals' | 'wellness';
 
 export type Language = 'en' | 'es';
 
@@ -94,3 +94,9 @@ export type ColorTheme = 'default' | 'ocean' | 'sunset' | 'forest';
 
 // FIX: Added Theme type to centralize type definitions.
 export type Theme = 'light' | 'dark';
+
+export interface CoupleLink {
+  linked: boolean;
+  partnerName: string | null;
+  linkId: string | null;
+}

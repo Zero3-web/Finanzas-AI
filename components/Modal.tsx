@@ -4,7 +4,7 @@ import { XIcon } from './icons';
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title: ReactNode;
   children: ReactNode;
   variant?: 'default' | 'glass';
 }

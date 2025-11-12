@@ -36,7 +36,7 @@ const History: React.FC<HistoryProps> = ({ transactions, accounts, formatCurrenc
         if (sort.key === 'date') {
           const dateA = new Date(a.date).getTime();
           const dateB = new Date(b.date).getTime();
-          return sort.order === 'asc' ? dateA - dateB : dateB - a;
+          return sort.order === 'asc' ? dateA - dateB : dateB - dateA;
         }
         if (sort.key === 'amount') {
           return sort.order === 'asc' ? a.amount - b.amount : b.amount - a.amount;

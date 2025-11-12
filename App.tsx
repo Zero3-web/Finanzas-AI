@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Tab, Transaction, Account, Debt, RecurringTransaction, SpendingLimit, Goal, Notification, Language, ColorTheme, TransactionType, AccountType } from './types';
+import { Tab, Transaction, Account, Debt, RecurringTransaction, SpendingLimit, Goal, Notification, Language, ColorTheme, TransactionType, AccountType, CoupleLink } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useTheme } from './hooks/useTheme';
 import { useColorTheme } from './hooks/useColorTheme';
@@ -51,6 +51,7 @@ const App: React.FC = () => {
     const [theme, toggleTheme] = useTheme();
     const [colorTheme, setColorTheme] = useColorTheme();
     const [isFinishedOnboarding, setIsFinishedOnboarding] = useLocalStorage('onboarding-finished', false);
+    const [coupleLink, setCoupleLink] = useLocalStorage<CoupleLink>('couple-link', { linked: false, partnerName: null, linkId: null });
 
     // Main App State
     const [isNavCollapsed, setIsNavCollapsed] = useLocalStorage('nav-collapsed', false);
@@ -434,7 +435,8 @@ const App: React.FC = () => {
             case 'analysis': return <Analysis transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} primaryCurrency={primaryCurrency} />;
             case 'calendar': return <Calendar accounts={accounts} debts={debts} recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} t={t} />;
             case 'export': return <Export transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} userName={userName} colorTheme={colorTheme} />;
-            case 'settings': return <Settings theme={theme} toggleTheme={toggleTheme} currency={primaryCurrency} setCurrency={setPrimaryCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} userName={userName} setUserName={setUserName} t={t} accounts={accounts} transactions={transactions} debts={debts} />;
+            case 'settings': return <Settings theme={theme} toggleTheme={toggleTheme} currency={primaryCurrency} setCurrency={setPrimaryCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} userName={userName} setUserName={setUserName} t={t} accounts={accounts} transactions={transactions} debts={debts} coupleLink={coupleLink} setCoupleLink={setCoupleLink} onOpenModal={openModal} />;
+            case 'wellness': return <Wellness transactions={transactions} accounts={accounts} debts={debts} t={t} colorTheme={colorTheme} />;
             default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} />;
         }
     };

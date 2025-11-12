@@ -8,7 +8,7 @@ interface AvatarGridProps {
 
 const AvatarGrid: React.FC<AvatarGridProps> = ({ selectedAvatar, onSelectAvatar }) => {
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-8 gap-4">
       {avatars.map((avatarUrl) => (
         <button
           key={avatarUrl}

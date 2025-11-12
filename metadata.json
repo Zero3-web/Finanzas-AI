@@ -2,6 +2,7 @@
   "name": "Panel de Finanzas Personales",
   "description": "Una aplicación web para gestionar tus finanzas personales, hacer un seguimiento de los ingresos, los gastos y los presupuestos.",
   "requestFramePermissions": [
-    "microphone"
+    "microphone",
+    "camera"
   ]
 }

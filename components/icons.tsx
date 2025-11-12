@@ -212,3 +212,24 @@ export const GripVerticalIcon: React.FC<IconProps> = ({ className }) => (
       <path d="M15 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path>
     </IconWrapper>
 );
+
+export const QrCodeIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4h4v4H4zM4 16h4v4H4zM16 4h4v4h-4zM16 16h4v4h-4zM10 4h2v2h-2zM4 10h2v2H4zM10 10h2v2h-2zM18 10h2v2h-2zM10 16h2v2h-2zM16 10h2v2h-2z" />
+        <path d="M10 4V4a2 2 0 00-2-2H4a2 2 0 00-2 2v4a2 2 0 002 2h2" />
+        <path d="M14 20v0a2 2 0 002 2h4a2 2 0 002-2v-4a2 2 0 00-2-2h-2" />
+    </IconWrapper>
+);
+
+export const LinkIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+    </IconWrapper>
+);
+
+export const CameraIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+    </IconWrapper>
+);
