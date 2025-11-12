@@ -12,6 +12,7 @@ interface AnalysisProps {
   t: (key: string) => string;
   colorTheme: ColorTheme;
   primaryCurrency: string;
+  onOpenDetailModal: (title: string, transactions: Transaction[]) => void;
 }
 
 interface CustomTooltipProps extends TooltipProps<ValueType, NameType> {
@@ -38,7 +39,7 @@ const CustomTooltip = ({ active, payload, label, formatCurrency, currency }: Cus
     return null;
 };
 
-const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurrency, t, colorTheme, primaryCurrency }) => {
+const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurrency, t, colorTheme, primaryCurrency, onOpenDetailModal }) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM format
 
   const currentPalette = themes[colorTheme];
@@ -90,6 +91,26 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
     const key = `category_${category.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`;
     return t(key);
   }
+  
+  const handleCategoryClick = (data: any) => {
+    const category = data.name;
+    const categoryTransactions = monthlyTransactions.filter(t => t.type === TransactionType.EXPENSE && t.category === category);
+    const translatedCategory = getCategoryTranslation(category);
+    onOpenDetailModal(t('transactions_for_category', { category: translatedCategory }), categoryTransactions);
+  };
+
+  const formattedMonth = new Date(selectedMonth + '-02').toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  const handleBarClick = (data: any, index: number) => {
+      const barName = data.dataKey; // e.g., "Ingreso" or "Gasto"
+      const type = barName === t('income') ? TransactionType.INCOME : TransactionType.EXPENSE;
+      const typeTransactions = monthlyTransactions.filter(t => t.type === type);
+      const title = type === TransactionType.INCOME 
+          ? t('income_for_month', { month: formattedMonth }) 
+          : t('expense_for_month', { month: formattedMonth });
+      onOpenDetailModal(title, typeTransactions);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -120,7 +141,7 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
             <h2 className="text-xl font-bold mb-4 text-text-main dark:text-text-main-dark">{t('spending_by_category')}</h2>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie data={spendingByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                <Pie data={spendingByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label onClick={handleCategoryClick} style={{cursor: 'pointer'}}>
                   {spendingByCategory.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
                   ))}
@@ -139,8 +160,8 @@ const Analysis: React.FC<AnalysisProps> = ({ transactions, accounts, formatCurre
                 <YAxis type="category" dataKey="name" hide />
                 <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} currency={primaryCurrency} />} />
                 <Legend wrapperStyle={{fontSize: "14px"}}/>
-                <Bar dataKey={t('income')} fill={primaryColor} radius={[0, 10, 10, 0]} barSize={30} />
-                <Bar dataKey={t('expense')} fill={accentColor} radius={[0, 10, 10, 0]} barSize={30} />
+                <Bar dataKey={t('income')} fill={primaryColor} radius={[0, 10, 10, 0]} barSize={30} onClick={handleBarClick} style={{cursor: 'pointer'}} />
+                <Bar dataKey={t('expense')} fill={accentColor} radius={[0, 10, 10, 0]} barSize={30} onClick={handleBarClick} style={{cursor: 'pointer'}} />
               </BarChart>
             </ResponsiveContainer>
           </Card>

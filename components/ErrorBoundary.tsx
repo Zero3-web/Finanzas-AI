@@ -6,13 +6,11 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  error?: any;
+  error?: Error;
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Replaced class property state initialization with a standard constructor.
-  // The previous implementation was causing a TypeScript error where `this.props` was not recognized.
-  // Using a constructor with `super(props)` is the standard way to ensure both `props` and `state` are correctly initialized.
+  // FIX: Replaced the class property for state initialization with a standard constructor. This is a more robust way to initialize a class component and ensures that `this.props` and `this.state` are correctly set on the component instance, resolving the TypeScript error where these properties were not found.
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -21,7 +19,7 @@ class ErrorBoundary extends Component<Props, State> {
     };
   }
 
-  static getDerivedStateFromError(error: any): State {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 

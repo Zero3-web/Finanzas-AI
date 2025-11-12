@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Transaction, TransactionType, Account } from '../types';
+import { GoogleGenAI } from '@google/genai';
+import useLocalStorage from '../hooks/useLocalStorage';
+import { SparklesIcon } from './icons';
+
 
 interface TransactionFormProps {
   accounts: Account[];
@@ -18,7 +22,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
   const [accountId, setAccountId] = useState<string>(accounts[0]?.id || '');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   
+  const [isSuggestingCategory, setIsSuggestingCategory] = useState(false);
+  const [categoryCache, setCategoryCache] = useLocalStorage<Record<string, string>>('category-cache', {});
+
   const isEditing = !!transactionToEdit;
+
+  const expenseCategories = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Utilities', 'Other'];
+  const incomeCategories = ['Salary', 'Freelance', 'Gifts', 'Investments', 'Other'];
 
   useEffect(() => {
     if (isEditing) {
@@ -30,6 +40,56 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
         setDate(new Date(transactionToEdit.date).toISOString().split('T')[0]);
     }
   }, [transactionToEdit, isEditing]);
+
+  const getCategorySuggestion = useCallback(async (desc: string) => {
+    if (!process.env.API_KEY) {
+        console.error("API_KEY environment variable not set.");
+        return;
+    }
+    const lowerDesc = desc.toLowerCase().trim();
+    if (categoryCache[lowerDesc]) {
+        setCategory(categoryCache[lowerDesc]);
+        return;
+    }
+    
+    setIsSuggestingCategory(true);
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const categoryList = type === TransactionType.EXPENSE ? expenseCategories : incomeCategories;
+        const prompt = `From the list [${categoryList.join(', ')}], which category best fits the transaction "${desc}"? Answer with only the single category name.`;
+        
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+
+        const suggestedCategory = response.text.trim();
+
+        if (categoryList.includes(suggestedCategory)) {
+            setCategory(suggestedCategory);
+            setCategoryCache(prev => ({ ...prev, [lowerDesc]: suggestedCategory }));
+        }
+    } catch (error) {
+        console.error("Error getting category suggestion:", error);
+    } finally {
+        setIsSuggestingCategory(false);
+    }
+  }, [type, categoryCache, setCategoryCache, expenseCategories, incomeCategories]);
+
+  useEffect(() => {
+      if (isEditing || description.length < 5) {
+          return;
+      }
+
+      const handler = setTimeout(() => {
+          getCategorySuggestion(description);
+      }, 500);
+
+      return () => {
+          clearTimeout(handler);
+          setIsSuggestingCategory(false);
+      };
+  }, [description, type, isEditing, getCategorySuggestion]);
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -53,13 +113,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
     } else {
         onAddTransaction(transactionData);
     }
-    
-    onClose();
   };
   
-  const expenseCategories = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Utilities', 'Other'];
-  const incomeCategories = ['Salary', 'Freelance', 'Gifts', 'Investments', 'Other'];
-
   const inputClasses = "mt-1 block w-full bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
 
   return (
@@ -86,7 +141,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
         <input type="text" id="description" value={description} onChange={(e) => setDescription(e.target.value)} className={inputClasses} placeholder={type === TransactionType.EXPENSE ? t('description_expense_placeholder') : t('description_income_placeholder')} />
       </div>
       <div>
-        <label htmlFor="category" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('category')}</label>
+        <label htmlFor="category" className="flex items-center justify-between text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
+          <span>{t('category')}</span>
+          <span className="flex items-center gap-1 text-primary" title={t('category_suggestion_tooltip')}>
+            {isSuggestingCategory ? (
+                <div className="w-4 h-4 border-2 border-t-primary border-transparent rounded-full animate-spin"></div>
+            ) : (
+                <SparklesIcon className="w-4 h-4" />
+            )}
+            
+          </span>
+        </label>
         <select id="category" value={category} onChange={(e) => setCategory(e.target.value)} className={inputClasses}>
             <option value="">{t('selectCategory')}</option>
             {(type === TransactionType.EXPENSE ? expenseCategories : incomeCategories).map(cat => (

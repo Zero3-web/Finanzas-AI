@@ -25,6 +25,7 @@ import VoiceInputModal from './components/VoiceInputModal';
 import VoiceTour from './components/VoiceTour';
 import DynamicIsland from './components/DynamicIsland';
 import Confetti from './components/Confetti';
+import TransactionDetailModal from './components/TransactionDetailModal';
 
 import Dashboard from './views/Dashboard';
 import Accounts from './views/Accounts';
@@ -65,11 +66,17 @@ const App: React.FC = () => {
     const [recurringTransactions, setRecurringTransactions] = useLocalStorage<RecurringTransaction[]>('recurringTransactions', []);
     const [limits, setLimits] = useLocalStorage<SpendingLimit[]>('limits', []);
     const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
+    const [lastAutoProcessDate, setLastAutoProcessDate] = useLocalStorage<string>('last-auto-process-date', '');
+
 
     // Modal & Editing State
     const [modal, setModal] = useState<string | null>(null);
     const [itemToEdit, setItemToEdit] = useState<any>(null);
     const [itemToRemove, setItemToRemove] = useState<{ type: string, id: string } | null>(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [detailModalContent, setDetailModalContent] = useState<{ title: string; transactions: Transaction[] }>({ title: '', transactions: [] });
+    const [isFormSubmitting, setIsFormSubmitting] = useState(false);
+
 
     // Voice Input State
     const [isVoiceTourFinished, setIsVoiceTourFinished] = useLocalStorage('voice-tour-finished', false);
@@ -157,6 +164,102 @@ const App: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [primaryCurrency]);
 
+    // Automatic Monthly Processing
+    useEffect(() => {
+        const today = new Date();
+        const lastProcess = lastAutoProcessDate ? new Date(lastAutoProcessDate) : null;
+    
+        // Run if it's never been run, or if the last run was in a previous month/year
+        if (!lastProcess || lastProcess.getMonth() !== today.getMonth() || lastProcess.getFullYear() !== today.getFullYear()) {
+            console.log("Running automatic monthly processing...");
+            
+            let newTransactions = [...transactions];
+            let newAccounts = [...accounts];
+            let newDebts = [...debts];
+
+            // 1. Process Recurring Transactions
+            recurringTransactions.forEach(rec => {
+                const dayOfMonth = parseInt(rec.paymentDay);
+                if (isNaN(dayOfMonth)) return;
+
+                const paymentDate = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
+                const firstAccount = newAccounts.find(acc => acc.currency === rec.currency) || newAccounts[0];
+
+                if (firstAccount) {
+                    const newTransaction: Transaction = {
+                        id: `auto-rec-${rec.id}-${paymentDate.toISOString()}`,
+                        accountId: firstAccount.id,
+                        amount: rec.amount,
+                        description: t('auto_recurring_payment', { name: rec.name }),
+                        category: rec.category,
+                        type: rec.type,
+                        date: paymentDate.toISOString().split('T')[0],
+                    };
+                    newTransactions.push(newTransaction);
+
+                    // Update account balance
+                    newAccounts = newAccounts.map(acc => {
+                        if (acc.id === firstAccount.id) {
+                            const newBalance = newTransaction.type === TransactionType.INCOME
+                                ? acc.balance + newTransaction.amount
+                                : acc.balance - newTransaction.amount;
+                            return { ...acc, balance: newBalance };
+                        }
+                        return acc;
+                    });
+                }
+            });
+
+            // 2. Process Debt Payments
+            newDebts = newDebts.map(debt => {
+                const nextPaymentDate = new Date(debt.nextPaymentDate);
+                if (nextPaymentDate <= today && debt.paidInstallments < debt.totalInstallments) {
+                    const firstAccount = newAccounts.find(acc => acc.currency === debt.currency) || newAccounts[0];
+                    if (firstAccount) {
+                        const paymentTransaction: Transaction = {
+                            id: `auto-debt-${debt.id}-${today.toISOString()}`,
+                            accountId: firstAccount.id,
+                            amount: debt.monthlyPayment,
+                            description: t('auto_debt_payment', { name: debt.name }),
+                            category: 'Housing', // Or a more generic "Debt" category could be used
+                            type: TransactionType.EXPENSE,
+                            date: today.toISOString().split('T')[0],
+                        };
+                        newTransactions.push(paymentTransaction);
+
+                        // Update account balance
+                        newAccounts = newAccounts.map(acc => {
+                            if (acc.id === firstAccount.id) {
+                                return { ...acc, balance: acc.balance - debt.monthlyPayment };
+                            }
+                            return acc;
+                        });
+                        
+                        // Update debt
+                        const newNextPaymentDate = new Date(nextPaymentDate);
+                        newNextPaymentDate.setMonth(newNextPaymentDate.getMonth() + 1);
+                        
+                        return {
+                            ...debt,
+                            paidInstallments: debt.paidInstallments + 1,
+                            nextPaymentDate: newNextPaymentDate.toISOString().split('T')[0]
+                        };
+                    }
+                }
+                return debt;
+            });
+
+            // Batch update state
+            setTransactions(newTransactions);
+            setAccounts(newAccounts);
+            setDebts(newDebts);
+            setLastAutoProcessDate(today.toISOString());
+            console.log("Monthly processing complete.");
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+
     // Notifications
     const notifications = useMemo<Notification[]>(() => {
         const today = new Date();
@@ -188,6 +291,8 @@ const App: React.FC = () => {
             ...transactionData,
             id: `${new Date().toISOString()}-${Math.random().toString(36).substr(2, 9)}`,
         };
+        
+        setIsFormSubmitting(true);
 
         setTransactions(prev => [...prev, newTransaction]);
 
@@ -202,12 +307,24 @@ const App: React.FC = () => {
                 return acc;
             })
         );
+        
+        setIslandStatus('success');
+        setIslandMessage(t('voice_success'));
+        playTone('success');
+        setIsIslandOpen(true);
+
+        if (window.innerWidth < 768) {
+            setScrollToTransactionId(newTransaction.id);
+        }
+
         return newTransaction;
     };
 
     const handleUpdateTransaction = (updatedTransaction: Transaction) => {
         const originalTransaction = transactions.find(t => t.id === updatedTransaction.id);
         if (!originalTransaction) return;
+
+        setIsFormSubmitting(true);
 
         setTransactions(prev => prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
 
@@ -232,6 +349,11 @@ const App: React.FC = () => {
                 return { ...acc, balance: newBalance };
             })
         );
+        
+        setIslandStatus('success');
+        setIslandMessage(t('transaction_updated'));
+        playTone('success');
+        setIsIslandOpen(true);
     };
 
     // Generic CRUD Handlers
@@ -303,9 +425,21 @@ const App: React.FC = () => {
         setItemToEdit(null);
     };
 
+    const handleModalExitComplete = () => {
+        closeModal();
+        setIsFormSubmitting(false);
+    }
+
     const openConfirmation = (type: string, id: string) => {
         setItemToRemove({ type, id });
     };
+
+    // Chart Drill-down Modal Handler
+    const handleOpenDetailModal = (title: string, transactions: Transaction[]) => {
+        setDetailModalContent({ title, transactions });
+        setIsDetailModalOpen(true);
+    };
+
 
     // Goal Completion Effect
     useEffect(() => {
@@ -389,14 +523,7 @@ const App: React.FC = () => {
                 if (!accounts.length) {
                     throw new Error("No account available to add transaction to.");
                 }
-                const newTransactionWithId = handleAddTransaction(newTransaction);
-                setIslandStatus('success');
-                setIslandMessage(t('voice_success'));
-                playTone('success');
-
-                if (window.innerWidth < 768) {
-                    setScrollToTransactionId(newTransactionWithId.id);
-                }
+                handleAddTransaction(newTransaction);
             } else {
                 throw new Error('Invalid transaction data from AI');
             }
@@ -425,19 +552,19 @@ const App: React.FC = () => {
 
     const renderView = () => {
         switch (activeTab) {
-            case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} />;
+            case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} />;
             case 'accounts': return <Accounts accounts={accounts} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={(id) => openConfirmation('account', id)} t={t} />;
             case 'debts': return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onEditDebt={(debt) => openModal('debt', debt)} onRemoveDebt={(id) => openConfirmation('debt', id)} t={t} />;
             case 'recurring': return <Recurring recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} onAddRecurring={() => openModal('recurring')} onEditRecurring={(rec) => openModal('recurring', rec)} onRemoveRecurring={(id) => openConfirmation('recurring', id)} t={t} />;
             case 'limits': return <Limits limits={limits} transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onAddLimit={() => openModal('limit')} onEditLimit={(limit) => openModal('limit', limit)} onRemoveLimit={(id) => openConfirmation('limit', id)} t={t} />;
             case 'goals': return <Goals goals={goals} formatCurrency={formatCurrency} onAddGoal={() => openModal('goal')} onEditGoal={(goal) => openModal('goal', goal)} onRemoveGoal={(id) => openConfirmation('goal', id)} t={t} primaryCurrency={primaryCurrency} />;
             case 'history': return <History transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onEditTransaction={(tr) => openModal('transaction', tr)} onRemoveTransaction={(id) => openConfirmation('transaction', id)} t={t} />;
-            case 'analysis': return <Analysis transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} primaryCurrency={primaryCurrency} />;
+            case 'analysis': return <Analysis transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} />;
             case 'calendar': return <Calendar accounts={accounts} debts={debts} recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} t={t} />;
             case 'export': return <Export transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} userName={userName} colorTheme={colorTheme} />;
             case 'settings': return <Settings theme={theme} toggleTheme={toggleTheme} currency={primaryCurrency} setCurrency={setPrimaryCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} userName={userName} setUserName={setUserName} t={t} accounts={accounts} transactions={transactions} debts={debts} coupleLink={coupleLink} setCoupleLink={setCoupleLink} onOpenModal={openModal} />;
             case 'wellness': return <Wellness transactions={transactions} accounts={accounts} debts={debts} t={t} colorTheme={colorTheme} />;
-            default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} />;
+            default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} />;
         }
     };
     
@@ -472,7 +599,13 @@ const App: React.FC = () => {
             </div>
 
             {/* Modals */}
-            <Modal isOpen={modal === 'transaction'} onClose={closeModal} title={itemToEdit ? t('edit_transaction') : t('add_transaction')}>
+            <Modal 
+                isOpen={modal === 'transaction'} 
+                onClose={closeModal} 
+                title={itemToEdit ? t('edit_transaction') : t('add_transaction')}
+                isExiting={isFormSubmitting}
+                onExitComplete={handleModalExitComplete}
+            >
                 <TransactionForm
                     accounts={accounts}
                     onAddTransaction={handleAddTransaction}
@@ -533,6 +666,16 @@ const App: React.FC = () => {
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
+            <TransactionDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                title={detailModalContent.title}
+                transactions={detailModalContent.transactions}
+                accounts={accounts}
+                formatCurrency={formatCurrency}
+                t={t}
+            />
+
 
             <ConfirmationModal 
                 isOpen={!!itemToRemove}

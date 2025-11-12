@@ -58,22 +58,26 @@ export const ActivityChart: React.FC<{
     primaryColor: string; 
     accentColor: string; 
     formatCurrency: (amount: number) => string;
-}> = ({ transactions, primaryColor, accentColor, formatCurrency }) => {
+    onDayClick: (date: string) => void;
+}> = ({ transactions, primaryColor, accentColor, formatCurrency, onDayClick }) => {
     const data = transactions.reduce((acc, t) => {
-        const day = new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        let entry = acc.find(e => e.name === day);
+        const fullDate = new Date(t.date).toISOString().split('T')[0]; // YYYY-MM-DD for uniqueness
+        const displayName = new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        let entry = acc.find(e => e.fullDate === fullDate);
         if (!entry) {
-            entry = { name: day, Ingresos: 0, Gastos: 0 };
+            entry = { name: displayName, fullDate: fullDate, Ingresos: 0, Gastos: 0 };
             acc.push(entry);
         }
+
         if (t.type === TransactionType.INCOME) {
             entry.Ingresos += t.amount;
         } else {
             entry.Gastos += t.amount;
         }
         return acc;
-    }, [] as { name: string; Ingresos: number; Gastos: number }[])
-    .sort((a,b) => new Date(a.name).getTime() - new Date(b.name).getTime());
+    }, [] as { name: string; fullDate: string; Ingresos: number; Gastos: number }[])
+    .sort((a,b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime());
 
     return (
         <ResponsiveContainer width="100%" height={300}>
@@ -83,8 +87,8 @@ export const ActivityChart: React.FC<{
                 <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(value) => formatCurrency(Number(value)).replace(/(\.\d*|,\d*)/, '')} className="dark:stroke-text-secondary-dark" />
                 <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
                 <Legend wrapperStyle={{fontSize: "14px"}}/>
-                <Line type="monotone" dataKey="Ingresos" stroke={primaryColor} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="Gastos" stroke={accentColor} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="Ingresos" stroke={primaryColor} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6, style: { cursor: 'pointer' }, onClick: (e, payload) => onDayClick((payload as any).payload.fullDate) }} />
+                <Line type="monotone" dataKey="Gastos" stroke={accentColor} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6, style: { cursor: 'pointer' }, onClick: (e, payload) => onDayClick((payload as any).payload.fullDate) }} />
             </LineChart>
         </ResponsiveContainer>
     );

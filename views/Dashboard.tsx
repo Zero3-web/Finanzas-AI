@@ -26,6 +26,7 @@ interface DashboardProps {
   onAddDebt: () => void;
   onAddRecurring: () => void;
   primaryCurrency: string;
+  onOpenDetailModal: (title: string, transactions: Transaction[]) => void;
 }
 
 const Header: React.FC<{ t: (key: string, params?: { [key: string]: string | number }) => string; notifications: Notification[], userName: string, theme: Theme, toggleTheme: () => void }> = ({ t, notifications, userName, theme, toggleTheme }) => {
@@ -121,14 +122,14 @@ const RecentActivityItem: React.FC<{ transaction: Transaction, account: Account 
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, recurringTransactions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddRecurring, primaryCurrency }) => {
+const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, recurringTransactions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddRecurring, primaryCurrency, onOpenDetailModal }) => {
     const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
     const accountMap = useMemo(() => new Map(accounts.map(acc => [acc.id, acc])), [accounts]);
     
     // Drag and Drop State
     const [sectionOrder, setSectionOrder] = useLocalStorage<string[]>(
         'dashboard-layout',
-        ['balances', 'activity', 'summary']
+        ['balances', 'activity', 'monthlySummary', 'totalSummary']
     );
     const dragItem = useRef<string | null>(null);
     const dragOverItem = useRef<string | null>(null);
@@ -259,6 +260,31 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
 
         return { totalIncome: income, totalExpenses: expenses, profit: income - expenses };
     }, [displayedTransactions, primaryCurrency, accounts]);
+
+    const { currentMonthIncome, currentMonthExpenses, currentMonthProfit } = useMemo(() => {
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+    
+        const transactionsInCurrentMonth = displayedTransactions.filter(t => {
+            const transactionDate = new Date(t.date);
+            return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
+        });
+
+        const accountCurrencyMap = new Map(accounts.map(acc => [acc.id, acc.currency]));
+
+        const transactionsInPrimaryCurrency = transactionsInCurrentMonth.filter(t => accountCurrencyMap.get(t.accountId) === primaryCurrency);
+
+        const income = transactionsInPrimaryCurrency
+            .filter(t => t.type === TransactionType.INCOME)
+            .reduce((sum, t) => sum + t.amount, 0);
+        
+        const expenses = transactionsInPrimaryCurrency
+            .filter(t => t.type === TransactionType.EXPENSE)
+            .reduce((sum, t) => sum + t.amount, 0);
+
+        return { currentMonthIncome: income, currentMonthExpenses: expenses, currentMonthProfit: income - expenses };
+    }, [displayedTransactions, primaryCurrency, accounts]);
     
     const upcomingRecurring = useMemo(() => {
         const today = new Date();
@@ -276,6 +302,18 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
             .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime())
             .slice(0, 4);
     }, [recurringTransactions]);
+
+    const handleChartDayClick = (dateString: string) => { // dateString is 'YYYY-MM-DD'
+        const dailyTransactions = transactions.filter(t => t.date === dateString);
+        // Use a timezone-neutral way to create the date for formatting
+        const displayDate = new Date(dateString + 'T00:00:00').toLocaleDateString(t.length > 0 ? t('en') : 'en', { // A bit of a hack to get language code
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            timeZone: 'UTC'
+        });
+        onOpenDetailModal(t('transactions_on_date', { date: displayDate }), dailyTransactions);
+    };
     
     const getAccountGridClasses = (count: number) => {
         if (count === 1) return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6";
@@ -345,7 +383,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                                 </div>
                             )}
                         </div>
-                        <ActivityChart transactions={displayedTransactions} primaryColor={primaryColor} accentColor={accentColor} formatCurrency={(amount) => formatCurrency(amount, primaryCurrency)} />
+                        <ActivityChart transactions={displayedTransactions} primaryColor={primaryColor} accentColor={accentColor} formatCurrency={(amount) => formatCurrency(amount, primaryCurrency)} onDayClick={handleChartDayClick} />
                     </Card>
                 </div>
 
@@ -418,21 +456,43 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                 </div>
             </div>
         ),
-        summary: (
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                    <p className="text-text-secondary dark:text-text-secondary-dark">{t('total_income')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                    <p className="text-2xl font-bold text-income">{formatCurrency(totalIncome, primaryCurrency)}</p>
-                </Card>
-                <Card>
-                    <p className="text-text-secondary dark:text-text-secondary-dark">{t('expense')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                    <p className="text-2xl font-bold text-expense">{formatCurrency(totalExpenses, primaryCurrency)}</p>
-                </Card>
-                <Card>
-                    <p className="text-text-secondary dark:text-text-secondary-dark">{t('net_profit')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                    <p className={`text-2xl font-bold ${profit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(profit, primaryCurrency)}</p>
-                </Card>
-            </div>
+        monthlySummary: (
+             <div>
+                <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark mb-4">{t('current_month_summary')}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card>
+                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('total_income')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                        <p className="text-2xl font-bold text-income">{formatCurrency(currentMonthIncome, primaryCurrency)}</p>
+                    </Card>
+                    <Card>
+                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('expense')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                        <p className="text-2xl font-bold text-expense">{formatCurrency(currentMonthExpenses, primaryCurrency)}</p>
+                    </Card>
+                    <Card>
+                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('net_profit')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                        <p className={`text-2xl font-bold ${currentMonthProfit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(currentMonthProfit, primaryCurrency)}</p>
+                    </Card>
+                </div>
+             </div>
+        ),
+        totalSummary: (
+             <div>
+                <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark mb-4">{t('overall_summary')}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card>
+                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('total_income')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                        <p className="text-2xl font-bold text-income">{formatCurrency(totalIncome, primaryCurrency)}</p>
+                    </Card>
+                    <Card>
+                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('expense')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                        <p className="text-2xl font-bold text-expense">{formatCurrency(totalExpenses, primaryCurrency)}</p>
+                    </Card>
+                    <Card>
+                        <p className="text-text-secondary dark:text-text-secondary-dark">{t('net_profit')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                        <p className={`text-2xl font-bold ${profit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(profit, primaryCurrency)}</p>
+                    </Card>
+                </div>
+             </div>
         )
     };
 

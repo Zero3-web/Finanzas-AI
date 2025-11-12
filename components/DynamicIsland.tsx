@@ -35,7 +35,7 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ isOpen, status, message, 
     const getIcon = () => {
         switch (status) {
             case 'processing':
-                return <div className="w-5 h-5 border-2 border-t-white border-transparent rounded-full animate-spin"></div>;
+                return <div className="w-5 h-5 border-2 border-t-white dark:border-t-black border-transparent rounded-full animate-spin"></div>;
             case 'success':
                 return (
                     <div className="animate-checkmark-pop">
@@ -66,7 +66,7 @@ const DynamicIsland: React.FC<DynamicIslandProps> = ({ isOpen, status, message, 
 
     return (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 ease-in-out ${isOpen ? 'translate-y-0 opacity-100' : '-translate-y-12 opacity-0'}`}>
-            <div className={`flex items-center justify-center gap-3 h-12 px-4 bg-black/90 dark:bg-zinc-800/90 text-white rounded-full shadow-2xl transition-all duration-300 ease-in-out ${islandWidth}`}>
+            <div className={`flex items-center justify-center gap-3 h-12 px-4 bg-black/90 text-white dark:bg-gray-100 dark:text-black rounded-full shadow-2xl transition-all duration-300 ease-in-out ${islandWidth}`}>
                 <div className="flex-shrink-0">{getIcon()}</div>
                 <p className="font-semibold text-sm truncate">{getMessage()}</p>
             </div>
