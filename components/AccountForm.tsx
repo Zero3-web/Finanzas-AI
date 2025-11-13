@@ -5,7 +5,7 @@ interface AccountFormProps {
   onAddAccount: (account: Omit<Account, 'id'>) => void;
   onUpdateAccount: (account: Account) => void;
   onClose: () => void;
-  accountToEdit?: Account | null;
+  accountToEdit?: Partial<Account> | null;
   t: (key: string) => string;
   onSuccess?: () => void;
   primaryCurrency: string;
@@ -19,18 +19,26 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount
   const [creditLimit, setCreditLimit] = useState('');
   const [paymentDueDate, setPaymentDueDate] = useState('');
   
-  const isEditing = !!accountToEdit;
+  const isEditing = !!(accountToEdit && accountToEdit.id);
 
   useEffect(() => {
-    if (isEditing) {
-        setName(accountToEdit.name);
-        setBalance(String(accountToEdit.balance));
-        setType(accountToEdit.type);
-        setCurrency(accountToEdit.currency);
-        setCreditLimit(String(accountToEdit.creditLimit || ''));
-        setPaymentDueDate(String(accountToEdit.paymentDueDate || ''));
+    if (accountToEdit) {
+        setName(accountToEdit.name || '');
+        setBalance(accountToEdit.balance ? String(accountToEdit.balance) : '');
+        setType(accountToEdit.type || 'checking');
+        setCurrency(accountToEdit.currency || primaryCurrency);
+        setCreditLimit(accountToEdit.creditLimit ? String(accountToEdit.creditLimit) : '');
+        setPaymentDueDate(accountToEdit.paymentDueDate ? String(accountToEdit.paymentDueDate) : '');
+    } else {
+        // Reset form when there's no item to edit (e.g. closing and reopening modal)
+        setName('');
+        setBalance('');
+        setType('checking');
+        setCurrency(primaryCurrency);
+        setCreditLimit('');
+        setPaymentDueDate('');
     }
-  }, [accountToEdit, isEditing]);
+  }, [accountToEdit, primaryCurrency]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +56,7 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount
       paymentDueDate: type === 'credit' ? paymentDueDate : undefined,
     };
 
-    if (isEditing) {
+    if (isEditing && accountToEdit.id) {
         onUpdateAccount({ ...accountData, id: accountToEdit.id });
     } else {
         onAddAccount(accountData);

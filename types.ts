@@ -116,4 +116,7 @@ export type LastTransactionAction = {
   action: 'add' | 'update';
   transaction: Transaction;
   originalTransaction?: Transaction; // For 'update' actions
+} | {
+  action: 'add_batch';
+  transactions: Transaction[];
 };

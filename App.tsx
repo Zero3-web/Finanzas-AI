@@ -1,6 +1,6 @@
-
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
+import { v4 as uuidv4 } from 'uuid';
 import { Tab, Transaction, Account, Debt, RecurringTransaction, SpendingLimit, Goal, Notification, Language, ColorTheme, TransactionType, AccountType, CoupleLink, LastTransactionAction } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useTheme } from './hooks/useTheme';
@@ -28,7 +28,8 @@ import VoiceTour from './components/VoiceTour';
 import DynamicIsland from './components/DynamicIsland';
 import Confetti from './components/Confetti';
 import TransactionDetailModal from './components/TransactionDetailModal';
-import VoiceTransactionConfirmationModal from './components/VoiceTransactionConfirmationModal';
+import AccountSelectionModal from './components/AccountSelectionModal';
+import CurrencyMismatchModal from './components/CurrencyMismatchModal';
 
 import Dashboard from './views/Dashboard';
 import Accounts from './views/Accounts';
@@ -45,6 +46,7 @@ import FollowUpModal from './components/FollowUpModal';
 import { MicIcon, PlusIcon } from './components/icons';
 import DashboardSkeleton from './components/DashboardSkeleton';
 
+type PendingTransaction = Omit<Transaction, 'id' | 'accountId'> & { currency: string };
 
 const App: React.FC = () => {
     // Global Settings
@@ -83,14 +85,18 @@ const App: React.FC = () => {
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [detailModalContent, setDetailModalContent] = useState<{ title: string; transactions: Transaction[] }>({ title: '', transactions: [] });
     const [isFormSubmitting, setIsFormSubmitting] = useState(false);
+    const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+    const [accountFormSuccessCallback, setAccountFormSuccessCallback] = useState<((newAccount: Account) => void) | null>(null);
 
 
     // Voice Input & Dynamic Island State
     const [isVoiceTourFinished, setIsVoiceTourFinished] = useLocalStorage('voice-tour-finished', false);
     const [isVoiceTourOpen, setIsVoiceTourOpen] = useState(false);
     const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
-    const [isVoiceConfirmationModalOpen, setIsVoiceConfirmationModalOpen] = useState(false);
-    const [pendingVoiceTransaction, setPendingVoiceTransaction] = useState<Omit<Transaction, 'id' | 'accountId'> | null>(null);
+    const [isAccountSelectionModalOpen, setIsAccountSelectionModalOpen] = useState(false);
+    const [pendingVoiceTransactions, setPendingVoiceTransactions] = useState<PendingTransaction[] | null>(null);
+    const [isCurrencyMismatchModalOpen, setIsCurrencyMismatchModalOpen] = useState(false);
+    const [mismatchData, setMismatchData] = useState<{ transactions: PendingTransaction[], detectedCurrency: string } | null>(null);
     const [isIslandOpen, setIsIslandOpen] = useState(false);
     const [islandStatus, setIslandStatus] = useState<'processing' | 'success' | 'error'>('processing');
     const [islandMessage, setIslandMessage] = useState('');
@@ -312,7 +318,7 @@ const App: React.FC = () => {
     const handleAddTransaction = (transactionData: Omit<Transaction, 'id'>): Transaction => {
         const newTransaction: Transaction = {
             ...transactionData,
-            id: `${currentDate.toISOString()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: uuidv4(),
         };
         
         setIsFormSubmitting(true);
@@ -340,6 +346,7 @@ const App: React.FC = () => {
             })
         );
         
+        setSelectedAccountId(null); // Reset dashboard filter to All Accounts
         setLastTransactionAction({ action: 'add', transaction: newTransaction });
         setIslandStatus('success');
         setIslandMessage(newTransaction.type === TransactionType.TRANSFER ? t('transfer_successful') : t('voice_success'));
@@ -405,6 +412,7 @@ const App: React.FC = () => {
         });
         
         if (!isUndo) {
+            setSelectedAccountId(null); // Reset dashboard filter
             setLastTransactionAction({ 
                 action: 'update', 
                 transaction: updatedTransaction, 
@@ -420,11 +428,11 @@ const App: React.FC = () => {
     // Generic CRUD Handlers
     const handleAddOrUpdate = <T extends { id: string }>(items: T[], setItems: (items: T[]) => void, newItem: Omit<T, 'id'> | T): T => {
         let result: T;
-        if ('id' in newItem) { // Update
+        if ('id' in newItem && newItem.id) { // Update
             result = newItem as T;
             setItems(items.map(item => (item.id === result.id ? result : item)));
         } else { // Add
-            result = { ...newItem, id: currentDate.toISOString() } as T;
+            result = { ...newItem, id: uuidv4() } as T;
             setItems([...items, result]);
         }
         return result;
@@ -435,21 +443,22 @@ const App: React.FC = () => {
         setItems: (items: T[]) => void,
         newItem: Omit<T, 'id'> | T,
         entityNameKey: 'account' | 'debt' | 'recurring_item' | 'limit' | 'goal'
-    ) => {
+    ): T => {
         setIsFormSubmitting(true);
         const isEditing = 'id' in newItem;
         
-        handleAddOrUpdate(items, setItems, newItem);
+        const result = handleAddOrUpdate(items, setItems, newItem);
 
         setIslandStatus('success');
         const successMessageKey = isEditing ? 'item_updated_successfully' : 'item_added_successfully';
         setIslandMessage(t(successMessageKey, { item: t(entityNameKey) }));
         playTone('success');
         setIsIslandOpen(true);
+        return result;
     };
 
 
-    const handleRemove = (type: string, id: string) => {
+    const handleRemove = (type: string, id: string, silent = false) => {
         const setters: { [key: string]: React.Dispatch<any> } = {
             account: setAccounts,
             transaction: setTransactions,
@@ -495,11 +504,17 @@ const App: React.FC = () => {
                 setTransactions(transactions.filter(t => t.accountId !== id && t.destinationAccountId !== id));
             }
         }
-        setItemToRemove(null);
+
+        if (!silent) {
+            setItemToRemove(null);
+        }
     };
 
     // Modal Open/Close Handlers
     const openModal = (name: string, item: any = null) => {
+        if (name !== 'account') {
+            setAccountFormSuccessCallback(null);
+        }
         setItemToEdit(item);
         setModal(name);
     };
@@ -507,6 +522,7 @@ const App: React.FC = () => {
     const closeModal = () => {
         setModal(null);
         setItemToEdit(null);
+        setAccountFormSuccessCallback(null);
     };
 
     const handleModalExitComplete = () => {
@@ -555,6 +571,34 @@ const App: React.FC = () => {
         }
     }, [scrollToTransactionId, setActiveTab]);
     
+    const addBatchTransactions = (transactionsData: Omit<Transaction, 'id' | 'accountId'>[], accountId: string) => {
+        let tempTransactions: Transaction[] = [];
+        let updatedBalance = accounts.find(a => a.id === accountId)?.balance || 0;
+    
+        transactionsData.forEach(txData => {
+            const newTransaction: Transaction = {
+                ...txData,
+                id: uuidv4(),
+                accountId: accountId,
+            };
+            tempTransactions.push(newTransaction);
+    
+            updatedBalance = newTransaction.type === TransactionType.INCOME
+                ? updatedBalance + newTransaction.amount
+                : updatedBalance - newTransaction.amount;
+        });
+    
+        setTransactions(prev => [...prev, ...tempTransactions]);
+        setAccounts(prev => prev.map(acc => acc.id === accountId ? { ...acc, balance: updatedBalance } : acc));
+    
+        setSelectedAccountId(accountId); // Switch dashboard view to this account
+        setLastTransactionAction({ action: 'add_batch', transactions: tempTransactions });
+        setIslandStatus('success');
+        setIslandMessage(t('voice_success_multi', { count: transactionsData.length }));
+        playTone('success');
+        setIsIslandOpen(true);
+    };
+
     // Gemini API integration
     const expenseCategories = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Utilities', 'Other'];
     const incomeCategories = ['Salary', 'Freelance', 'Gifts', 'Investments', 'Other'];
@@ -576,12 +620,23 @@ const App: React.FC = () => {
             const responseSchema = {
                 type: Type.OBJECT,
                 properties: {
-                    amount: { type: Type.NUMBER, description: "The transaction amount as a number." },
-                    description: { type: Type.STRING, description: "A brief description of the transaction." },
-                    category: { type: Type.STRING, description: "The category of the transaction." },
-                    type: { type: Type.STRING, enum: ['income', 'expense'], description: "The type of transaction, either 'income' or 'expense'." },
+                    transactions: {
+                        type: Type.ARRAY,
+                        description: "A list of financial transactions parsed from the user's input.",
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                amount: { type: Type.NUMBER, description: "The transaction amount as a number." },
+                                description: { type: Type.STRING, description: "A brief description of the transaction." },
+                                category: { type: Type.STRING, description: "The category of the transaction." },
+                                type: { type: Type.STRING, enum: ['income', 'expense'], description: "The type of transaction, either 'income' or 'expense'." },
+                                currency: { type: Type.STRING, description: "The currency of the transaction as a 3-letter ISO code (e.g., USD, PEN, EUR). If not mentioned, use the user's primary currency." }
+                            },
+                            required: ['amount', 'description', 'category', 'type', 'currency'],
+                        }
+                    }
                 },
-                required: ['amount', 'description', 'category', 'type'],
+                required: ['transactions']
             };
 
             const prompt = t('voice_prompt', {
@@ -593,6 +648,7 @@ const App: React.FC = () => {
             const systemInstruction = t('voice_system_instruction', {
                 expense_categories: expenseCategories.join(', '),
                 income_categories: incomeCategories.join(', '),
+                primary_currency: primaryCurrency,
             });
 
             const response = await ai.models.generateContent({
@@ -607,24 +663,38 @@ const App: React.FC = () => {
 
             const jsonStr = response.text.trim();
             const parsed = JSON.parse(jsonStr);
+            const parsedTransactions = parsed.transactions || [];
 
-            if (parsed.amount && parsed.description && parsed.category && parsed.type) {
-                if (!accounts.length) {
-                    throw new Error("No account available to add transaction to.");
-                }
-                const pendingTransaction: Omit<Transaction, 'id' | 'accountId'> = {
-                    amount: Math.abs(parsed.amount),
-                    description: parsed.description,
-                    category: parsed.category,
-                    type: parsed.type as TransactionType,
+            if (parsedTransactions.length > 0) {
+                 const newTransactions: PendingTransaction[] = parsedTransactions.map((p: any) => ({
+                    amount: Math.abs(p.amount),
+                    description: p.description,
+                    category: p.category,
+                    type: p.type as TransactionType,
                     date: currentDate.toISOString().split('T')[0],
-                };
+                    currency: p.currency,
+                }));
+
+                const detectedCurrency = newTransactions[0].currency;
+                const existingCurrencies = [...new Set(accounts.map(a => a.currency))];
                 
-                setPendingVoiceTransaction(pendingTransaction);
-                setIsVoiceConfirmationModalOpen(true);
-                setIsIslandOpen(false); // Hide island as modal is opening
+                if (accounts.length > 0 && !existingCurrencies.includes(detectedCurrency)) {
+                    // Currency Mismatch Flow
+                    setMismatchData({ transactions: newTransactions, detectedCurrency });
+                    setIsCurrencyMismatchModalOpen(true);
+                    setIsIslandOpen(false);
+                } else if (accounts.length > 1) {
+                    setPendingVoiceTransactions(newTransactions);
+                    setIsAccountSelectionModalOpen(true);
+                    setIsIslandOpen(false); // Hide island as modal is opening
+                } else if (accounts.length === 1) {
+                    setIsIslandOpen(false); // Hide "processing" island before success one shows
+                    addBatchTransactions(newTransactions, accounts[0].id);
+                } else {
+                     throw new Error("No account available to add transaction to.");
+                }
             } else {
-                throw new Error('Invalid transaction data from AI');
+                throw new Error('No transactions parsed from AI');
             }
         } catch (error) {
             console.error('Error processing transcript with AI:', error);
@@ -634,6 +704,82 @@ const App: React.FC = () => {
             setIsIslandOpen(true);
         }
     };
+    
+    const handleConvertTransaction = async (targetAccountId: string) => {
+        if (!mismatchData) return;
+    
+        const targetAccount = accounts.find(acc => acc.id === targetAccountId);
+        if (!targetAccount) return;
+    
+        const { transactions, detectedCurrency } = mismatchData;
+        const targetCurrency = targetAccount.currency;
+    
+        setIsCurrencyMismatchModalOpen(false);
+        setMismatchData(null);
+        setIslandStatus('processing');
+        setIslandMessage(t('voice_processing'));
+        setIsIslandOpen(true);
+    
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            
+            // For simplicity, we'll convert the first transaction and open it for user review.
+            // Batch conversion without confirmation is risky.
+            const firstTransaction = transactions[0];
+    
+            const prompt = t('ai_conversion_prompt', {
+                amount: String(firstTransaction.amount),
+                from_currency: detectedCurrency,
+                to_currency: targetCurrency,
+            });
+    
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+            });
+            
+            const convertedAmountText = response.text.trim().replace(/[^0-9.,]/g, '').replace(',', '.');
+            const convertedAmount = parseFloat(convertedAmountText);
+    
+            if (isNaN(convertedAmount)) {
+                throw new Error('AI did not return a valid number for conversion.');
+            }
+    
+            const transactionToConfirm = {
+                ...firstTransaction,
+                amount: convertedAmount,
+                description: `${firstTransaction.description} (${t('conversion_prefix')}: ${firstTransaction.amount} ${detectedCurrency})`,
+                accountId: targetAccountId,
+                id: '', 
+                destinationAccountId: undefined,
+            };
+    
+            setIsIslandOpen(false);
+            openModal('transaction', transactionToConfirm);
+    
+        } catch (error) {
+            console.error('Error during currency conversion:', error);
+            setIslandStatus('error');
+            setIslandMessage(t('voice_error'));
+            setIsIslandOpen(true);
+        }
+    };
+
+    const handleCreateAccountForMismatch = () => {
+        if (!mismatchData) return;
+        const { transactions, detectedCurrency } = mismatchData;
+
+        const successCb = (newAccount: Account) => {
+            const transactionsToAdd = transactions.map(({ currency, ...rest }) => rest);
+            addBatchTransactions(transactionsToAdd, newAccount.id);
+        };
+        setAccountFormSuccessCallback(() => successCb);
+
+        setIsCurrencyMismatchModalOpen(false);
+        setMismatchData(null);
+        openModal('account', { currency: detectedCurrency });
+    };
+
 
     const handleVoiceClick = () => {
         if (!isVoiceTourFinished) {
@@ -658,12 +804,12 @@ const App: React.FC = () => {
     const handleUndoAction = () => {
         if (!lastTransactionAction) return;
     
-        const { action, transaction, originalTransaction } = lastTransactionAction;
-    
-        if (action === 'add') {
-            handleRemove('transaction', transaction.id);
-        } else if (action === 'update' && originalTransaction) {
-            handleUpdateTransaction(originalTransaction, true);
+        if (lastTransactionAction.action === 'add_batch') {
+            lastTransactionAction.transactions.forEach(tx => handleRemove('transaction', tx.id, true));
+        } else if (lastTransactionAction.action === 'add') {
+            handleRemove('transaction', lastTransactionAction.transaction.id);
+        } else if (lastTransactionAction.action === 'update' && lastTransactionAction.originalTransaction) {
+            handleUpdateTransaction(lastTransactionAction.originalTransaction, true);
         }
     
         setLastTransactionAction(null); // Must clear before setting new island state
@@ -674,13 +820,18 @@ const App: React.FC = () => {
     
     const handleEditAction = () => {
         if (!lastTransactionAction) return;
-        openModal('transaction', lastTransactionAction.transaction);
+
+        if (lastTransactionAction.action === 'add_batch') {
+            openModal('transaction', lastTransactionAction.transactions[0]);
+        } else if (lastTransactionAction.action === 'add' || lastTransactionAction.action === 'update') {
+            openModal('transaction', lastTransactionAction.transaction);
+        }
     };
 
 
     const renderView = () => {
         switch (activeTab) {
-            case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} />;
+            case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} selectedAccountId={selectedAccountId} setSelectedAccountId={setSelectedAccountId} />;
             case 'accounts': return <Accounts accounts={accounts} transactions={transactions} primaryCurrency={primaryCurrency} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={(id) => openConfirmation('account', id)} t={t} />;
             case 'debts': return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onEditDebt={(debt) => openModal('debt', debt)} onRemoveDebt={(id) => openConfirmation('debt', id)} t={t} />;
             case 'recurring': return <Recurring recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} onAddRecurring={() => openModal('recurring')} onEditRecurring={(rec) => openModal('recurring', rec)} onRemoveRecurring={(id) => openConfirmation('recurring', id)} t={t} />;
@@ -691,7 +842,7 @@ const App: React.FC = () => {
             case 'calendar': return <Calendar accounts={accounts} debts={debts} recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} t={t} />;
             case 'settings': return <Settings theme={theme} toggleTheme={toggleTheme} currency={primaryCurrency} setCurrency={setPrimaryCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} userName={userName} setUserName={setUserName} t={t} accounts={accounts} transactions={transactions} debts={debts} coupleLink={coupleLink} setCoupleLink={setCoupleLink} onOpenModal={openModal} setActiveTab={setActiveTab} formatCurrency={formatCurrency} />;
             case 'wellness': return <Wellness transactions={transactions} accounts={accounts} debts={debts} t={t} colorTheme={colorTheme} />;
-            default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} />;
+            default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} selectedAccountId={selectedAccountId} setSelectedAccountId={setSelectedAccountId} />;
         }
     };
     
@@ -746,12 +897,18 @@ const App: React.FC = () => {
             <Modal 
                 isOpen={modal === 'account'} 
                 onClose={closeModal} 
-                title={itemToEdit ? t('edit_account') : t('addAccount')}
+                title={itemToEdit?.id ? t('edit_account') : t('addAccount')}
                 isExiting={isFormSubmitting}
                 onExitComplete={handleModalExitComplete}
             >
                 <AccountForm
-                    onAddAccount={(acc) => handleGenericSubmit(accounts, setAccounts, acc, 'account')}
+                    onAddAccount={(acc) => {
+                        const newAccount = handleGenericSubmit(accounts, setAccounts, acc, 'account');
+                        if (accountFormSuccessCallback) {
+                            accountFormSuccessCallback(newAccount);
+                            setAccountFormSuccessCallback(null);
+                        }
+                    }}
                     onUpdateAccount={(acc) => handleGenericSubmit(accounts, setAccounts, acc, 'account')}
                     onClose={closeModal}
                     accountToEdit={itemToEdit}
@@ -867,32 +1024,49 @@ const App: React.FC = () => {
                 lang={language}
             />
 
-            <VoiceTransactionConfirmationModal
-                isOpen={isVoiceConfirmationModalOpen}
+            <AccountSelectionModal
+                isOpen={isAccountSelectionModalOpen}
                 onClose={() => {
-                    setIsVoiceConfirmationModalOpen(false);
-                    setPendingVoiceTransaction(null);
+                    setIsAccountSelectionModalOpen(false);
+                    setPendingVoiceTransactions(null);
                 }}
-                transactionData={pendingVoiceTransaction}
+                transactionsData={pendingVoiceTransactions}
                 accounts={accounts}
                 t={t}
                 formatCurrency={formatCurrency}
-                onConfirm={(transactionDataWithAccount) => {
-                    setIsVoiceConfirmationModalOpen(false);
-                    setPendingVoiceTransaction(null);
-                    handleAddTransaction(transactionDataWithAccount);
+                onAccountSelect={(accountId) => {
+                    if (pendingVoiceTransactions) {
+                        const transactionsToAdd = pendingVoiceTransactions.map(({ currency, ...rest }) => rest);
+                        addBatchTransactions(transactionsToAdd, accountId);
+                    }
+                    setIsAccountSelectionModalOpen(false);
+                    setPendingVoiceTransactions(null);
                 }}
                 onEdit={() => {
-                    if (!pendingVoiceTransaction) return;
-                    setIsVoiceConfirmationModalOpen(false);
+                    if (!pendingVoiceTransactions || pendingVoiceTransactions.length === 0) return;
+                    setIsAccountSelectionModalOpen(false);
+                    const { currency, ...rest } = pendingVoiceTransactions[0];
                     openModal('transaction', {
-                        ...pendingVoiceTransaction,
+                        ...rest,
                         id: '', // New transaction
                         accountId: accounts[0]?.id || '', // Default account
                         destinationAccountId: undefined,
                     });
-                    setPendingVoiceTransaction(null);
+                    setPendingVoiceTransactions(null);
                 }}
+            />
+
+            <CurrencyMismatchModal
+                isOpen={isCurrencyMismatchModalOpen}
+                onClose={() => {
+                    setIsCurrencyMismatchModalOpen(false);
+                    setMismatchData(null);
+                }}
+                detectedCurrency={mismatchData?.detectedCurrency || ''}
+                accounts={accounts}
+                onConvert={handleConvertTransaction}
+                onCreateNew={handleCreateAccountForMismatch}
+                t={t}
             />
             
             <DynamicIsland 

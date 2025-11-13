@@ -28,6 +28,8 @@ interface DashboardProps {
   onAddRecurring: () => void;
   primaryCurrency: string;
   onOpenDetailModal: (title: string, transactions: Transaction[]) => void;
+  selectedAccountId: string | null;
+  setSelectedAccountId: (id: string | null) => void;
 }
 
 const expenseCategoryIcons: { [key: string]: React.FC<{ className?: string }> } = {
@@ -201,8 +203,7 @@ const RecentActivityItem: React.FC<{ transaction: Transaction, accounts: Map<str
 const defaultSectionOrder = ['accountBalances', 'accountSelector', 'recentActivity', 'activityChart', 'debtSummary', 'recurringSummary', 'totalSummary'];
 const defaultVisibleSections = ['accountBalances', 'accountSelector', 'activityChart', 'recentActivity', 'debtSummary', 'recurringSummary', 'totalSummary'];
 
-const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, recurringTransactions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddRecurring, primaryCurrency, onOpenDetailModal }) => {
-    const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, recurringTransactions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddRecurring, primaryCurrency, onOpenDetailModal, selectedAccountId, setSelectedAccountId }) => {
     const accountMap = useMemo(() => new Map(accounts.map(acc => [acc.id, acc])), [accounts]);
     
     const [sectionOrder, setSectionOrder] = useLocalStorage<string[]>('dashboard-layout-v3', defaultSectionOrder);
@@ -279,7 +280,16 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
     const primaryColor = toHex(currentPalette['--color-primary']);
     const accentColor = toHex(currentPalette['--color-accent']);
     
-    const nonTransferTransactions = useMemo(() => transactions.filter(t => t.type !== TransactionType.TRANSFER), [transactions]);
+    const selectedAccount = useMemo(() => {
+        return accounts.find(acc => acc.id === selectedAccountId) || null;
+    }, [accounts, selectedAccountId]);
+
+    const displayedTransactions = useMemo(() => {
+        if (!selectedAccountId) return transactions;
+        return transactions.filter(t => t.accountId === selectedAccountId || t.destinationAccountId === selectedAccountId);
+    }, [transactions, selectedAccountId]);
+    
+    const nonTransferTransactionsForChart = useMemo(() => displayedTransactions.filter(t => t.type !== TransactionType.TRANSFER), [displayedTransactions]);
 
     const accountBalanceChanges = useMemo(() => {
         const changes = new Map<string, number>();
@@ -322,15 +332,6 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         }
         return sortedAccounts;
     }, [selectedAccountId, accounts, sortedAccounts]);
-
-    const selectedAccount = useMemo(() => {
-        return accounts.find(acc => acc.id === selectedAccountId) || null;
-    }, [accounts, selectedAccountId]);
-
-    const displayedTransactions = useMemo(() => {
-        if (!selectedAccountId) return transactions;
-        return transactions.filter(t => t.accountId === selectedAccountId || t.destinationAccountId === selectedAccountId);
-    }, [transactions, selectedAccountId]);
 
     const dateRangeText = useMemo(() => {
         if (displayedTransactions.length < 1) {
@@ -497,7 +498,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                             </div>
                         )}
                     </div>
-                    <ActivityChart transactions={nonTransferTransactions} primaryColor={primaryColor} accentColor={accentColor} formatCurrency={(amount) => formatCurrency(amount, primaryCurrency)} onDayClick={handleChartDayClick} />
+                    <ActivityChart transactions={nonTransferTransactionsForChart} primaryColor={primaryColor} accentColor={accentColor} formatCurrency={(amount) => formatCurrency(amount, primaryCurrency)} onDayClick={handleChartDayClick} />
                 </Card>
             )
         },

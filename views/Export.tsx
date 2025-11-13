@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { Transaction, Account, ColorTheme } from '../types';
 import Card from '../components/Card';
 import { DocumentArrowDownIcon } from '../components/icons';
-import { exportToCSV, printReport } from '../utils/export';
+// FIX: Changed import from non-existent 'printReport' to 'exportToPDF'.
+import { exportToCSV, exportToPDF } from '../utils/export';
 
 interface ExportProps {
   transactions: Transaction[];
@@ -32,8 +33,18 @@ const Export: React.FC<ExportProps> = ({ transactions, accounts, formatCurrency,
     exportToCSV(transactions, accountMap);
   };
 
-  const handlePrintReport = () => {
-    printReport('print-area', colorTheme, t);
+  // FIX: Renamed function and updated implementation to correctly call exportToPDF.
+  const handleExportPDF = () => {
+    const reportData = {
+        userName,
+        formattedMonth,
+        accounts,
+        transactions: reportTransactions,
+        accountMap,
+        // FIX: Add missing selectedAccountId property to satisfy exportToPDF function signature.
+        selectedAccountId: null,
+    };
+    exportToPDF(reportData, colorTheme, t, formatCurrency);
   };
 
   const formattedMonth = new Date(selectedMonth + '-02').toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -78,7 +89,7 @@ const Export: React.FC<ExportProps> = ({ transactions, accounts, formatCurrency,
                 </div>
             </div>
             <button 
-                onClick={handlePrintReport} 
+                onClick={handleExportPDF} 
                 className="flex items-center bg-secondary dark:bg-secondary-dark text-text-main dark:text-text-main-dark font-bold py-2 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-opacity-80 transition-colors w-full md:w-auto justify-center shrink-0"
             >
                 {t('print_report')}
