@@ -427,10 +427,9 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
     }
 
-    const sections: { [key: string]: { nameKey: string, content: React.ReactNode, colSpan: string } } = {
+    const sections: { [key: string]: { nameKey: string, content: React.ReactNode } } = {
         accountBalances: {
             nameKey: 'section_accountBalances',
-            colSpan: 'lg:col-span-3',
             content: (
                 <div className={getAccountGridClasses(displayedBalanceCards.length)}>
                     {accounts.length > 0 ? (
@@ -462,7 +461,6 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         },
         accountSelector: {
             nameKey: 'section_accountSelector',
-            colSpan: 'lg:col-span-2',
             content: (
                  <Card className="p-4 dark:bg-surface-dark">
                     <div className="flex justify-between items-center mb-4 px-2">
@@ -486,7 +484,6 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         },
         activityChart: {
             nameKey: 'section_activityChart',
-            colSpan: 'lg:col-span-2 lg:row-span-2',
             content: (
                  <Card className="dark:bg-surface-dark h-full">
                     <div className="flex justify-between items-center mb-4">
@@ -506,9 +503,8 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         },
         recentActivity: {
             nameKey: 'section_recentActivity',
-            colSpan: 'lg:col-span-1',
             content: (
-                 <Card className="h-full">
+                 <Card>
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-bold text-text-main dark:text-text-main-dark">
                                 {t('recent_activity')} <span className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{selectedAccount ? `(${selectedAccount.name})` : ''}</span>
@@ -525,7 +521,6 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         },
         debtSummary: {
             nameKey: 'section_debtSummary',
-            colSpan: 'lg:col-span-1',
             content: (
                  <Card>
                     <div className="flex justify-between items-center mb-4">
@@ -558,7 +553,6 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         },
         recurringSummary: {
             nameKey: 'section_recurringSummary',
-            colSpan: 'lg:col-span-1',
             content: (
                 <Card>
                     <div className="flex justify-between items-center mb-4">
@@ -589,7 +583,6 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         },
         totalSummary: {
             nameKey: 'section_totalSummary',
-            colSpan: 'lg:col-span-3',
             content: (
              <Card>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
@@ -622,7 +615,54 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         }
     };
     
+    const renderDraggableSection = (key: string) => {
+        const isDraggingOver = dragOverKey === key && dragItem.current !== key;
+        return (
+            <div
+                key={key}
+                draggable
+                onDragStart={e => handleDragStart(e, key)}
+                onDragEnter={() => handleDragEnter(key)}
+                onDragEnd={handleDragEnd}
+                onDrop={handleDrop}
+                onDragOver={e => e.preventDefault()}
+                className="draggable-section group relative transition-all duration-300"
+            >
+                <div className={`relative ${isDraggingOver ? 'drag-over-indicator' : ''}`}>
+                    <div className="absolute top-1/2 -translate-y-1/2 right-3 p-2 text-text-secondary cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-50 transition-opacity z-10 bg-surface/50 dark:bg-surface-dark/50 rounded-full">
+                        <GripVerticalIcon className="w-5 h-5" />
+                    </div>
+                    {sections[key].content}
+                </div>
+            </div>
+        );
+    };
+
+    const mainColKeys = ['accountSelector', 'activityChart'];
+    const sideColKeys = ['recentActivity', 'debtSummary', 'recurringSummary'];
     const sectionsToRender = sectionOrder.filter(key => visibleSections.includes(key) && sections[key]);
+    
+    const layout = useMemo(() => sectionsToRender.reduce((acc, key) => {
+        const isColumnItem = mainColKeys.includes(key) || sideColKeys.includes(key);
+        const lastBlock = acc[acc.length - 1];
+
+        if (isColumnItem) {
+            if (lastBlock && lastBlock.type === 'columns') {
+                if (mainColKeys.includes(key)) lastBlock.main.push(key);
+                else lastBlock.side.push(key);
+            } else {
+                acc.push({
+                    type: 'columns',
+                    main: mainColKeys.includes(key) ? [key] : [],
+                    side: sideColKeys.includes(key) ? [key] : []
+                });
+            }
+        } else {
+            acc.push({ type: 'full', key: key });
+        }
+        return acc;
+    }, [] as Array<{ type: 'full', key: string } | { type: 'columns', main: string[], side: string[] }>), [sectionsToRender]);
+
 
     return (
         <>
@@ -674,28 +714,24 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                     </div>
                 )}
                 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {sectionsToRender.map(key => {
-                        const isDraggingOver = dragOverKey === key && dragItem.current !== key;
-                        return (
-                            <div
-                                key={key}
-                                draggable
-                                onDragStart={e => handleDragStart(e, key)}
-                                onDragEnter={() => handleDragEnter(key)}
-                                onDragEnd={handleDragEnd}
-                                onDrop={handleDrop}
-                                onDragOver={e => e.preventDefault()}
-                                className={`draggable-section group relative transition-all duration-300 ${sections[key].colSpan}`}
-                            >
-                                <div className={`relative ${isDraggingOver ? 'drag-over-indicator' : ''}`}>
-                                    <div className="absolute top-1/2 -translate-y-1/2 right-3 p-2 text-text-secondary cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-50 transition-opacity z-10 bg-surface/50 dark:bg-surface-dark/50 rounded-full">
-                                        <GripVerticalIcon className="w-5 h-5" />
+                <div className="space-y-6">
+                    {layout.map((block, index) => {
+                        if (block.type === 'full') {
+                            return renderDraggableSection(block.key);
+                        }
+                        if (block.type === 'columns') {
+                            return (
+                                <div key={`col-grid-${index}`} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="lg:col-span-2 space-y-6">
+                                        {block.main.map(renderDraggableSection)}
                                     </div>
-                                    {sections[key].content}
+                                    <div className="lg:col-span-1 space-y-6">
+                                        {block.side.map(renderDraggableSection)}
+                                    </div>
                                 </div>
-                            </div>
-                        );
+                            );
+                        }
+                        return null;
                     })}
                 </div>
             </div>

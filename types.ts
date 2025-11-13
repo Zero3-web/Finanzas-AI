@@ -111,3 +111,9 @@ export interface FocusModeConfig {
   selectedGoalId?: string | null;
   selectedLimitId?: string | null;
 }
+
+export type LastTransactionAction = {
+  action: 'add' | 'update';
+  transaction: Transaction;
+  originalTransaction?: Transaction; // For 'update' actions
+};

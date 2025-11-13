@@ -114,36 +114,41 @@ export const WeeklySpendingChart: React.FC<{
     const data = useMemo(() => {
         const accountCurrencyMap = new Map(accounts.map(acc => [acc.id, acc.currency]));
         const today = new Date();
-        today.setHours(23, 59, 59, 999);
-        const sevenDaysAgo = new Date(today);
-        sevenDaysAgo.setDate(today.getDate() - 6);
-        sevenDaysAgo.setHours(0, 0, 0, 0);
-
         const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+        
+        // Calculate the start of the current week (Monday)
+        const dayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
+        const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - diffToMonday);
+        
+        // Initialize data for Monday to Sunday
         const weekData: { [key: string]: { name: string, Gastos: number, fullDate: string }} = {};
-
         for (let i = 0; i < 7; i++) {
-            const date = new Date(sevenDaysAgo);
-            date.setDate(sevenDaysAgo.getDate() + i);
-            const dayKey = date.toISOString().split('T')[0];
+            const date = new Date(startOfWeek);
+            date.setDate(startOfWeek.getDate() + i);
+            // Create a timezone-agnostic 'YYYY-MM-DD' key
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const dayKey = `${year}-${month}-${day}`;
+            
             weekData[dayKey] = { name: t(days[date.getDay()]), Gastos: 0, fullDate: dayKey };
         }
 
+        // Populate with transaction data
         transactions.forEach(t => {
-            const transactionDate = new Date(t.date);
+            const dayKey = t.date; // t.date is already in 'YYYY-MM-DD' format
             if (
                 t.type === TransactionType.EXPENSE &&
                 accountCurrencyMap.get(t.accountId) === primaryCurrency &&
-                transactionDate >= sevenDaysAgo &&
-                transactionDate <= today
+                weekData[dayKey] // Check if the transaction falls within the current week
             ) {
-                const dayKey = transactionDate.toISOString().split('T')[0];
-                if (weekData[dayKey]) {
-                    weekData[dayKey].Gastos += t.amount;
-                }
+                weekData[dayKey].Gastos += t.amount;
             }
         });
         
+        // Return the data in the correct order (Monday to Sunday)
         return Object.values(weekData);
 
     }, [transactions, accounts, primaryCurrency, t]);

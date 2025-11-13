@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Tab, Transaction, Account, Debt, RecurringTransaction, SpendingLimit, Goal, Notification, Language, ColorTheme, TransactionType, AccountType, CoupleLink } from './types';
+import { Tab, Transaction, Account, Debt, RecurringTransaction, SpendingLimit, Goal, Notification, Language, ColorTheme, TransactionType, AccountType, CoupleLink, LastTransactionAction } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useTheme } from './hooks/useTheme';
 import { useColorTheme } from './hooks/useColorTheme';
@@ -82,7 +82,7 @@ const App: React.FC = () => {
     const [isFormSubmitting, setIsFormSubmitting] = useState(false);
 
 
-    // Voice Input State
+    // Voice Input & Dynamic Island State
     const [isVoiceTourFinished, setIsVoiceTourFinished] = useLocalStorage('voice-tour-finished', false);
     const [isVoiceTourOpen, setIsVoiceTourOpen] = useState(false);
     const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
@@ -92,6 +92,7 @@ const App: React.FC = () => {
     const [islandStatus, setIslandStatus] = useState<'processing' | 'success' | 'error'>('processing');
     const [islandMessage, setIslandMessage] = useState('');
     const [scrollToTransactionId, setScrollToTransactionId] = useState<string | null>(null);
+    const [lastTransactionAction, setLastTransactionAction] = useState<LastTransactionAction | null>(null);
 
 
     // Goal Completion State
@@ -336,6 +337,7 @@ const App: React.FC = () => {
             })
         );
         
+        setLastTransactionAction({ action: 'add', transaction: newTransaction });
         setIslandStatus('success');
         setIslandMessage(newTransaction.type === TransactionType.TRANSFER ? t('transfer_successful') : t('voice_success'));
         playTone('success');
@@ -348,11 +350,11 @@ const App: React.FC = () => {
         return newTransaction;
     };
 
-    const handleUpdateTransaction = (updatedTransaction: Transaction) => {
+    const handleUpdateTransaction = (updatedTransaction: Transaction, isUndo: boolean = false) => {
         const originalTransaction = transactions.find(t => t.id === updatedTransaction.id);
         if (!originalTransaction) return;
 
-        setIsFormSubmitting(true);
+        if (!isUndo) setIsFormSubmitting(true);
 
         setTransactions(prev => prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
 
@@ -399,10 +401,17 @@ const App: React.FC = () => {
             return tempAccounts;
         });
         
-        setIslandStatus('success');
-        setIslandMessage(t('transaction_updated'));
-        playTone('success');
-        setIsIslandOpen(true);
+        if (!isUndo) {
+            setLastTransactionAction({ 
+                action: 'update', 
+                transaction: updatedTransaction, 
+                originalTransaction: originalTransaction 
+            });
+            setIslandStatus('success');
+            setIslandMessage(t('transaction_updated'));
+            playTone('success');
+            setIsIslandOpen(true);
+        }
     };
 
     // Generic CRUD Handlers
@@ -458,6 +467,9 @@ const App: React.FC = () => {
         if (type === 'transaction') {
             const transactionToRemove = transactions.find(t => t.id === id);
             if (transactionToRemove) {
+                if (id === scrollToTransactionId) {
+                    setScrollToTransactionId(null);
+                }
                 setAccounts(prevAccounts => prevAccounts.map(acc => {
                     if (transactionToRemove.type === TransactionType.TRANSFER) {
                         if (acc.id === transactionToRemove.accountId) return { ...acc, balance: acc.balance + transactionToRemove.amount };
@@ -634,6 +646,34 @@ const App: React.FC = () => {
         setIsVoiceModalOpen(true); // Open the real modal right after the tour.
     };
 
+    // Dynamic Island Undo/Edit handlers
+    const handleCloseIsland = () => {
+        setIsIslandOpen(false);
+        setLastTransactionAction(null);
+    };
+    
+    const handleUndoAction = () => {
+        if (!lastTransactionAction) return;
+    
+        const { action, transaction, originalTransaction } = lastTransactionAction;
+    
+        if (action === 'add') {
+            handleRemove('transaction', transaction.id);
+        } else if (action === 'update' && originalTransaction) {
+            handleUpdateTransaction(originalTransaction, true);
+        }
+    
+        setLastTransactionAction(null); // Must clear before setting new island state
+        setIslandStatus('success');
+        setIslandMessage(t('action_undone'));
+        setIsIslandOpen(true); // Re-open or update island
+    };
+    
+    const handleEditAction = () => {
+        if (!lastTransactionAction) return;
+        openModal('transaction', lastTransactionAction.transaction);
+    };
+
 
     const renderView = () => {
         switch (activeTab) {
@@ -693,7 +733,7 @@ const App: React.FC = () => {
                 <TransactionForm
                     accounts={accounts}
                     onAddTransaction={handleAddTransaction}
-                    onUpdateTransaction={handleUpdateTransaction}
+                    onUpdateTransaction={(tx) => handleUpdateTransaction(tx, false)}
                     onClose={closeModal}
                     transactionToEdit={itemToEdit}
                     t={t}
@@ -856,7 +896,14 @@ const App: React.FC = () => {
                 isOpen={isIslandOpen}
                 status={islandStatus}
                 message={islandMessage}
-                onClose={() => setIsIslandOpen(false)}
+                onClose={handleCloseIsland}
+                showActions={!!lastTransactionAction}
+                onUndo={handleUndoAction}
+                onEdit={() => {
+                    handleEditAction();
+                    handleCloseIsland();
+                }}
+                t={t}
             />
 
             <FollowUpModal

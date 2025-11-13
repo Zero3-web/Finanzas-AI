@@ -79,6 +79,8 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     coming_soon: 'Coming Soon',
     confirm: 'Confirm',
     edit: 'Edit',
+    undo: 'Undo',
+    action_undone: 'Action undone',
     // Color Themes
     default_theme: 'Default',
     ocean_theme: 'Ocean',
@@ -413,6 +415,8 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     coming_soon: 'Próximamente',
     confirm: 'Confirmar',
     edit: 'Editar',
+    undo: 'Deshacer',
+    action_undone: 'Acción deshecha',
     // Color Themes
     default_theme: 'Predeterminado',
     ocean_theme: 'Océano',
