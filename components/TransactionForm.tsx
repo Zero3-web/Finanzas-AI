@@ -12,9 +12,10 @@ interface TransactionFormProps {
   onClose: () => void;
   transactionToEdit?: Transaction | null;
   t: (key: string) => string;
+  onOpenAccountModal: () => void;
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransaction, onUpdateTransaction, onClose, transactionToEdit, t }) => {
+const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransaction, onUpdateTransaction, onClose, transactionToEdit, t, onOpenAccountModal }) => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
@@ -132,6 +133,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
     }
   };
   
+  const handleTransferClick = () => {
+    if (accounts.length < 2) {
+      if (window.confirm(t('transfer_need_two_accounts_prompt'))) {
+        onClose();
+        onOpenAccountModal();
+      }
+    } else {
+      setType(TransactionType.TRANSFER);
+    }
+  };
+
   const inputClasses = "mt-1 block w-full bg-secondary dark:bg-secondary-dark border-transparent focus:border-primary focus:ring-primary text-text-main dark:text-text-main-dark p-2 rounded-md";
   const fromAccounts = accounts.filter(acc => acc.id !== destinationAccountId);
   const toAccounts = accounts.filter(acc => acc.id !== accountId);
@@ -143,7 +155,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
         <div className="mt-1 grid grid-cols-3 rounded-md">
             <button type="button" onClick={() => setType(TransactionType.EXPENSE)} className={`px-4 py-2 rounded-l-md transition-colors ${type === TransactionType.EXPENSE ? 'bg-expense text-white' : 'bg-secondary hover:bg-gray-200 dark:bg-secondary-dark dark:hover:bg-opacity-80'}`}>{t('expense')}</button>
             <button type="button" onClick={() => setType(TransactionType.INCOME)} className={`px-4 py-2 transition-colors ${type === TransactionType.INCOME ? 'bg-income text-white' : 'bg-secondary hover:bg-gray-200 dark:bg-secondary-dark dark:hover:bg-opacity-80'}`}>{t('income')}</button>
-            <button type="button" onClick={() => setType(TransactionType.TRANSFER)} className={`px-4 py-2 rounded-r-md transition-colors ${type === TransactionType.TRANSFER ? 'bg-primary text-white' : 'bg-secondary hover:bg-gray-200 dark:bg-secondary-dark dark:hover:bg-opacity-80'}`}>{t('transfer')}</button>
+            <button type="button" onClick={handleTransferClick} className={`px-4 py-2 rounded-r-md transition-colors ${type === TransactionType.TRANSFER ? 'bg-primary text-white' : 'bg-secondary hover:bg-gray-200 dark:bg-secondary-dark dark:hover:bg-opacity-80'}`}>{t('transfer')}</button>
         </div>
       </div>
 

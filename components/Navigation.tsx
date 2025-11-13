@@ -11,7 +11,8 @@ import {
     ShieldCheckIcon,
     CalendarIcon,
     BullseyeIcon,
-    GaugeIcon
+    GaugeIcon,
+    DocumentTextIcon
 } from './icons';
 
 interface NavigationProps {
@@ -41,6 +42,7 @@ const Navigation: React.FC<NavigationProps> = ({
     { tab: 'limits', labelKey: 'limits', icon: ShieldCheckIcon },
     { tab: 'goals', labelKey: 'goals', icon: BullseyeIcon },
     { tab: 'analysis', labelKey: 'analysis', icon: ChartPieIcon },
+    { tab: 'history', labelKey: 'history', icon: DocumentTextIcon },
     { tab: 'wellness', labelKey: 'wellness', icon: GaugeIcon },
     { tab: 'calendar', labelKey: 'calendar', icon: CalendarIcon },
     { tab: 'settings', labelKey: 'settings', icon: CogIcon },

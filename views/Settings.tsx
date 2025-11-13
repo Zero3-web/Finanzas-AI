@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { Account, ColorTheme, CoupleLink, Debt, Language, Tab, Theme, Transaction } from '../types';
 import { themes } from '../hooks/useColorTheme';
 import { calculateWellnessScore, getScoreTitle } from '../utils/wellness';
@@ -6,7 +6,6 @@ import { ResponsiveContainer, RadialBarChart, RadialBar, PolarAngleAxis } from '
 import Card from '../components/Card';
 import AvatarGrid from '../components/AvatarGrid';
 import Switch from '../components/Switch';
-import CoupleModeModal from '../components/CoupleModeModal';
 import { DocumentArrowDownIcon } from '../components/icons';
 import { exportToCSV, printReport } from '../utils/export';
 
@@ -56,17 +55,16 @@ const Settings: React.FC<SettingsProps> = ({
     setActiveTab,
     formatCurrency,
 }) => {
-    const [isCoupleModalOpen, setIsCoupleModalOpen] = useState(false);
-    const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
-    const accountMap = useMemo(() => new Map(accounts.map(acc => [acc.id, acc])), [accounts]);
+    const [selectedMonth, setSelectedMonth] = React.useState(new Date().toISOString().slice(0, 7));
+    const accountMap = React.useMemo(() => new Map(accounts.map(acc => [acc.id, acc])), [accounts]);
     
-    const availableMonths = useMemo(() => {
+    const availableMonths = React.useMemo(() => {
         const months = new Set<string>();
         transactions.forEach(t => months.add(t.date.slice(0, 7)));
         return Array.from(months).sort().reverse();
     }, [transactions]);
 
-    const reportTransactions = useMemo(() => {
+    const reportTransactions = React.useMemo(() => {
         if (!selectedMonth) return [];
         return transactions.filter(tr => tr.date.slice(0, 7) === selectedMonth);
     }, [transactions, selectedMonth]);
@@ -201,19 +199,14 @@ const Settings: React.FC<SettingsProps> = ({
 
              {/* Couple Mode Section */}
             <Card>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <span>{t('couple_mode')}</span>
-                    <span className="bg-yellow-200 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full">{t('beta')}</span>
-                </h2>
                 <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-medium text-text-main dark:text-text-main-dark">{t('sync_with_partner')}</p>
-                        <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{coupleLink.linked ? t('linked_with', { name: coupleLink.partnerName }) : t('not_linked')}</p>
-                    </div>
-                    <button onClick={() => setIsCoupleModalOpen(true)} className="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors text-sm">
-                        {t('manage')}
-                    </button>
+                    <h2 className="text-xl font-bold flex items-center gap-2 text-text-main dark:text-text-main-dark">
+                        <span>{t('couple_mode')}</span>
+                        <span className="bg-yellow-200 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full">{t('beta')}</span>
+                    </h2>
+                    <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">{t('coming_soon')}</span>
                 </div>
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-2">{t('couple_mode_desc')}</p>
             </Card>
 
             {/* Export Section */}
@@ -273,14 +266,6 @@ const Settings: React.FC<SettingsProps> = ({
                      </div>
                  </div>
             </Card>
-            
-            <CoupleModeModal 
-                isOpen={isCoupleModalOpen}
-                onClose={() => setIsCoupleModalOpen(false)}
-                t={t}
-                coupleLink={coupleLink}
-                setCoupleLink={setCoupleLink}
-            />
 
              {/* Hidden area for printing */}
             <div id="print-area-settings" className="no-print" style={{ display: 'none' }}>

@@ -15,7 +15,7 @@ export interface Transaction {
   destinationAccountId?: string;
 }
 
-export type AccountType = 'checking' | 'savings' | 'credit';
+export type AccountType = 'checking' | 'savings' | 'credit' | 'cash';
 
 export interface Account {
   id: string;
@@ -65,7 +65,7 @@ export interface Goal {
   currency: string;
 }
 
-export type Tab = 'dashboard' | 'accounts' | 'debts' | 'recurring' | 'limits' | 'analysis' | 'settings' | 'calendar' | 'goals' | 'wellness';
+export type Tab = 'dashboard' | 'accounts' | 'debts' | 'recurring' | 'limits' | 'analysis' | 'settings' | 'calendar' | 'goals' | 'wellness' | 'history';
 
 export type Language = 'en' | 'es';
 
@@ -103,10 +103,11 @@ export interface CoupleLink {
   linkId: string | null;
 }
 
+// FIX: Add missing FocusWidgetType and FocusModeConfig type definitions.
 export type FocusWidgetType = 'goal' | 'limit' | 'upcoming' | 'quickAdd' | 'tip';
 
 export interface FocusModeConfig {
   activeWidgets: FocusWidgetType[];
-  selectedGoalId?: string;
-  selectedLimitId?: string;
+  selectedGoalId?: string | null;
+  selectedLimitId?: string | null;
 }

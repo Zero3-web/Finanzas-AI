@@ -1,7 +1,7 @@
 import React from 'react';
 import { Goal } from '../types';
 import Card from '../components/Card';
-import { PlusIcon, TrashIcon, PencilIcon, BullseyeIcon } from '../components/icons';
+import { PlusIcon, TrashIcon, PencilIcon, BullseyeIcon, TruckIcon, HomeIcon, PaperAirplaneIcon, ArrowTrendingUpIcon, GiftIcon, BanknotesIcon } from '../components/icons';
 
 interface GoalsProps {
   goals: Goal[];
@@ -13,12 +13,23 @@ interface GoalsProps {
   primaryCurrency: string;
 }
 
+const getIconForGoal = (goal: Goal): React.FC<{ className?: string }> => {
+    const name = goal.name.toLowerCase();
+    if (name.includes('car') || name.includes('auto')) return TruckIcon;
+    if (name.includes('house') || name.includes('home')) return HomeIcon;
+    if (name.includes('vacation') || name.includes('trip') || name.includes('travel')) return PaperAirplaneIcon;
+    if (name.includes('investment')) return ArrowTrendingUpIcon;
+    if (name.includes('gift')) return GiftIcon;
+    return BanknotesIcon; // Generic goal icon
+};
+
 const GoalCard: React.FC<{ goal: Goal; formatCurrency: (amount: number, currency: string) => string; onEdit: (goal: Goal) => void; onRemove: (id: string) => void; t: (key: string, params?: { [key: string]: string | number }) => string }> = ({ goal, formatCurrency, onEdit, onRemove, t }) => {
     const progress = goal.targetAmount > 0 ? (goal.savedAmount / goal.targetAmount) * 100 : 0;
     const today = new Date();
     const deadlineDate = new Date(goal.deadline);
     deadlineDate.setUTCHours(0,0,0,0);
     today.setUTCHours(0,0,0,0);
+    const Icon = getIconForGoal(goal);
 
     const diffTime = deadlineDate.getTime() - today.getTime();
     const diffDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
@@ -26,9 +37,14 @@ const GoalCard: React.FC<{ goal: Goal; formatCurrency: (amount: number, currency
     return (
         <Card>
             <div className="flex justify-between items-start">
-                <div>
-                    <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark">{goal.name}</h3>
-                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{diffDays > 0 ? t('days_left', { days: diffDays }) : t('deadline_passed')}</p>
+                 <div className="flex items-center gap-3">
+                    <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                        <Icon className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark">{goal.name}</h3>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{diffDays > 0 ? t('days_left', { days: diffDays }) : t('deadline_passed')}</p>
+                    </div>
                 </div>
                 <div className="flex space-x-2">
                     <button onClick={() => onEdit(goal)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark transition-colors p-1">

@@ -4,7 +4,7 @@ import { Transaction, Account, TransactionType, ColorTheme } from '../types';
 import { themes } from '../hooks/useColorTheme';
 import Card from '../components/Card';
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
-import { PencilIcon, TrashIcon } from '../components/icons';
+import { PencilIcon, TrashIcon, ShoppingCartIcon, BuildingStorefrontIcon, TruckIcon, BuildingOffice2Icon, HeartIcon, TicketIcon, BoltIcon, BriefcaseIcon, GiftIcon, ArrowTrendingUpIcon, GlobeAltIcon, ArrowUpIcon, ArrowDownIcon, ArrowPathIcon, VisaIcon, StripeIcon, PaypalIcon, ApplePayIcon, CollectionIcon } from '../components/icons';
 
 interface AnalysisProps {
   transactions: Transaction[];
@@ -14,9 +14,55 @@ interface AnalysisProps {
   colorTheme: ColorTheme;
   primaryCurrency: string;
   onOpenDetailModal: (title: string, transactions: Transaction[]) => void;
-  onEditTransaction: (transaction: Transaction) => void;
-  onRemoveTransaction: (transactionId: string) => void;
 }
+
+const expenseCategoryIcons: { [key: string]: React.FC<{ className?: string }> } = {
+    'Food': BuildingStorefrontIcon,
+    'Transport': TruckIcon,
+    'Housing': BuildingOffice2Icon,
+    'Entertainment': TicketIcon,
+    'Health': HeartIcon,
+    'Shopping': ShoppingCartIcon,
+    'Utilities': BoltIcon,
+    'Software': GlobeAltIcon,
+    'Other': CollectionIcon,
+};
+
+const incomeCategoryIcons: { [key: string]: React.FC<{ className?: string }> } = {
+    'Salary': BriefcaseIcon,
+    'Freelance': BriefcaseIcon,
+    'Gifts': GiftIcon,
+    'Investments': ArrowTrendingUpIcon,
+    'Other': ArrowUpIcon,
+};
+
+const getIconForTransaction = (transaction: Transaction): React.FC<{ className?: string }> => {
+    const desc = transaction.description.toLowerCase();
+    
+    if (transaction.type === TransactionType.TRANSFER) return ArrowPathIcon;
+
+    if (transaction.type === TransactionType.INCOME) {
+        const depositIcons: { [key: string]: React.FC<{ className?: string }> } = {
+            'visa': VisaIcon, 'stripe': StripeIcon,
+            'paypal': PaypalIcon, 'apple': ApplePayIcon,
+        };
+        const lowerDesc = desc.toLowerCase();
+        for (const keyword in depositIcons) {
+            if (lowerDesc.includes(keyword)) {
+                return depositIcons[keyword];
+            }
+        }
+        return incomeCategoryIcons[transaction.category] || ArrowUpIcon;
+    }
+
+    const googleKeywords = ['google', 'youtube', 'gcp', 'gsuite'];
+    if (googleKeywords.some(kw => desc.includes(kw))) {
+        return GlobeAltIcon;
+    }
+
+    return expenseCategoryIcons[transaction.category] || ArrowDownIcon;
+};
+
 
 interface CustomTooltipProps extends TooltipProps<ValueType, NameType> {
     // FIX: Add missing properties passed by recharts Tooltip component to resolve destructuring error.
@@ -49,17 +95,10 @@ const Analysis: React.FC<AnalysisProps> = ({
   t, 
   colorTheme, 
   primaryCurrency, 
-  onOpenDetailModal,
-  onEditTransaction,
-  onRemoveTransaction
+  onOpenDetailModal
  }) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM format
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  // State from History component
-  const [filter, setFilter] = useState('');
-  const [sort, setSort] = useState({ key: 'date', order: 'desc' });
-  const [typeFilter, setTypeFilter] = useState<'all' | TransactionType.INCOME | TransactionType.EXPENSE>('all');
 
   const currentPalette = themes[colorTheme];
   const toHex = (rgb: string) => '#' + rgb.split(',').map(c => parseInt(c).toString(16).padStart(2, '0')).join('');
@@ -139,43 +178,6 @@ const Analysis: React.FC<AnalysisProps> = ({
           ? t('income_for_month', { month: formattedMonth }) 
           : t('expense_for_month', { month: formattedMonth });
       onOpenDetailModal(title, typeTransactions);
-  };
-
-  // Logic from History component
-  const filteredAndSortedTransactions = useMemo(() => {
-    return [...transactions]
-      .filter(t => {
-          if (typeFilter === 'all') return true;
-          return t.type === typeFilter;
-      })
-      .filter(t => t.description.toLowerCase().includes(filter.toLowerCase()) || t.category.toLowerCase().includes(filter.toLowerCase()))
-      .sort((a, b) => {
-        if (sort.key === 'date') {
-          const dateA = new Date(a.date).getTime();
-          const dateB = new Date(b.date).getTime();
-          return sort.order === 'asc' ? dateA - dateB : dateB - dateA;
-        }
-        if (sort.key === 'amount') {
-          return sort.order === 'asc' ? a.amount - b.amount : b.amount - a.amount;
-        }
-        return 0;
-      });
-  }, [transactions, filter, sort, typeFilter]);
-
-  const handleSort = (key: 'date' | 'amount') => {
-    if (sort.key === key) {
-        setSort(prev => ({...prev, order: prev.order === 'asc' ? 'desc' : 'asc'}));
-    } else {
-        setSort({ key, order: 'desc' });
-    }
-  }
-
-  const getButtonClasses = (type: 'all' | TransactionType) => {
-    const baseClasses = "px-4 py-2 rounded-lg text-sm font-semibold transition-colors";
-    if (typeFilter === type) {
-        return `${baseClasses} bg-primary text-white`;
-    }
-    return `${baseClasses} bg-surface dark:bg-surface-dark hover:bg-secondary dark:hover:bg-secondary-dark`;
   };
 
   return (
@@ -275,123 +277,6 @@ const Analysis: React.FC<AnalysisProps> = ({
           )}
         </Fragment>
       )}
-
-      {/* Merged History section */}
-      <div className="space-y-6 pt-6">
-        <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark">{t('transaction_history')}</h2>
-        <Card className="p-4 space-y-4">
-          <input 
-              type="text"
-              placeholder={t('search_transactions')}
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="block w-full bg-secondary dark:bg-secondary-dark border-transparent rounded-lg focus:ring-primary focus:border-primary text-text-main dark:text-text-main-dark p-3"
-              id="search-transactions"
-          />
-          <div className="flex items-center space-x-2">
-              <button onClick={() => setTypeFilter('all')} className={getButtonClasses('all')}>
-                  {t('all')}
-              </button>
-              <button onClick={() => setTypeFilter(TransactionType.INCOME)} className={getButtonClasses(TransactionType.INCOME)}>
-                  {t('income')}
-              </button>
-              <button onClick={() => setTypeFilter(TransactionType.EXPENSE)} className={getButtonClasses(TransactionType.EXPENSE)}>
-                  {t('expense')}
-              </button>
-          </div>
-        </Card>
-
-        {/* Desktop Table View */}
-        <Card className="hidden md:block">
-          <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                  <thead className="border-b border-secondary dark:border-border-dark text-sm text-text-secondary dark:text-text-secondary-dark" id="history-table-header">
-                      <tr>
-                          <th className="p-3 cursor-pointer" onClick={() => handleSort('date')}>{t('date')}</th>
-                          <th className="p-3">{t('description')}</th>
-                          <th className="p-3">{t('category')}</th>
-                          <th className="p-3">{t('account')}</th>
-                          <th className="p-3 text-right cursor-pointer" onClick={() => handleSort('amount')}>{t('amount')}</th>
-                          <th className="p-3 text-right">{t('actions')}</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      {filteredAndSortedTransactions.map((transaction, index) => {
-                          const account = accountCurrencyMap.get(transaction.accountId);
-                          return (
-                          <tr 
-                              key={transaction.id} 
-                              className="border-b border-secondary dark:border-border-dark last:border-b-0 hover:bg-secondary dark:hover:bg-secondary-dark/50 animate-item-fade-in"
-                              style={{ animationDelay: `${index * 30}ms` }}
-                          >
-                              <td className="p-3">{new Date(transaction.date).toLocaleDateString()}</td>
-                              <td className="p-3">{transaction.description}</td>
-                              <td className="p-3">{getCategoryTranslation(transaction.category)}</td>
-                              <td className="p-3">{account?.name}</td>
-                              <td className={`p-3 text-right font-semibold ${transaction.type === TransactionType.INCOME ? 'text-income' : 'text-expense'}`}>
-                                  {transaction.type === TransactionType.INCOME ? '+' : '-'}{formatCurrency(transaction.amount, account?.currency || 'USD')}
-                              </td>
-                              <td className="p-3 text-right">
-                                  <button onClick={() => onEditTransaction(transaction)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary p-1">
-                                      <PencilIcon className="w-5 h-5" />
-                                  </button>
-                                  <button onClick={() => onRemoveTransaction(transaction.id)} className="text-text-secondary dark:text-text-secondary-dark hover:text-expense p-1 ml-2">
-                                      <TrashIcon className="w-5 h-5" />
-                                  </button>
-                              </td>
-                          </tr>
-                      )})}
-                  </tbody>
-              </table>
-          </div>
-          {filteredAndSortedTransactions.length === 0 && (
-              <div className="text-center py-10">
-                  <p className="text-text-secondary dark:text-text-secondary-dark">{t('noTransactionsFound')}</p>
-              </div>
-          )}
-        </Card>
-
-        {/* Mobile Card List View */}
-        <div className="md:hidden space-y-3">
-          {filteredAndSortedTransactions.length > 0 ? (
-            filteredAndSortedTransactions.map((transaction, index) => {
-              const account = accountCurrencyMap.get(transaction.accountId);
-              return (
-              <Card 
-                  key={transaction.id} 
-                  className="p-4 animate-item-fade-in" 
-                  id={`transaction-${transaction.id}`}
-                  style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-sm bg-secondary dark:bg-secondary-dark px-2 py-1 rounded-md">{getCategoryTranslation(transaction.category)}</span>
-                  <p className={`font-semibold text-lg ${transaction.type === TransactionType.INCOME ? 'text-income' : 'text-expense'}`}>
-                      {transaction.type === TransactionType.INCOME ? '+' : '-'}{formatCurrency(transaction.amount, account?.currency || 'USD')}
-                  </p>
-                </div>
-                <p className="font-semibold text-text-main dark:text-text-main-dark mb-3 break-words">{transaction.description}</p>
-                <div className="flex justify-between items-center text-sm text-text-secondary dark:text-gray-500">
-                    <span>{account?.name} &bull; {new Date(transaction.date).toLocaleDateString()}</span>
-                    <div>
-                        <button onClick={() => onEditTransaction(transaction)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary p-1 rounded-full">
-                            <PencilIcon className="w-5 h-5" />
-                        </button>
-                        <button onClick={() => onRemoveTransaction(transaction.id)} className="text-text-secondary dark:text-text-secondary-dark hover:text-expense p-1 ml-1 rounded-full">
-                            <TrashIcon className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-              </Card>
-            )})
-          ) : (
-            <Card>
-              <div className="text-center py-10">
-                  <p className="text-text-secondary dark:text-text-secondary-dark">{t('noTransactionsFound')}</p>
-              </div>
-            </Card>
-          )}
-        </div>
-      </div>
     </div>
   );
 };

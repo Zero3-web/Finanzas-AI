@@ -72,6 +72,7 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onUpdateAccount
           <option value="checking">{t('checking')}</option>
           <option value="savings">{t('savings')}</option>
           <option value="credit">{t('credit')}</option>
+          <option value="cash">{t('cash')}</option>
         </select>
       </div>
       <div className="grid grid-cols-2 gap-4">

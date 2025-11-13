@@ -38,7 +38,6 @@ import Analysis from './views/Analysis';
 import Calendar from './views/Calendar';
 import Settings from './views/Settings';
 import Wellness from './views/Wellness';
-import FocusMode from './views/FocusMode';
 import FollowUpModal from './components/FollowUpModal';
 import { MicIcon, PlusIcon } from './components/icons';
 import DashboardSkeleton from './components/DashboardSkeleton';
@@ -61,7 +60,6 @@ const App: React.FC = () => {
     const [activeTab, setActiveTab] = useLocalStorage<Tab>('active-tab', 'dashboard');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [isFocusMode, setIsFocusMode] = useState(false);
 
 
     // Data State
@@ -522,8 +520,8 @@ const App: React.FC = () => {
     // Effect to scroll to a newly added transaction on mobile
     useEffect(() => {
         if (scrollToTransactionId) {
-            // We need to be on the analysis tab to see the transaction list
-            setActiveTab('analysis');
+            // We need to be on the history tab to see the transaction list
+            setActiveTab('history');
             
             // Allow time for the view to re-render before trying to find the element
             const scrollTimer = setTimeout(() => {
@@ -540,6 +538,8 @@ const App: React.FC = () => {
     }, [scrollToTransactionId, setActiveTab]);
     
     // Gemini API integration
+    const expenseCategories = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Utilities', 'Other'];
+    const incomeCategories = ['Salary', 'Freelance', 'Gifts', 'Investments', 'Other'];
     const handleTranscriptReady = async (transcript: string) => {
         setIsVoiceModalOpen(false);
         setIslandStatus('processing');
@@ -566,13 +566,24 @@ const App: React.FC = () => {
                 required: ['amount', 'description', 'category', 'type'],
             };
 
+            const prompt = t('voice_prompt', {
+                currency: primaryCurrency,
+                date: new Date().toLocaleDateString(language),
+                transcript: transcript,
+            });
+
+            const systemInstruction = t('voice_system_instruction', {
+                expense_categories: expenseCategories.join(', '),
+                income_categories: incomeCategories.join(', '),
+            });
+
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
-                contents: `Parse the following text into a transaction. The user's primary currency is ${primaryCurrency}. Today is ${new Date().toLocaleDateString()}. Text: "${transcript}"`,
+                contents: prompt,
                 config: {
                     responseMimeType: 'application/json',
                     responseSchema,
-                    systemInstruction: `You are a financial assistant. Parse the user's voice input into a structured JSON transaction. Available expense categories: Food, Transport, Housing, Entertainment, Health, Shopping, Utilities, Other. Available income categories: Salary, Freelance, Gifts, Investments, Other. Infer the category. Default to 'Other' if unsure.`,
+                    systemInstruction,
                 },
             });
 
@@ -620,17 +631,18 @@ const App: React.FC = () => {
 
     const renderView = () => {
         switch (activeTab) {
-            case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} onEnterFocusMode={() => setIsFocusMode(true)} />;
+            case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} />;
             case 'accounts': return <Accounts accounts={accounts} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={(id) => openConfirmation('account', id)} t={t} />;
             case 'debts': return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onEditDebt={(debt) => openModal('debt', debt)} onRemoveDebt={(id) => openConfirmation('debt', id)} t={t} />;
             case 'recurring': return <Recurring recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} onAddRecurring={() => openModal('recurring')} onEditRecurring={(rec) => openModal('recurring', rec)} onRemoveRecurring={(id) => openConfirmation('recurring', id)} t={t} />;
             case 'limits': return <Limits limits={limits} transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onAddLimit={() => openModal('limit')} onEditLimit={(limit) => openModal('limit', limit)} onRemoveLimit={(id) => openConfirmation('limit', id)} t={t} />;
             case 'goals': return <Goals goals={goals} formatCurrency={formatCurrency} onAddGoal={() => openModal('goal')} onEditGoal={(goal) => openModal('goal', goal)} onRemoveGoal={(id) => openConfirmation('goal', id)} t={t} primaryCurrency={primaryCurrency} />;
-            case 'analysis': return <Analysis transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} onEditTransaction={(tr) => openModal('transaction', tr)} onRemoveTransaction={(id) => openConfirmation('transaction', id)} />;
+            case 'history': return <History transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onEditTransaction={(tr) => openModal('transaction', tr)} onRemoveTransaction={(id) => openConfirmation('transaction', id)} t={t} />;
+            case 'analysis': return <Analysis transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} />;
             case 'calendar': return <Calendar accounts={accounts} debts={debts} recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} t={t} />;
             case 'settings': return <Settings theme={theme} toggleTheme={toggleTheme} currency={primaryCurrency} setCurrency={setPrimaryCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} userName={userName} setUserName={setUserName} t={t} accounts={accounts} transactions={transactions} debts={debts} coupleLink={coupleLink} setCoupleLink={setCoupleLink} onOpenModal={openModal} setActiveTab={setActiveTab} formatCurrency={formatCurrency} />;
             case 'wellness': return <Wellness transactions={transactions} accounts={accounts} debts={debts} t={t} colorTheme={colorTheme} />;
-            default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} onEnterFocusMode={() => setIsFocusMode(true)} />;
+            default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} />;
         }
     };
     
@@ -649,21 +661,6 @@ const App: React.FC = () => {
             setUserName={setUserName}
             avatar={avatar}
             setAvatar={setAvatar}
-        />
-    }
-
-    if (isFocusMode) {
-        return <FocusMode 
-            onExit={() => setIsFocusMode(false)}
-            t={t}
-            formatCurrency={formatCurrency}
-            accounts={accounts}
-            goals={goals}
-            limits={limits}
-            recurringTransactions={recurringTransactions}
-            transactions={transactions}
-            primaryCurrency={primaryCurrency}
-            onAddTransaction={handleAddTransaction}
         />
     }
 
@@ -694,6 +691,7 @@ const App: React.FC = () => {
                     onClose={closeModal}
                     transactionToEdit={itemToEdit}
                     t={t}
+                    onOpenAccountModal={() => openModal('account')}
                 />
             </Modal>
             <Modal 
@@ -835,26 +833,24 @@ const App: React.FC = () => {
             />
 
             {/* FABs for adding transaction */}
-            {!isFocusMode && (
-                <div role="group" aria-label={t('quick_actions')}>
-                    {/* Voice Input FAB */}
-                    <button
-                        onClick={handleVoiceClick}
-                        className="fixed bottom-36 right-5 md:bottom-24 md:right-9 bg-accent hover:opacity-90 text-primary rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-transform transform active:scale-90"
-                        title={t('voice_input_title')}
-                    >
-                        <MicIcon className="w-6 h-6" />
-                    </button>
-                    {/* Add Transaction FAB */}
-                    <button
-                        onClick={() => openModal('transaction')}
-                        className="fixed bottom-20 right-4 md:bottom-8 md:right-8 bg-primary hover:bg-primary-focus text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg transition-transform transform active:scale-90"
-                        title={t('add_transaction')}
-                    >
-                        <PlusIcon className="w-8 h-8" />
-                    </button>
-                </div>
-            )}
+            <div role="group" aria-label={t('quick_actions')}>
+                {/* Voice Input FAB */}
+                <button
+                    onClick={handleVoiceClick}
+                    className="fixed bottom-36 right-5 md:bottom-24 md:right-9 bg-accent hover:opacity-90 text-primary rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-transform transform active:scale-90"
+                    title={t('voice_input_title')}
+                >
+                    <MicIcon className="w-6 h-6" />
+                </button>
+                {/* Add Transaction FAB */}
+                <button
+                    onClick={() => openModal('transaction')}
+                    className="fixed bottom-20 right-4 md:bottom-8 md:right-8 bg-primary hover:bg-primary-focus text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg transition-transform transform active:scale-90"
+                    title={t('add_transaction')}
+                >
+                    <PlusIcon className="w-8 h-8" />
+                </button>
+            </div>
         </div>
     );
 }

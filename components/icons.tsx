@@ -34,7 +34,7 @@ export const DocumentTextIcon: React.FC<IconProps> = ({ className }) => (
 
 export const CogIcon: React.FC<IconProps> = ({ className }) => (
     <IconWrapper className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </IconWrapper>
 );
@@ -243,5 +243,85 @@ export const CameraIcon: React.FC<IconProps> = ({ className }) => (
 export const LightningBoltIcon: React.FC<IconProps> = ({ className }) => (
     <IconWrapper className={className}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </IconWrapper>
+);
+
+export const ShoppingCartIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l.383-1.437M7.5 14.25L5.106 5.106A2.25 2.25 0 002.868 3H2.25m13.5 11.25a3 3 0 100-6 3 3 0 000 6z" />
+    </IconWrapper>
+);
+
+export const BuildingStorefrontIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5A2.25 2.25 0 0115.75 11h.5a2.25 2.25 0 012.25 2.25V21M3 10.5v2.25a2.25 2.25 0 002.25 2.25h.5a2.25 2.25 0 002.25-2.25V10.5m-5.25 4.5h5.25m-5.25-4.5h5.25m5.25-4.5h5.25M3.75 6.75h16.5M3 9h18M3.75 12h16.5m-16.5 3h16.5M4.5 21v-5.25A2.25 2.25 0 016.75 13h.5a2.25 2.25 0 012.25 2.25V21" />
+    </IconWrapper>
+);
+
+export const TruckIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path d="M13 17H4.279a1.721 1.721 0 0 1-1.721-1.721V5.72A1.721 1.721 0 0 1 4.28 4h8.441a1.72 1.72 0 0 1 1.72 1.721V17m-1.72-13h-1.72v13h1.72m0-13 3.441 2.58m0 0 1.72 10.322M20 17h-1.721M13 17l1.72 2.58m-.86.432a1.721 1.721 0 1 1-3.442 0 1.721 1.721 0 0 1 3.442 0Zm-8.603 0a1.721 1.721 0 1 1-3.442 0 1.721 1.721 0 0 1 3.442 0Z" />
+    </IconWrapper>
+);
+
+export const BuildingOffice2Icon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h6M9 11.25h6M9 15.75h6" />
+    </IconWrapper>
+);
+
+export const HeartIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+    </IconWrapper>
+);
+
+export const TicketIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-1.5h5.25m-5.25 0h3m-3 0h.008M9.75 7.5h4.5m-4.5 0h.008M11.25 15h.008M11.25 18h.008m-3.75-9h.008m2.25-3h.008M15 12h.008m-4.5 0h.008m2.25 0h.008m-2.25-3h.008M15 9h.008M7.5 15h3m-3 0h.008m-3-3h.008m3 0h.008m-3-3h.008m3 0h.008" />
+    </IconWrapper>
+);
+
+export const BoltIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+    </IconWrapper>
+);
+
+export const BriefcaseIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.098a2.25 2.25 0 01-2.25 2.25H6.001a2.25 2.25 0 01-2.25-2.25v-4.098m16.5 0a2.25 2.25 0 00-2.25-2.25H6.001a2.25 2.25 0 00-2.25 2.25m16.5 0v-2.25A2.25 2.25 0 0018 9.75h-1.5a2.25 2.25 0 00-2.25 2.25v2.25m-6.75 0v-2.25A2.25 2.25 0 009 9.75H7.5A2.25 2.25 0 005.25 12v2.25" />
+    </IconWrapper>
+);
+
+export const GiftIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m-8.25-6.75h16.5M12 3c-4.142 0-7.5 3.358-7.5 7.5 0 4.142 3.358 7.5 7.5 7.5M12 3c4.142 0 7.5 3.358 7.5 7.5 0 4.142-3.358 7.5-7.5 7.5" />
+    </IconWrapper>
+);
+
+export const ArrowTrendingUpIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-3.976 5.196M21.75 3l-5.519 5.814" />
+    </IconWrapper>
+);
+
+export const GlobeAltIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12H20.25m-16.5 0a8.966 8.966 0 011.08-4.22m14.34 0a8.966 8.966 0 011.08 4.22m-16.5 0a8.966 8.966 0 001.08 4.22m14.34 0a8.966 8.966 0 001.08-4.22" />
+    </IconWrapper>
+);
+
+export const BanknotesIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6H2.25m0 0v1.5a.75.75 0 001.5 0V6h1.5a.75.75 0 000-1.5H3a.75.75 0 00-.75.75z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 3.75H6.75a2.25 2.25 0 00-2.25 2.25v8.25a2.25 2.25 0 002.25 2.25h8.25a2.25 2.25 0 002.25-2.25v-8.25a2.25 2.25 0 00-2.25-2.25h-5.25zM12 8.25v.01M15 12v.01M15 8.25v.01M12 12v.01M9 12v.01M9 8.25v.01" />
+    </IconWrapper>
+);
+
+export const PaperAirplaneIcon: React.FC<IconProps> = ({ className }) => (
+    <IconWrapper className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
     </IconWrapper>
 );

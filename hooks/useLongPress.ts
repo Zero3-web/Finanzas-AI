@@ -5,7 +5,7 @@ export const useLongPress = (
     onClick: () => void,
     { delay = 500 } = {}
 ) => {
-    // Fix: Replace NodeJS.Timeout with a browser-compatible type for setTimeout's return value.
+    // FIX: Replace NodeJS.Timeout with a browser-compatible type for setTimeout's return value.
     const timeout = useRef<ReturnType<typeof setTimeout>>();
     const wasLongPress = useRef(false);
 

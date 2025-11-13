@@ -3,7 +3,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Transaction, Account, TransactionType, Debt, Notification, ColorTheme, RecurringTransaction, Theme } from '../types';
 import { themes } from '../hooks/useColorTheme';
 import Card from '../components/Card';
-import { PlusIcon, ArrowUpIcon, VisaIcon, StripeIcon, PaypalIcon, ApplePayIcon, CalendarIcon, ArrowDownIcon, CollectionIcon, GripVerticalIcon, ArrowPathIcon, CogIcon, XIcon, LightningBoltIcon } from '../components/icons';
+import { PlusIcon, ArrowUpIcon, VisaIcon, StripeIcon, PaypalIcon, ApplePayIcon, CalendarIcon, ArrowDownIcon, CollectionIcon, GripVerticalIcon, ArrowPathIcon, CogIcon, XIcon, ShoppingCartIcon, BuildingStorefrontIcon, TruckIcon, BuildingOffice2Icon, HeartIcon, TicketIcon, BoltIcon, BriefcaseIcon, GiftIcon, ArrowTrendingUpIcon, GlobeAltIcon } from '../components/icons';
 import { AccountBalancePieChart, ActivityChart, WeeklySpendingChart } from '../components/Charts';
 import Notifications from '../components/Notifications';
 import ThemeToggle from '../components/ThemeToggle';
@@ -28,10 +28,58 @@ interface DashboardProps {
   onAddRecurring: () => void;
   primaryCurrency: string;
   onOpenDetailModal: (title: string, transactions: Transaction[]) => void;
-  onEnterFocusMode: () => void;
 }
 
-const Header: React.FC<{ t: (key: string, params?: { [key: string]: string | number }) => string; notifications: Notification[], userName: string, theme: Theme, toggleTheme: () => void, onCustomize: () => void, onEnterFocusMode: () => void }> = ({ t, notifications, userName, theme, toggleTheme, onCustomize, onEnterFocusMode }) => {
+const expenseCategoryIcons: { [key: string]: React.FC<{ className?: string }> } = {
+    'Food': BuildingStorefrontIcon,
+    'Transport': TruckIcon,
+    'Housing': BuildingOffice2Icon,
+    'Entertainment': TicketIcon,
+    'Health': HeartIcon,
+    'Shopping': ShoppingCartIcon,
+    'Utilities': BoltIcon,
+    'Software': GlobeAltIcon,
+    'Other': CollectionIcon,
+};
+
+const incomeCategoryIcons: { [key: string]: React.FC<{ className?: string }> } = {
+    'Salary': BriefcaseIcon,
+    'Freelance': BriefcaseIcon,
+    'Gifts': GiftIcon,
+    'Investments': ArrowTrendingUpIcon,
+    'Other': ArrowUpIcon,
+};
+
+const getIconForTransaction = (transaction: Transaction): React.FC<{ className?: string }> => {
+    const desc = transaction.description.toLowerCase();
+    
+    if (transaction.type === TransactionType.TRANSFER) return ArrowPathIcon;
+
+    if (transaction.type === TransactionType.INCOME) {
+        const depositIcons: { [key: string]: React.FC<{ className?: string }> } = {
+            'visa': VisaIcon, 'stripe': StripeIcon,
+            'paypal': PaypalIcon, 'apple': ApplePayIcon,
+        };
+        const lowerDesc = desc.toLowerCase();
+        for (const keyword in depositIcons) {
+            if (lowerDesc.includes(keyword)) {
+                return depositIcons[keyword];
+            }
+        }
+        return incomeCategoryIcons[transaction.category] || ArrowUpIcon;
+    }
+
+    // Expense
+    const googleKeywords = ['google', 'youtube', 'gcp', 'gsuite'];
+    if (googleKeywords.some(kw => desc.includes(kw))) {
+        return GlobeAltIcon;
+    }
+
+    return expenseCategoryIcons[transaction.category] || ArrowDownIcon;
+};
+
+
+const Header: React.FC<{ t: (key: string, params?: { [key: string]: string | number }) => string; notifications: Notification[], userName: string, theme: Theme, toggleTheme: () => void, onCustomize: () => void }> = ({ t, notifications, userName, theme, toggleTheme, onCustomize }) => {
     const [isShimmering, setIsShimmering] = useState(true);
 
     useEffect(() => {
@@ -57,9 +105,6 @@ const Header: React.FC<{ t: (key: string, params?: { [key: string]: string | num
                 </h1>
             </div>
             <div className="flex items-center space-x-2 md:space-x-4">
-                <button onClick={onEnterFocusMode} className="p-2 rounded-full text-text-secondary dark:text-gray-400 hover:bg-secondary dark:hover:bg-gray-700" title={t('focus_mode_title')}>
-                    <LightningBoltIcon className="w-6 h-6" />
-                </button>
                 <button onClick={onCustomize} className="p-2 rounded-full text-text-secondary dark:text-gray-400 hover:bg-secondary dark:hover:bg-gray-700" title={t('customize_dashboard')}>
                     <CogIcon className="w-6 h-6" />
                 </button>
@@ -119,33 +164,30 @@ const AllAccountsCard: React.FC<{ isSelected: boolean; onClick: () => void; t: (
 };
 
 
-const RecentActivityItem: React.FC<{ transaction: Transaction, accounts: Map<string, Account>, formatCurrency: (amount: number, currency: string) => string }> = ({ transaction, accounts, formatCurrency }) => {
+const RecentActivityItem: React.FC<{ transaction: Transaction, accounts: Map<string, Account>, formatCurrency: (amount: number, currency: string) => string, t: (key: string) => string }> = ({ transaction, accounts, formatCurrency, t }) => {
     const isIncome = transaction.type === TransactionType.INCOME;
     const isTransfer = transaction.type === TransactionType.TRANSFER;
-    const iconKey = transaction.description.split(' ')[0].toLowerCase();
-    
-    const depositIcons: { [key: string]: React.ReactNode } = {
-        'visa': <VisaIcon className="w-8 h-8" />, 'stripe': <StripeIcon className="w-8 h-8" />,
-        'paypal': <PaypalIcon className="w-8 h-8" />, 'apple': <ApplePayIcon className="w-8 h-8" />,
-    };
-
-    const getIcon = () => {
-        if (isTransfer) return <ArrowPathIcon className="w-6 h-6 text-primary"/>;
-        if (isIncome) return depositIcons[iconKey] || <ArrowUpIcon className="w-6 h-6 text-income"/>
-        return <ArrowDownIcon className="w-6 h-6 text-expense"/>
-    }
+    const Icon = getIconForTransaction(transaction);
 
     const account = accounts.get(transaction.accountId);
     const destAccount = isTransfer ? accounts.get(transaction.destinationAccountId!) : null;
+    
+    const getCategoryTranslation = (category: string) => {
+        if (!category) return '';
+        const key = `category_${category.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`;
+        return t(key);
+    };
 
     return (
         <div className="flex items-center justify-between">
             <div className="flex items-center">
-                <div className={`p-2 rounded-lg mr-4 ${isIncome ? 'bg-green-100 dark:bg-green-900/50' : isTransfer ? 'bg-primary/10 dark:bg-primary/20' : 'bg-red-100 dark:bg-red-900/50'}`}>{getIcon()}</div>
+                <div className={`p-2 rounded-lg mr-4 ${isIncome ? 'bg-green-100 dark:bg-green-900/50' : isTransfer ? 'bg-primary/10 dark:bg-primary/20' : 'bg-red-100 dark:bg-red-900/50'}`}>
+                    <Icon className={`w-6 h-6 ${isIncome ? 'text-income' : isTransfer ? 'text-primary' : 'text-expense'}`} />
+                </div>
                 <div>
                     <p className="font-semibold text-text-main dark:text-text-main-dark">{transaction.description}</p>
                     <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
-                        {isTransfer ? `${account?.name} → ${destAccount?.name}` : transaction.category}
+                        {isTransfer ? `${account?.name} → ${destAccount?.name}` : getCategoryTranslation(transaction.category)}
                     </p>
                 </div>
             </div>
@@ -156,18 +198,15 @@ const RecentActivityItem: React.FC<{ transaction: Transaction, accounts: Map<str
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, recurringTransactions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddRecurring, primaryCurrency, onOpenDetailModal, onEnterFocusMode }) => {
+const defaultSectionOrder = ['accountBalances', 'accountSelector', 'recentActivity', 'activityChart', 'debtSummary', 'recurringSummary', 'totalSummary'];
+const defaultVisibleSections = ['accountBalances', 'accountSelector', 'activityChart', 'recentActivity', 'debtSummary', 'recurringSummary', 'totalSummary'];
+
+const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, recurringTransactions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddRecurring, primaryCurrency, onOpenDetailModal }) => {
     const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
     const accountMap = useMemo(() => new Map(accounts.map(acc => [acc.id, acc])), [accounts]);
     
-    const [sectionOrder, setSectionOrder] = useLocalStorage<string[]>(
-        'dashboard-layout',
-        ['balances', 'activity', 'totalSummary']
-    );
-    const [visibleSections, setVisibleSections] = useLocalStorage<string[]>(
-        'dashboard-visible-sections',
-        ['balances', 'activity', 'totalSummary']
-    );
+    const [sectionOrder, setSectionOrder] = useLocalStorage<string[]>('dashboard-layout-v3', defaultSectionOrder);
+    const [visibleSections, setVisibleSections] = useLocalStorage<string[]>('dashboard-visible-sections-v3', defaultVisibleSections);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const settingsRef = useRef<HTMLDivElement>(null);
 
@@ -226,6 +265,12 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         } else {
             setVisibleSections(prev => prev.filter(key => key !== sectionKey));
         }
+    };
+    
+    const handleResetLayout = () => {
+        setSectionOrder(defaultSectionOrder);
+        setVisibleSections(defaultVisibleSections);
+        setIsSettingsOpen(false);
     };
 
     const currentPalette = themes[colorTheme];
@@ -382,9 +427,10 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
     }
 
-    const sections: { [key: string]: { nameKey: string, content: React.ReactNode } } = {
-        balances: {
-            nameKey: 'section_balances',
+    const sections: { [key: string]: { nameKey: string, content: React.ReactNode, colSpan: string } } = {
+        accountBalances: {
+            nameKey: 'section_accountBalances',
+            colSpan: 'lg:col-span-3',
             content: (
                 <div className={getAccountGridClasses(displayedBalanceCards.length)}>
                     {accounts.length > 0 ? (
@@ -414,122 +460,140 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                 </div>
             )
         },
-        activity: {
-            nameKey: 'section_activity',
+        accountSelector: {
+            nameKey: 'section_accountSelector',
+            colSpan: 'lg:col-span-2',
             content: (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                    <Card className="p-4 dark:bg-surface-dark">
-                         <div className="flex justify-between items-center mb-4 px-2">
-                            <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">{t('your_accounts')}</h3>
-                            <button onClick={onAddAccount} className="flex items-center bg-primary/10 text-primary hover:bg-primary/20 rounded-lg px-3 py-1 text-sm font-semibold transition-colors">
-                                <PlusIcon className="w-4 h-4 mr-1"/>
-                                {t('add')}
-                            </button>
-                        </div>
-                        <div className="flex items-center space-x-4 overflow-x-auto pb-4 custom-scrollbar">
-                            <AllAccountsCard isSelected={selectedAccountId === null} onClick={() => setSelectedAccountId(null)} t={t} />
-                            {accounts.map((acc, index) => {
-                                const cardVariants: Array<'purple' | 'cyan' | 'dark'> = ['purple', 'cyan', 'dark'];
-                                const variant = cardVariants[index % cardVariants.length];
-                                return <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={variant} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} />;
-                            })}
-                        </div>
-                         <style>{`.custom-scrollbar::-webkit-scrollbar{height:6px;}.custom-scrollbar::-webkit-scrollbar-track{background:transparent;}.custom-scrollbar::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:10px;}.dark .custom-scrollbar::-webkit-scrollbar-thumb{background:#4b5563;}`}</style>
-                    </Card>
-
-                    <Card className="dark:bg-surface-dark">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">
-                                {t('activity')} <span className="text-base font-medium text-text-secondary dark:text-text-secondary-dark">{selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</span>
-                            </h3>
-                            {dateRangeText && (
-                                <div className="text-text-secondary dark:text-text-secondary-dark text-sm flex items-center border border-secondary dark:border-border-dark rounded-lg px-2 py-1">
-                                    <CalendarIcon className="w-5 h-5 mr-2"/>
-                                    {dateRangeText}
-                                </div>
-                            )}
-                        </div>
-                        <ActivityChart transactions={nonTransferTransactions} primaryColor={primaryColor} accentColor={accentColor} formatCurrency={(amount) => formatCurrency(amount, primaryCurrency)} onDayClick={handleChartDayClick} />
-                    </Card>
-                </div>
-
-                <div className="lg:col-span-1 space-y-6">
-                     <Card>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-text-main dark:text-text-main-dark">
-                                 {t('recent_activity')} <span className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{selectedAccount ? `(${selectedAccount.name})` : ''}</span>
-                            </h3>
-                        </div>
-                        <div className="space-y-4">
-                            {recentActivity.map(transaction => (
-                                <RecentActivityItem key={transaction.id} transaction={transaction} accounts={accountMap} formatCurrency={formatCurrency} />
-                            ))}
-                            {recentActivity.length === 0 && <p className="text-sm text-center py-4 text-text-secondary dark:text-text-secondary-dark">{t('noTransactionsFound')}</p>}
-                        </div>
-                    </Card>
-                     <Card>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-text-main dark:text-text-main-dark">{t('debt_summary')}</h3>
-                            <button onClick={onAddDebt} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary transition-colors">
-                                <PlusIcon className="w-5 h-5"/>
-                            </button>
-                        </div>
-                        <div className="space-y-4">
-                            {debts.length > 0 ? (
-                                debts.slice(0, 3).map(debt => {
-                                    const amountPaid = debt.paidInstallments * debt.monthlyPayment;
-                                    const remainingAmount = debt.totalAmount - amountPaid;
-                                    return (
-                                        <div key={debt.id} className="flex justify-between items-center">
-                                            <div>
-                                                <p className="font-semibold text-text-main dark:text-text-main-dark">{debt.name}</p>
-                                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(debt.nextPaymentDate).toLocaleDateString()}</p>
-                                            </div>
-                                            <p className="font-semibold text-expense">{formatCurrency(remainingAmount, debt.currency)}</p>
-                                        </div>
-                                    )
-                                })
-                            ) : (
-                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('no_debts')}</p>
-                            )}
-                        </div>
-                    </Card>
-                    <Card>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-text-main dark:text-text-main-dark">{t('recurring_summary')}</h3>
-                            <button onClick={onAddRecurring} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary transition-colors">
-                                <PlusIcon className="w-5 h-5"/>
-                            </button>
-                        </div>
-                        <div className="space-y-4">
-                            {upcomingRecurring.length > 0 ? (
-                                upcomingRecurring.map(rec => (
-                                    <div key={rec.id} className="flex justify-between items-center">
+                 <Card className="p-4 dark:bg-surface-dark">
+                    <div className="flex justify-between items-center mb-4 px-2">
+                        <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">{t('your_accounts')}</h3>
+                        <button onClick={onAddAccount} className="flex items-center bg-primary/10 text-primary hover:bg-primary/20 rounded-lg px-3 py-1 text-sm font-semibold transition-colors">
+                            <PlusIcon className="w-4 h-4 mr-1"/>
+                            {t('add')}
+                        </button>
+                    </div>
+                    <div className="flex items-center space-x-4 overflow-x-auto pb-4 custom-scrollbar">
+                        <AllAccountsCard isSelected={selectedAccountId === null} onClick={() => setSelectedAccountId(null)} t={t} />
+                        {accounts.map((acc, index) => {
+                            const cardVariants: Array<'purple' | 'cyan' | 'dark'> = ['purple', 'cyan', 'dark'];
+                            const variant = cardVariants[index % cardVariants.length];
+                            return <CreditCardVisual key={acc.id} account={acc} formatCurrency={formatCurrency} variant={variant} isSelected={selectedAccountId === acc.id} onClick={() => setSelectedAccountId(acc.id)} />;
+                        })}
+                    </div>
+                        <style>{`.custom-scrollbar::-webkit-scrollbar{height:6px;}.custom-scrollbar::-webkit-scrollbar-track{background:transparent;}.custom-scrollbar::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:10px;}.dark .custom-scrollbar::-webkit-scrollbar-thumb{background:#4b5563;}`}</style>
+                </Card>
+            )
+        },
+        activityChart: {
+            nameKey: 'section_activityChart',
+            colSpan: 'lg:col-span-2 lg:row-span-2',
+            content: (
+                 <Card className="dark:bg-surface-dark h-full">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">
+                            {t('activity')} <span className="text-base font-medium text-text-secondary dark:text-text-secondary-dark">{selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</span>
+                        </h3>
+                        {dateRangeText && (
+                            <div className="text-text-secondary dark:text-text-secondary-dark text-sm flex items-center border border-secondary dark:border-border-dark rounded-lg px-2 py-1">
+                                <CalendarIcon className="w-5 h-5 mr-2"/>
+                                {dateRangeText}
+                            </div>
+                        )}
+                    </div>
+                    <ActivityChart transactions={nonTransferTransactions} primaryColor={primaryColor} accentColor={accentColor} formatCurrency={(amount) => formatCurrency(amount, primaryCurrency)} onDayClick={handleChartDayClick} />
+                </Card>
+            )
+        },
+        recentActivity: {
+            nameKey: 'section_recentActivity',
+            colSpan: 'lg:col-span-1',
+            content: (
+                 <Card className="h-full">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-text-main dark:text-text-main-dark">
+                                {t('recent_activity')} <span className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{selectedAccount ? `(${selectedAccount.name})` : ''}</span>
+                        </h3>
+                    </div>
+                    <div className="space-y-4">
+                        {recentActivity.map(transaction => (
+                            <RecentActivityItem key={transaction.id} transaction={transaction} accounts={accountMap} formatCurrency={formatCurrency} t={t} />
+                        ))}
+                        {recentActivity.length === 0 && <p className="text-sm text-center py-4 text-text-secondary dark:text-text-secondary-dark">{t('noTransactionsFound')}</p>}
+                    </div>
+                </Card>
+            )
+        },
+        debtSummary: {
+            nameKey: 'section_debtSummary',
+            colSpan: 'lg:col-span-1',
+            content: (
+                 <Card>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-text-main dark:text-text-main-dark">{t('debt_summary')}</h3>
+                        <button onClick={onAddDebt} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary transition-colors">
+                            <PlusIcon className="w-5 h-5"/>
+                        </button>
+                    </div>
+                    <div className="space-y-4">
+                        {debts.length > 0 ? (
+                            debts.slice(0, 3).map(debt => {
+                                const amountPaid = debt.paidInstallments * debt.monthlyPayment;
+                                const remainingAmount = debt.totalAmount - amountPaid;
+                                return (
+                                    <div key={debt.id} className="flex justify-between items-center">
                                         <div>
-                                            <p className="font-semibold text-text-main dark:text-text-main-dark">{rec.name}</p>
-                                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(rec.nextPaymentDate).toLocaleDateString()}</p>
+                                            <p className="font-semibold text-text-main dark:text-text-main-dark">{debt.name}</p>
+                                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(debt.nextPaymentDate).toLocaleDateString()}</p>
                                         </div>
-                                        <p className={`font-semibold ${rec.type === 'income' ? 'text-income' : 'text-expense'}`}>
-                                            {formatCurrency(rec.amount, rec.currency)}
-                                        </p>
+                                        <p className="font-semibold text-expense">{formatCurrency(remainingAmount, debt.currency)}</p>
                                     </div>
-                                ))
-                            ) : (
-                                <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('no_recurring')}</p>
-                            )}
-                        </div>
-                    </Card>
-                </div>
-            </div>
+                                )
+                            })
+                        ) : (
+                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('no_debts')}</p>
+                        )}
+                    </div>
+                </Card>
+            )
+        },
+        recurringSummary: {
+            nameKey: 'section_recurringSummary',
+            colSpan: 'lg:col-span-1',
+            content: (
+                <Card>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-text-main dark:text-text-main-dark">{t('recurring_summary')}</h3>
+                        <button onClick={onAddRecurring} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary transition-colors">
+                            <PlusIcon className="w-5 h-5"/>
+                        </button>
+                    </div>
+                    <div className="space-y-4">
+                        {upcomingRecurring.length > 0 ? (
+                            upcomingRecurring.map(rec => (
+                                <div key={rec.id} className="flex justify-between items-center">
+                                    <div>
+                                        <p className="font-semibold text-text-main dark:text-text-main-dark">{rec.name}</p>
+                                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('next_payment')}: {new Date(rec.nextPaymentDate).toLocaleDateString()}</p>
+                                    </div>
+                                    <p className={`font-semibold ${rec.type === 'income' ? 'text-income' : 'text-expense'}`}>
+                                        {formatCurrency(rec.amount, rec.currency)}
+                                    </p>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('no_recurring')}</p>
+                        )}
+                    </div>
+                </Card>
             )
         },
         totalSummary: {
             nameKey: 'section_totalSummary',
+            colSpan: 'lg:col-span-3',
             content: (
              <Card>
-                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center">
-                    <div className="lg:col-span-2 space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <div className="space-y-4">
                          <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark">{t('overall_summary')}</h2>
                         <div>
                             <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('total_income')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
@@ -539,12 +603,8 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                             <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('expense')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
                             <p className="text-2xl font-bold text-expense">{formatCurrency(totalExpenses, primaryCurrency)}</p>
                         </div>
-                        <div>
-                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('net_profit')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                            <p className={`text-2xl font-bold ${profit >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(profit, primaryCurrency)}</p>
-                        </div>
                     </div>
-                    <div className="lg:col-span-3">
+                    <div>
                          <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark mb-2 text-center lg:text-left">{t('weekly_spending')}</h3>
                         <WeeklySpendingChart 
                             transactions={transactions}
@@ -562,25 +622,31 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         }
     };
     
-    const sectionsToRender = sectionOrder.filter(key => visibleSections.includes(key));
+    const sectionsToRender = sectionOrder.filter(key => visibleSections.includes(key) && sections[key]);
 
     return (
         <>
             <style>{`
-                .dragging { opacity: 0.4; }
+                .dragging { opacity: 0.4; border: 2px dashed rgb(var(--color-primary)); }
                 .drag-over-indicator::before {
                     content: '';
                     position: absolute;
-                    top: -0.75rem;
-                    left: 0;
-                    right: 0;
+                    top: -0.5rem;
+                    left: 0.5rem;
+                    right: 0.5rem;
                     height: 4px;
                     background-color: rgb(var(--color-primary));
                     border-radius: 2px;
+                    animation: pulse 1.5s infinite ease-in-out;
+                }
+                 @keyframes pulse {
+                    0% { transform: scaleX(0.95); opacity: 0.7; }
+                    50% { transform: scaleX(1); opacity: 1; }
+                    100% { transform: scaleX(0.95); opacity: 0.7; }
                 }
             `}</style>
-            <div className="space-y-6">
-                <Header t={t} notifications={notifications} userName={userName} theme={theme} toggleTheme={toggleTheme} onCustomize={() => setIsSettingsOpen(true)} onEnterFocusMode={onEnterFocusMode} />
+            <div>
+                <Header t={t} notifications={notifications} userName={userName} theme={theme} toggleTheme={toggleTheme} onCustomize={() => setIsSettingsOpen(true)} />
 
                 {isSettingsOpen && (
                     <div ref={settingsRef} className="absolute top-20 right-8 bg-surface dark:bg-surface-dark p-4 rounded-lg shadow-lg border border-secondary dark:border-border-dark z-20 w-72">
@@ -600,31 +666,38 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                                 </div>
                             ))}
                         </div>
+                        <div className="mt-4 pt-3 border-t border-secondary dark:border-border-dark">
+                            <button onClick={handleResetLayout} className="text-sm text-primary hover:underline w-full text-left">
+                                {t('reset_layout')}
+                            </button>
+                        </div>
                     </div>
                 )}
                 
-                {sectionsToRender.map(key => {
-                    const isDraggingOver = dragOverKey === key && dragItem.current !== key;
-                    return (
-                        <div
-                            key={key}
-                            draggable
-                            onDragStart={e => handleDragStart(e, key)}
-                            onDragEnter={() => handleDragEnter(key)}
-                            onDragEnd={handleDragEnd}
-                            onDrop={handleDrop}
-                            onDragOver={e => e.preventDefault()}
-                            className="draggable-section group relative"
-                        >
-                            <div className={`relative ${isDraggingOver ? 'drag-over-indicator' : ''}`}>
-                                <div className="absolute top-4 right-4 text-text-secondary cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-50 transition-opacity z-10">
-                                    <GripVerticalIcon className="w-6 h-6" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {sectionsToRender.map(key => {
+                        const isDraggingOver = dragOverKey === key && dragItem.current !== key;
+                        return (
+                            <div
+                                key={key}
+                                draggable
+                                onDragStart={e => handleDragStart(e, key)}
+                                onDragEnter={() => handleDragEnter(key)}
+                                onDragEnd={handleDragEnd}
+                                onDrop={handleDrop}
+                                onDragOver={e => e.preventDefault()}
+                                className={`draggable-section group relative transition-all duration-300 ${sections[key].colSpan}`}
+                            >
+                                <div className={`relative ${isDraggingOver ? 'drag-over-indicator' : ''}`}>
+                                    <div className="absolute top-2 right-2 p-2 text-text-secondary cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-50 transition-opacity z-10 bg-surface/50 dark:bg-surface-dark/50 rounded-full">
+                                        <GripVerticalIcon className="w-6 h-6" />
+                                    </div>
+                                    {sections[key].content}
                                 </div>
-                                {sections[key].content}
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
         </>
     );

@@ -1,7 +1,7 @@
 import React from 'react';
 import { RecurringTransaction, TransactionType } from '../types';
 import Card from '../components/Card';
-import { PlusIcon, TrashIcon, PencilIcon, CollectionIcon } from '../components/icons';
+import { PlusIcon, TrashIcon, PencilIcon, CollectionIcon, BriefcaseIcon, GiftIcon, ArrowTrendingUpIcon, ArrowUpIcon, ShoppingCartIcon, BuildingStorefrontIcon, TruckIcon, BuildingOffice2Icon, HeartIcon, TicketIcon, BoltIcon, GlobeAltIcon } from '../components/icons';
 
 interface RecurringProps {
   recurringTransactions: RecurringTransaction[];
@@ -11,6 +11,36 @@ interface RecurringProps {
   onRemoveRecurring: (recurringId: string) => void;
   t: (key: string) => string;
 }
+
+const expenseCategoryIcons: { [key: string]: React.FC<{ className?: string }> } = {
+    'Food': BuildingStorefrontIcon,
+    'Transport': TruckIcon,
+    'Housing': BuildingOffice2Icon,
+    'Entertainment': TicketIcon,
+    'Health': HeartIcon,
+    'Shopping': ShoppingCartIcon,
+    'Utilities': BoltIcon,
+    'Software': GlobeAltIcon,
+    'Other': CollectionIcon,
+};
+
+const incomeCategoryIcons: { [key: string]: React.FC<{ className?: string }> } = {
+    'Salary': BriefcaseIcon,
+    'Freelance': BriefcaseIcon,
+    'Gifts': GiftIcon,
+    'Investments': ArrowTrendingUpIcon,
+    'Other': ArrowUpIcon,
+};
+
+const getIconForRecurring = (recurring: RecurringTransaction): React.FC<{ className?: string }> => {
+    if (recurring.type === TransactionType.INCOME) {
+        return incomeCategoryIcons[recurring.category] || BriefcaseIcon;
+    }
+    // Expense
+    const name = recurring.name.toLowerCase();
+    if (name.includes('google')) return GlobeAltIcon;
+    return expenseCategoryIcons[recurring.category] || CollectionIcon;
+};
 
 const RecurringTransactionCard: React.FC<{ 
     recurring: RecurringTransaction; 
@@ -31,16 +61,21 @@ const RecurringTransactionCard: React.FC<{
   }
   
   const isIncome = recurring.type === TransactionType.INCOME;
-  const borderColor = isIncome ? 'border-income' : 'border-expense';
+  const Icon = getIconForRecurring(recurring);
   const amountColor = isIncome ? 'text-income' : 'text-expense';
 
   return (
-    <Card className={`flex flex-col justify-between border-l-4 ${borderColor}`}>
+    <Card className="flex flex-col justify-between">
       <div>
         <div className="flex justify-between items-start mb-2">
-            <div>
-                <h3 className="text-xl font-bold text-text-main dark:text-brand-white">{recurring.name}</h3>
-                <p className="text-xs text-text-secondary dark:text-gray-400 capitalize">{t(`category_${recurring.category.toLowerCase()}`)}</p>
+            <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${isIncome ? 'bg-income/10' : 'bg-expense/10'}`}>
+                    <Icon className={`w-6 h-6 ${amountColor}`} />
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-text-main dark:text-brand-white">{recurring.name}</h3>
+                    <p className="text-xs text-text-secondary dark:text-gray-400 capitalize">{t(`category_${recurring.category.toLowerCase()}`)}</p>
+                </div>
             </div>
             <div className="flex space-x-2">
                 <button onClick={() => onEdit(recurring)} className="text-text-secondary dark:text-gray-400 hover:text-primary dark:hover:text-primary-dark transition-colors p-1">
@@ -51,7 +86,7 @@ const RecurringTransactionCard: React.FC<{
                 </button>
             </div>
         </div>
-        <p className={`text-2xl font-semibold ${amountColor}`}>
+        <p className={`text-2xl font-semibold text-right ${amountColor}`}>
             {isIncome ? '+' : '-'}{formatCurrency(recurring.amount, recurring.currency)}
         </p>
       </div>

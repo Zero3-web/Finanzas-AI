@@ -1,7 +1,7 @@
 import React from 'react';
 import { Debt } from '../types';
 import Card from '../components/Card';
-import { PlusIcon, TrashIcon, PencilIcon, ScaleIcon } from '../components/icons';
+import { PlusIcon, TrashIcon, PencilIcon, ScaleIcon, TruckIcon, HomeIcon, CardIcon as CreditCardIcon } from '../components/icons';
 
 interface DebtsProps {
   debts: Debt[];
@@ -12,17 +12,31 @@ interface DebtsProps {
   t: (key: string, params?: { [key: string]: string | number }) => string;
 }
 
+const getIconForDebt = (debt: Debt): React.FC<{ className?: string }> => {
+    const name = debt.name.toLowerCase();
+    if (name.includes('car') || name.includes('auto')) return TruckIcon;
+    if (name.includes('house') || name.includes('mortgage') || name.includes('rent')) return HomeIcon;
+    if (name.includes('card') || name.includes('credit')) return CreditCardIcon;
+    return ScaleIcon;
+};
+
 const DebtCard: React.FC<{ debt: Debt; formatCurrency: (amount: number, currency: string) => string; onEdit: (debt: Debt) => void; onRemove: (id: string) => void; t: (key: string, params?: { [key: string]: string | number }) => string; }> = ({ debt, formatCurrency, onEdit, onRemove, t }) => {
     const amountPaid = debt.paidInstallments * debt.monthlyPayment;
     const remainingAmount = debt.totalAmount - amountPaid;
     const progress = debt.totalInstallments > 0 ? (debt.paidInstallments / debt.totalInstallments) * 100 : 0;
+    const Icon = getIconForDebt(debt);
 
     return (
         <Card>
             <div className="flex justify-between items-start">
-                <div>
-                    <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark">{debt.name}</h3>
-                    <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('monthlyPayment')}: {formatCurrency(debt.monthlyPayment, debt.currency)}</p>
+                <div className="flex items-center gap-3">
+                    <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                        <Icon className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark">{debt.name}</h3>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('monthlyPayment')}: {formatCurrency(debt.monthlyPayment, debt.currency)}</p>
+                    </div>
                 </div>
                 <div className="flex space-x-2">
                     <button onClick={() => onEdit(debt)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark transition-colors p-1">
