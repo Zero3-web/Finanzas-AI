@@ -22,7 +22,7 @@ export const exportToCSV = (transactions: Transaction[], accounts: Map<string, A
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `finanzas_transactions_${new Date().toISOString().split('T')[0]}.csv`);
+  link.setAttribute("download", `flowvixtrack_transactions_${new Date().toISOString().split('T')[0]}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -36,7 +36,7 @@ export const printReport = (
     const currentPalette = themes[colorTheme];
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-        printWindow.document.write('<html><head><title>Finanzas Report</title>');
+        printWindow.document.write('<html><head><title>FlowVix Track Report</title>');
         printWindow.document.write(`
             <style>
             body { font-family: sans-serif; margin: 2rem; }

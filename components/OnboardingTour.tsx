@@ -72,7 +72,9 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
       case 1: // Welcome
         return (
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2 animate-fade-in">{t('tour_welcome_title')}</h2>
+            <h2 className="text-2xl font-bold text-text-main dark:text-text-main-dark mb-2 animate-fade-in">
+                <span className="shimmer-text-anim">{t('tour_welcome_title')}</span>
+            </h2>
             <AnimatedWelcomeText text={t('tour_welcome_desc')} />
           </div>
         );

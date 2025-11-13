@@ -15,7 +15,7 @@ const CoupleModeModal: React.FC<CoupleModeModalProps> = ({ isOpen, onClose, t, c
     const [partnerId, setPartnerId] = useState('');
 
     const handleGenerateId = () => {
-        const newId = `finanzas-link-${Math.random().toString(36).substr(2, 9)}`;
+        const newId = `flowvixtrack-link-${Math.random().toString(36).substr(2, 9)}`;
         setCoupleLink({ ...coupleLink, linkId: newId });
     };
 

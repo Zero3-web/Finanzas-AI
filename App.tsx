@@ -26,6 +26,7 @@ import VoiceTour from './components/VoiceTour';
 import DynamicIsland from './components/DynamicIsland';
 import Confetti from './components/Confetti';
 import TransactionDetailModal from './components/TransactionDetailModal';
+import VoiceTransactionConfirmationModal from './components/VoiceTransactionConfirmationModal';
 
 import Dashboard from './views/Dashboard';
 import Accounts from './views/Accounts';
@@ -85,6 +86,8 @@ const App: React.FC = () => {
     const [isVoiceTourFinished, setIsVoiceTourFinished] = useLocalStorage('voice-tour-finished', false);
     const [isVoiceTourOpen, setIsVoiceTourOpen] = useState(false);
     const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+    const [isVoiceConfirmationModalOpen, setIsVoiceConfirmationModalOpen] = useState(false);
+    const [pendingVoiceTransaction, setPendingVoiceTransaction] = useState<Omit<Transaction, 'id' | 'accountId'> | null>(null);
     const [isIslandOpen, setIsIslandOpen] = useState(false);
     const [islandStatus, setIslandStatus] = useState<'processing' | 'success' | 'error'>('processing');
     const [islandMessage, setIslandMessage] = useState('');
@@ -591,18 +594,20 @@ const App: React.FC = () => {
             const parsed = JSON.parse(jsonStr);
 
             if (parsed.amount && parsed.description && parsed.category && parsed.type) {
-                const newTransaction: Omit<Transaction, 'id'> = {
+                if (!accounts.length) {
+                    throw new Error("No account available to add transaction to.");
+                }
+                const pendingTransaction: Omit<Transaction, 'id' | 'accountId'> = {
                     amount: Math.abs(parsed.amount),
                     description: parsed.description,
                     category: parsed.category,
                     type: parsed.type as TransactionType,
-                    accountId: accounts[0]?.id || '',
                     date: new Date().toISOString().split('T')[0],
                 };
-                if (!accounts.length) {
-                    throw new Error("No account available to add transaction to.");
-                }
-                handleAddTransaction(newTransaction);
+                
+                setPendingVoiceTransaction(pendingTransaction);
+                setIsVoiceConfirmationModalOpen(true);
+                setIsIslandOpen(false); // Hide island as modal is opening
             } else {
                 throw new Error('Invalid transaction data from AI');
             }
@@ -611,6 +616,7 @@ const App: React.FC = () => {
             setIslandStatus('error');
             setIslandMessage(t('voice_error'));
             playTone('error');
+            setIsIslandOpen(true);
         }
     };
 
@@ -816,6 +822,34 @@ const App: React.FC = () => {
                 onTranscriptReady={handleTranscriptReady}
                 t={t}
                 lang={language}
+            />
+
+            <VoiceTransactionConfirmationModal
+                isOpen={isVoiceConfirmationModalOpen}
+                onClose={() => {
+                    setIsVoiceConfirmationModalOpen(false);
+                    setPendingVoiceTransaction(null);
+                }}
+                transactionData={pendingVoiceTransaction}
+                accounts={accounts}
+                t={t}
+                formatCurrency={formatCurrency}
+                onConfirm={(transactionDataWithAccount) => {
+                    setIsVoiceConfirmationModalOpen(false);
+                    setPendingVoiceTransaction(null);
+                    handleAddTransaction(transactionDataWithAccount);
+                }}
+                onEdit={() => {
+                    if (!pendingVoiceTransaction) return;
+                    setIsVoiceConfirmationModalOpen(false);
+                    openModal('transaction', {
+                        ...pendingVoiceTransaction,
+                        id: '', // New transaction
+                        accountId: accounts[0]?.id || '', // Default account
+                        destinationAccountId: undefined,
+                    });
+                    setPendingVoiceTransaction(null);
+                }}
             />
             
             <DynamicIsland 

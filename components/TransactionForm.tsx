@@ -11,7 +11,7 @@ interface TransactionFormProps {
   onUpdateTransaction: (transaction: Transaction) => void;
   onClose: () => void;
   transactionToEdit?: Transaction | null;
-  t: (key: string) => string;
+  t: (key: string) => void;
   onOpenAccountModal: () => void;
 }
 
@@ -27,7 +27,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
   const [isSuggestingCategory, setIsSuggestingCategory] = useState(false);
   const [categoryCache, setCategoryCache] = useLocalStorage<Record<string, string>>('category-cache', {});
 
-  const isEditing = !!transactionToEdit;
+  const isEditing = !!(transactionToEdit && transactionToEdit.id);
 
   const expenseCategories = ['Food', 'Transport', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Utilities', 'Other'];
   const incomeCategories = ['Salary', 'Freelance', 'Gifts', 'Investments', 'Other'];
@@ -41,7 +41,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
   }, [accounts, accountId]);
 
   useEffect(() => {
-    if (isEditing) {
+    if (transactionToEdit) {
         setAmount(String(transactionToEdit.amount));
         setDescription(transactionToEdit.description);
         setCategory(transactionToEdit.category);
@@ -52,7 +52,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
           setDestinationAccountId(transactionToEdit.destinationAccountId || '');
         }
     }
-  }, [transactionToEdit, isEditing]);
+  }, [transactionToEdit]);
 
   const getCategorySuggestion = useCallback(async (desc: string) => {
     if (!process.env.API_KEY || type === TransactionType.TRANSFER) {

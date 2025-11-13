@@ -77,6 +77,8 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     goal: 'Goal',
     transaction_history: 'Transaction History',
     coming_soon: 'Coming Soon',
+    confirm: 'Confirm',
+    edit: 'Edit',
     // Color Themes
     default_theme: 'Default',
     ocean_theme: 'Ocean',
@@ -222,7 +224,7 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     account_summary: 'Account Summary',
     transactions_report: 'Transactions for the Period',
     // Onboarding
-    tour_welcome_title: 'Welcome to Finanzas!',
+    tour_welcome_title: 'Welcome to FlowVix Track!',
     tour_welcome_desc: 'Your personal finance companion. Let’s get you set up in just a minute.',
     tour_regional_title: 'Regional Settings',
     tour_regional_desc: 'Customize the app to your location for accurate formatting.',
@@ -257,6 +259,8 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     voice_input_prompt: 'Tap the orb and say something like:\n"Spent 25 dollars on lunch"',
     voice_prompt: 'Parse this text into a transaction in JSON format, using the provided schema. The description field should be in the same language as the input text. The user\'s main currency is {currency}. Today is {date}. Input text: "{transcript}"',
     voice_system_instruction: 'You are a financial assistant. Parse the user\'s voice input into structured JSON. You must use one of these exact strings for the category. Expense categories: {expense_categories}. Income categories: {income_categories}. Default to "Other" if unsure.',
+    voice_confirm_title: 'Confirm Voice Transaction',
+    voice_confirm_desc: 'Please review the details captured from your voice input. Select the correct account below.',
     // Voice Tour
     voice_tour_step1_title: 'Voice Input',
     voice_tour_step1_desc: 'Quickly add transactions just by speaking.',
@@ -407,6 +411,8 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     goal: 'Meta',
     transaction_history: 'Historial de Transacciones',
     coming_soon: 'Próximamente',
+    confirm: 'Confirmar',
+    edit: 'Editar',
     // Color Themes
     default_theme: 'Predeterminado',
     ocean_theme: 'Océano',
@@ -552,7 +558,7 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     account_summary: 'Resumen de Cuentas',
     transactions_report: 'Transacciones del Período',
     // Onboarding
-    tour_welcome_title: '¡Bienvenido a Finanzas!',
+    tour_welcome_title: '¡Bienvenido a FlowVix Track!',
     tour_welcome_desc: 'Tu compañero de finanzas personales. Configurémoslo en solo un minuto.',
     tour_regional_title: 'Configuración Regional',
     tour_regional_desc: 'Personaliza la aplicación a tu ubicación para un formato preciso.',
@@ -587,6 +593,8 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     voice_input_prompt: 'Toca el orbe y di algo como:\n"Gasté 25 dólares en el almuerzo"',
     voice_prompt: 'Analiza este texto y conviértelo en una transacción en formato JSON, usando el esquema proporcionado. El campo de descripción debe estar en el mismo idioma que el texto de entrada. La moneda principal del usuario es {currency}. Hoy es {date}. Texto de entrada: "{transcript}"',
     voice_system_instruction: 'Eres un asistente financiero. Analiza la entrada de voz del usuario y conviértela en JSON estructurado. Debes usar una de estas cadenas exactas para la categoría. Categorías de gastos: {expense_categories}. Categorías de ingresos: {income_categories}. Usa "Otro" si no estás seguro.',
+    voice_confirm_title: 'Confirmar Transacción por Voz',
+    voice_confirm_desc: 'Por favor, revisa los detalles capturados de tu voz. Selecciona la cuenta correcta a continuación.',
     // Voice Tour
     voice_tour_step1_title: 'Entrada por Voz',
     voice_tour_step1_desc: 'Añade transacciones rápidamente solo con hablar.',

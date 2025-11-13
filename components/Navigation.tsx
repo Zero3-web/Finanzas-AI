@@ -72,7 +72,7 @@ const Navigation: React.FC<NavigationProps> = ({
     <aside className={`hidden md:flex flex-col bg-surface dark:bg-surface-dark border-r border-secondary dark:border-border-dark transition-all duration-300 relative ${isCollapsed ? 'w-20' : 'w-64'}`}>
       {/* Header */}
       <div className={`flex items-center p-4 h-20 border-b border-secondary dark:border-border-dark ${isCollapsed ? 'justify-center' : ''}`}>
-        {!isCollapsed && <span className="text-xl font-bold text-text-main dark:text-text-main-dark">Finanzas</span>}
+        {!isCollapsed && <span className="text-xl font-bold text-text-main dark:text-text-main-dark">FlowVix Track</span>}
       </div>
 
       {/* Navigation Links */}

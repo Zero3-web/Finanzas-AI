@@ -1,7 +1,7 @@
 {
-  "short_name": "Finanzas",
-  "name": "Panel de Finanzas Personales",
-  "description": "Una aplicación web para rastrear tus ingresos, gastos y deudas con un panel visual y gráficos.",
+  "short_name": "FlowVix Track",
+  "name": "FlowVix Track",
+  "description": "FlowVix Track: Una aplicación web para rastrear tus ingresos, gastos y deudas con un panel visual y gráficos.",
   "icons": [
     {
       "src": "https://www.gstatic.com/android/keyboard/emojikit/20181023/1f4b3/1f4b3_512.png",
