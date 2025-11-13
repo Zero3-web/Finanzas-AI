@@ -1,7 +1,9 @@
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Account, Debt, CalendarEvent, RecurringTransaction, TransactionType } from '../types';
 import Card from '../components/Card';
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
+import { useCurrentDate } from '../contexts/CurrentDateContext';
 
 interface CalendarProps {
   accounts: Account[];
@@ -11,24 +13,25 @@ interface CalendarProps {
   t: (key: string, params?: { [key: string]: string | number }) => string;
 }
 
-const getDaysUntil = (dateString: string): number => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+const getDaysUntil = (dateString: string, today: Date): number => {
+    const todayClone = new Date(today);
+    todayClone.setHours(0, 0, 0, 0);
     const eventDate = new Date(dateString);
     eventDate.setHours(0, 0, 0, 0);
-    const diffTime = eventDate.getTime() - today.getTime();
+    const diffTime = eventDate.getTime() - todayClone.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
 const Calendar: React.FC<CalendarProps> = ({ accounts, debts, recurringTransactions, formatCurrency, t }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const { currentDate: realToday } = useCurrentDate();
+  const [viewingDate, setViewingDate] = useState(new Date(realToday.getFullYear(), realToday.getMonth(), 1));
+  const [selectedDate, setSelectedDate] = useState<Date | null>(realToday);
   const selectedEventsRef = useRef<HTMLDivElement>(null);
 
   const eventsMap = useMemo(() => {
     const events = new Map<string, CalendarEvent[]>();
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const year = viewingDate.getFullYear();
+    const month = viewingDate.getMonth();
 
     // Debt events
     debts.forEach(debt => {
@@ -87,11 +90,11 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, recurringTransacti
     });
 
     return events;
-  }, [accounts, debts, recurringTransactions, currentDate, t]);
+  }, [accounts, debts, recurringTransactions, viewingDate, t]);
 
   const upcomingEventsIn5Days = useMemo(() => {
     const allUpcoming: (CalendarEvent & { daysUntil: number })[] = [];
-    const today = new Date();
+    const today = new Date(realToday);
     today.setHours(0, 0, 0, 0);
     const fiveDaysFromNow = new Date(today);
     fiveDaysFromNow.setDate(today.getDate() + 5);
@@ -108,7 +111,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, recurringTransacti
           amount: remainingAmount,
           currency: debt.currency,
           type: 'debt',
-          daysUntil: getDaysUntil(debt.nextPaymentDate),
+          daysUntil: getDaysUntil(debt.nextPaymentDate, today),
         });
       }
     });
@@ -137,7 +140,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, recurringTransacti
             currency: item.currency,
             type: isCreditCard ? 'credit_card' : 'recurring',
             transactionType: isCreditCard ? TransactionType.EXPENSE : item.type,
-            daysUntil: getDaysUntil(dateStr),
+            daysUntil: getDaysUntil(dateStr, today),
           });
         }
       };
@@ -151,7 +154,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, recurringTransacti
     return allUpcoming
       .filter((event, index, self) => index === self.findIndex(e => e.id.startsWith(event.id.substring(0, event.id.lastIndexOf('-')))))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [accounts, debts, recurringTransactions, t]);
+  }, [accounts, debts, recurringTransactions, t, realToday]);
 
   const selectedDateEvents = useMemo(() => {
     if (!selectedDate) return [];
@@ -160,7 +163,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, recurringTransacti
   }, [selectedDate, eventsMap]);
   
   const handleDateClick = (day: number) => {
-    setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
+    setSelectedDate(new Date(viewingDate.getFullYear(), viewingDate.getMonth(), day));
   };
   
   useEffect(() => {
@@ -169,27 +172,25 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, recurringTransacti
     }
   }, [selectedDate, selectedDateEvents]);
 
-  const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  const startOfMonth = new Date(viewingDate.getFullYear(), viewingDate.getMonth(), 1);
+  const endOfMonth = new Date(viewingDate.getFullYear(), viewingDate.getMonth() + 1, 0);
   const startDay = startOfMonth.getDay();
   const daysInMonth = endOfMonth.getDate();
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const prefixDays = Array.from({ length: startDay }, (_, i) => i);
 
   const handlePrevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    setViewingDate(new Date(viewingDate.getFullYear(), viewingDate.getMonth() - 1, 1));
   };
 
   const handleNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    setViewingDate(new Date(viewingDate.getFullYear(), viewingDate.getMonth() + 1, 1));
   };
   
-  const todayDate = new Date();
-
   const getDayClass = (day: number) => {
-    const d = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    const d = new Date(viewingDate.getFullYear(), viewingDate.getMonth(), day);
     const dateKey = d.toISOString().split('T')[0];
-    const isToday = d.toDateString() === todayDate.toDateString();
+    const isToday = d.toDateString() === realToday.toDateString();
     const isSelected = d.toDateString() === selectedDate?.toDateString();
     const hasEvent = eventsMap.has(dateKey);
 
@@ -233,7 +234,7 @@ const Calendar: React.FC<CalendarProps> = ({ accounts, debts, recurringTransacti
                     <ChevronLeftIcon className="w-6 h-6" />
                 </button>
                 <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark">
-                    {currentDate.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
+                    {viewingDate.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
                 </h2>
                 <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-secondary dark:hover:bg-secondary-dark">
                     <ChevronRightIcon className="w-6 h-6" />

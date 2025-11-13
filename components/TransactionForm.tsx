@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Transaction, TransactionType, Account } from '../types';
 import { GoogleGenAI } from '@google/genai';
 import useLocalStorage from '../hooks/useLocalStorage';
+import { useCurrentDate } from '../contexts/CurrentDateContext';
 import { SparklesIcon } from './icons';
 
 
@@ -16,13 +18,14 @@ interface TransactionFormProps {
 }
 
 const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransaction, onUpdateTransaction, onClose, transactionToEdit, t, onOpenAccountModal }) => {
+  const { currentDate } = useCurrentDate();
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [type, setType] = useState<TransactionType>(TransactionType.EXPENSE);
   const [accountId, setAccountId] = useState<string>(accounts[0]?.id || '');
   const [destinationAccountId, setDestinationAccountId] = useState<string>('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState('');
   
   const [isSuggestingCategory, setIsSuggestingCategory] = useState(false);
   const [categoryCache, setCategoryCache] = useLocalStorage<Record<string, string>>('category-cache', {});
@@ -51,8 +54,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
         if (transactionToEdit.type === TransactionType.TRANSFER) {
           setDestinationAccountId(transactionToEdit.destinationAccountId || '');
         }
+    } else {
+        setDate(currentDate.toISOString().split('T')[0]);
     }
-  }, [transactionToEdit]);
+  }, [transactionToEdit, currentDate]);
 
   const getCategorySuggestion = useCallback(async (desc: string) => {
     if (!process.env.API_KEY || type === TransactionType.TRANSFER) {

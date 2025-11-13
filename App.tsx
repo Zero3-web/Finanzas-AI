@@ -1,9 +1,11 @@
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
 import { Tab, Transaction, Account, Debt, RecurringTransaction, SpendingLimit, Goal, Notification, Language, ColorTheme, TransactionType, AccountType, CoupleLink, LastTransactionAction } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useTheme } from './hooks/useTheme';
 import { useColorTheme } from './hooks/useColorTheme';
+import { useCurrentDate } from './contexts/CurrentDateContext';
 import { translations } from './utils/translations';
 import { avatars } from './utils/avatars';
 import { playTone } from './utils/audio';
@@ -61,6 +63,7 @@ const App: React.FC = () => {
     const [activeTab, setActiveTab] = useLocalStorage<Tab>('active-tab', 'dashboard');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const { currentDate } = useCurrentDate();
 
 
     // Data State
@@ -186,7 +189,7 @@ const App: React.FC = () => {
 
     // Automatic Monthly Processing
     useEffect(() => {
-        const today = new Date();
+        const today = currentDate;
         const lastProcess = lastAutoProcessDate ? new Date(lastAutoProcessDate) : null;
     
         // Run if it's never been run, or if the last run was in a previous month/year
@@ -277,14 +280,14 @@ const App: React.FC = () => {
             console.log("Monthly processing complete.");
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [currentDate]);
 
 
     // Notifications
     const notifications = useMemo<Notification[]>(() => {
-        const today = new Date();
+        const today = currentDate;
         const upcoming: Notification[] = [];
-        const sevenDaysFromNow = new Date();
+        const sevenDaysFromNow = new Date(today);
         sevenDaysFromNow.setDate(today.getDate() + 7);
 
         debts.forEach(d => {
@@ -303,13 +306,13 @@ const App: React.FC = () => {
         });
 
         return upcoming.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-    }, [debts, accounts, t]);
+    }, [debts, accounts, t, currentDate]);
 
     // Transaction-specific CRUD handlers
     const handleAddTransaction = (transactionData: Omit<Transaction, 'id'>): Transaction => {
         const newTransaction: Transaction = {
             ...transactionData,
-            id: `${new Date().toISOString()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: `${currentDate.toISOString()}-${Math.random().toString(36).substr(2, 9)}`,
         };
         
         setIsFormSubmitting(true);
@@ -421,7 +424,7 @@ const App: React.FC = () => {
             result = newItem as T;
             setItems(items.map(item => (item.id === result.id ? result : item)));
         } else { // Add
-            result = { ...newItem, id: new Date().toISOString() } as T;
+            result = { ...newItem, id: currentDate.toISOString() } as T;
             setItems([...items, result]);
         }
         return result;
@@ -583,7 +586,7 @@ const App: React.FC = () => {
 
             const prompt = t('voice_prompt', {
                 currency: primaryCurrency,
-                date: new Date().toLocaleDateString(language),
+                date: currentDate.toLocaleDateString(language),
                 transcript: transcript,
             });
 
@@ -614,7 +617,7 @@ const App: React.FC = () => {
                     description: parsed.description,
                     category: parsed.category,
                     type: parsed.type as TransactionType,
-                    date: new Date().toISOString().split('T')[0],
+                    date: currentDate.toISOString().split('T')[0],
                 };
                 
                 setPendingVoiceTransaction(pendingTransaction);
@@ -678,7 +681,7 @@ const App: React.FC = () => {
     const renderView = () => {
         switch (activeTab) {
             case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} />;
-            case 'accounts': return <Accounts accounts={accounts} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={(id) => openConfirmation('account', id)} t={t} />;
+            case 'accounts': return <Accounts accounts={accounts} transactions={transactions} primaryCurrency={primaryCurrency} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={(id) => openConfirmation('account', id)} t={t} />;
             case 'debts': return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onEditDebt={(debt) => openModal('debt', debt)} onRemoveDebt={(id) => openConfirmation('debt', id)} t={t} />;
             case 'recurring': return <Recurring recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} onAddRecurring={() => openModal('recurring')} onEditRecurring={(rec) => openModal('recurring', rec)} onRemoveRecurring={(id) => openConfirmation('recurring', id)} t={t} />;
             case 'limits': return <Limits limits={limits} transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onAddLimit={() => openModal('limit')} onEditLimit={(limit) => openModal('limit', limit)} onRemoveLimit={(id) => openConfirmation('limit', id)} t={t} />;

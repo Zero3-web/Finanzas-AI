@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Debt } from '../types';
+import { useCurrentDate } from '../contexts/CurrentDateContext';
 
 interface DebtFormProps {
   onAddDebt: (debt: Omit<Debt, 'id'>) => void;
@@ -11,13 +13,14 @@ interface DebtFormProps {
 }
 
 const DebtForm: React.FC<DebtFormProps> = ({ onAddDebt, onUpdateDebt, onClose, debtToEdit, t, primaryCurrency }) => {
+  const { currentDate } = useCurrentDate();
   const [name, setName] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
   const [monthlyPayment, setMonthlyPayment] = useState('');
   const [totalInstallments, setTotalInstallments] = useState('');
   const [paidInstallments, setPaidInstallments] = useState('0');
   const [interestRate, setInterestRate] = useState('');
-  const [nextPaymentDate, setNextPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [nextPaymentDate, setNextPaymentDate] = useState('');
   const [currency, setCurrency] = useState(primaryCurrency);
 
   const isEditing = !!debtToEdit;
@@ -32,8 +35,10 @@ const DebtForm: React.FC<DebtFormProps> = ({ onAddDebt, onUpdateDebt, onClose, d
       setInterestRate(String(debtToEdit.interestRate));
       setNextPaymentDate(new Date(debtToEdit.nextPaymentDate).toISOString().split('T')[0]);
       setCurrency(debtToEdit.currency);
+    } else {
+      setNextPaymentDate(currentDate.toISOString().split('T')[0]);
     }
-  }, [debtToEdit, isEditing]);
+  }, [debtToEdit, isEditing, currentDate]);
 
 
   const handleSubmit = (e: React.FormEvent) => {

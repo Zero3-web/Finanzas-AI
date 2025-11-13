@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
+import { CurrentDateProvider } from './contexts/CurrentDateContext';
 
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
@@ -26,7 +27,9 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <App />
+      <CurrentDateProvider>
+        <App />
+      </CurrentDateProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );

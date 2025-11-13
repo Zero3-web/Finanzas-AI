@@ -1,10 +1,12 @@
 import React from 'react';
 import { Account, Transaction, TransactionType } from '../types';
 import Card from '../components/Card';
-import { PlusIcon, TrashIcon, PencilIcon, CardIcon } from '../components/icons';
+import { PlusIcon, TrashIcon, PencilIcon, CardIcon, ArrowUpIcon, ArrowDownIcon } from '../components/icons';
 
 interface AccountsProps {
   accounts: Account[];
+  transactions: Transaction[];
+  primaryCurrency: string;
   formatCurrency: (amount: number, currency: string) => string;
   onAddAccount: () => void;
   onEditAccount: (account: Account) => void;
@@ -13,13 +15,19 @@ interface AccountsProps {
 }
 
 const AccountCard: React.FC<{ 
-    account: Account; 
+    account: Account;
+    transactions: Transaction[];
     formatCurrency: (amount: number, currency: string) => string; 
     onEdit: (account: Account) => void;
     onRemove: (id: string) => void;
     t: (key: string) => string;
-}> = ({ account, formatCurrency, onEdit, onRemove, t }) => {
+}> = ({ account, transactions, formatCurrency, onEdit, onRemove, t }) => {
   
+  const recentTransactions = transactions
+    .filter(t => t.accountId === account.id || t.destinationAccountId === account.id)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 3);
+
   return (
     <Card className="flex flex-col justify-between">
       <div>
@@ -40,6 +48,25 @@ const AccountCard: React.FC<{
         <p className="text-2xl font-semibold text-text-main dark:text-text-main-dark">{formatCurrency(account.balance, account.currency)}</p>
       </div>
 
+      <div className="mt-4 pt-4 border-t border-secondary dark:border-border-dark space-y-2">
+        <h4 className="text-sm font-semibold text-text-secondary dark:text-text-secondary-dark">{t('recent_transactions_for_account')}</h4>
+        {recentTransactions.length > 0 ? (
+          recentTransactions.map(tr => (
+            <div key={tr.id} className="flex justify-between items-center text-sm">
+              <div className="flex items-center gap-2">
+                {tr.type === 'income' ? <ArrowUpIcon className="w-4 h-4 text-income" /> : <ArrowDownIcon className="w-4 h-4 text-expense" />}
+                <span className="truncate text-text-main dark:text-text-main-dark">{tr.description}</span>
+              </div>
+              <span className={`font-medium ${tr.type === 'income' ? 'text-income' : 'text-expense'}`}>
+                {tr.type === 'income' ? '+' : '-'}{formatCurrency(tr.amount, account.currency)}
+              </span>
+            </div>
+          ))
+        ) : (
+          <p className="text-xs text-text-secondary dark:text-text-secondary-dark text-center py-1">{t('no_recent_transactions')}</p>
+        )}
+      </div>
+
       {account.type === 'credit' && (
         <div className="mt-4 pt-4 border-t border-secondary dark:border-border-dark text-sm">
             <div className="flex justify-between">
@@ -56,7 +83,11 @@ const AccountCard: React.FC<{
   );
 };
 
-const Accounts: React.FC<AccountsProps> = ({ accounts, formatCurrency, onAddAccount, onEditAccount, onRemoveAccount, t }) => {
+const Accounts: React.FC<AccountsProps> = ({ accounts, transactions, primaryCurrency, formatCurrency, onAddAccount, onEditAccount, onRemoveAccount, t }) => {
+  const totalBalance = accounts
+    .filter(acc => acc.currency === primaryCurrency)
+    .reduce((sum, acc) => sum + acc.balance, 0);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -66,11 +97,19 @@ const Accounts: React.FC<AccountsProps> = ({ accounts, formatCurrency, onAddAcco
           {t('addAccount')}
         </button>
       </div>
+
+      {accounts.length > 0 && (
+          <Card className="col-span-1 md:col-span-2 lg:col-span-3">
+              <h2 className="text-lg font-semibold text-text-secondary dark:text-text-secondary-dark">{t('net_worth')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></h2>
+              <p className="text-4xl font-bold text-primary">{formatCurrency(totalBalance, primaryCurrency)}</p>
+          </Card>
+      )}
+
       {accounts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {accounts.map((account, index) => (
             <div key={account.id} className="animate-item-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                <AccountCard account={account} formatCurrency={formatCurrency} onEdit={onEditAccount} onRemove={onRemoveAccount} t={t} />
+                <AccountCard account={account} transactions={transactions} formatCurrency={formatCurrency} onEdit={onEditAccount} onRemove={onRemoveAccount} t={t} />
             </div>
           ))}
         </div>

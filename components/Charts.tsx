@@ -1,6 +1,8 @@
+
 import React, { useMemo } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, TooltipProps, LineChart, Line, CartesianGrid } from 'recharts';
 import { Transaction, TransactionType, Account } from '../types';
+import { useCurrentDate } from '../contexts/CurrentDateContext';
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 
 interface CustomTooltipProps extends TooltipProps<ValueType, NameType> {
@@ -110,10 +112,11 @@ export const WeeklySpendingChart: React.FC<{
     t: (key: string) => string;
     onBarClick: (date: string) => void;
 }> = ({ transactions, accounts, primaryCurrency, accentColor, formatCurrency, t, onBarClick }) => {
+    const { currentDate } = useCurrentDate();
 
     const data = useMemo(() => {
         const accountCurrencyMap = new Map(accounts.map(acc => [acc.id, acc.currency]));
-        const today = new Date();
+        const today = currentDate;
         const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
         
         // Calculate the start of the current week (Monday)
@@ -151,7 +154,7 @@ export const WeeklySpendingChart: React.FC<{
         // Return the data in the correct order (Monday to Sunday)
         return Object.values(weekData);
 
-    }, [transactions, accounts, primaryCurrency, t]);
+    }, [transactions, accounts, primaryCurrency, t, currentDate]);
 
     return (
         <ResponsiveContainer width="100%" height={150}>

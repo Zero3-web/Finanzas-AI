@@ -136,6 +136,9 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     credit_limit: 'Credit Limit',
     payment_due_date: 'Payment Due Date (Day of Month)',
     payment_due_day: 'Payment Due Day',
+    net_worth: 'Net Worth',
+    recent_transactions_for_account: 'Recent Activity',
+    no_recent_transactions: 'No recent transactions.',
     // Debts
     addDebt: 'Add Debt',
     edit_debt: 'Edit Debt',
@@ -334,6 +337,11 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     empty_state_limits_desc: 'Set monthly spending limits for categories to better manage your budget.',
     empty_state_recurring_title: 'Track your subscriptions',
     empty_state_recurring_desc: 'Add recurring payments and income like Netflix, rent, or your salary to never miss a due date.',
+    // Analysis v2
+    cash_flow_over_time: 'Cash Flow (Last 6 Months)',
+    top_spending_categories: 'Top Spending Categories',
+    all_time: 'All Time',
+    monthly: 'Monthly',
   },
   es: {
     // General
@@ -472,6 +480,9 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     credit_limit: 'Límite de Crédito',
     payment_due_date: 'Fecha de Vencimiento de Pago (Día del Mes)',
     payment_due_day: 'Día de Vencimiento del Pago',
+    net_worth: 'Patrimonio Neto',
+    recent_transactions_for_account: 'Actividad Reciente',
+    no_recent_transactions: 'Sin transacciones recientes.',
     // Debts
     addDebt: 'Añadir Deuda',
     edit_debt: 'Editar Deuda',
@@ -670,5 +681,10 @@ export const translations: { [key: string]: { [key: string]: string } } = {
     empty_state_limits_desc: 'Define límites de gasto mensuales por categoría para gestionar mejor tu presupuesto.',
     empty_state_recurring_title: 'Sigue tus suscripciones',
     empty_state_recurring_desc: 'Añade pagos e ingresos recurrentes como Netflix, el alquiler o tu salario para no olvidar ninguna fecha de vencimiento.',
+    // Analysis v2
+    cash_flow_over_time: 'Flujo de Caja (Últimos 6 Meses)',
+    top_spending_categories: 'Principales Categorías de Gasto',
+    all_time: 'Histórico',
+    monthly: 'Mensual',
   },
 };

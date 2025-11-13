@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../types';
+import { useCurrentDate } from '../contexts/CurrentDateContext';
 
 interface GoalFormProps {
   onAddGoal: (goal: Omit<Goal, 'id'>) => void;
@@ -11,10 +13,11 @@ interface GoalFormProps {
 }
 
 const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, goalToEdit, t, primaryCurrency }) => {
+  const { currentDate } = useCurrentDate();
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
   const [savedAmount, setSavedAmount] = useState('0');
-  const [deadline, setDeadline] = useState(new Date().toISOString().split('T')[0]);
+  const [deadline, setDeadline] = useState('');
   const [currency, setCurrency] = useState(primaryCurrency);
 
   const isEditing = !!goalToEdit;
@@ -26,8 +29,10 @@ const GoalForm: React.FC<GoalFormProps> = ({ onAddGoal, onUpdateGoal, onClose, g
       setSavedAmount(String(goalToEdit.savedAmount));
       setDeadline(new Date(goalToEdit.deadline).toISOString().split('T')[0]);
       setCurrency(goalToEdit.currency);
+    } else {
+      setDeadline(currentDate.toISOString().split('T')[0]);
     }
-  }, [goalToEdit, isEditing]);
+  }, [goalToEdit, isEditing, currentDate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
