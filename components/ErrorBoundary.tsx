@@ -10,7 +10,8 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  // FIX: Switched to a constructor to initialize state and call super(props). This resolves an issue where 'this.props' was not being recognized by TypeScript in the render method.
+  // FIX: Reverted state initialization to use a constructor. The class field syntax
+  // was causing a typing issue where `this.props` was not recognized.
   constructor(props: Props) {
     super(props);
     this.state = {

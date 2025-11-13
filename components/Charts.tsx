@@ -80,11 +80,18 @@ export const ActivityChart: React.FC<{
     .sort((a,b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime());
 
     return (
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={240}>
             <LineChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-border-dark" />
                 <XAxis dataKey="name" stroke="#6b7280" fontSize={12} className="dark:stroke-text-secondary-dark" />
-                <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(value) => formatCurrency(Number(value)).replace(/(\.\d*|,\d*)/, '')} className="dark:stroke-text-secondary-dark" />
+                <YAxis 
+                    stroke="#6b7280" 
+                    fontSize={12} 
+                    tickFormatter={(value) => formatCurrency(Number(value)).replace(/(\.\d*|,\d*)/, '')} 
+                    className="dark:stroke-text-secondary-dark"
+                    domain={[0, (dataMax: number) => (dataMax > 5 ? Math.ceil(dataMax * 1.2) : 10)]}
+                    allowDecimals={false}
+                />
                 <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
                 <Legend wrapperStyle={{fontSize: "14px"}}/>
                 <Line type="monotone" dataKey="Ingresos" stroke={primaryColor} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6, style: { cursor: 'pointer' }, onClick: (e, payload) => onDayClick((payload as any).payload.fullDate) }} />

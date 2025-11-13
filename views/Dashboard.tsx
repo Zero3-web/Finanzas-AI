@@ -689,8 +689,8 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                                 className={`draggable-section group relative transition-all duration-300 ${sections[key].colSpan}`}
                             >
                                 <div className={`relative ${isDraggingOver ? 'drag-over-indicator' : ''}`}>
-                                    <div className="absolute top-2 right-2 p-2 text-text-secondary cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-50 transition-opacity z-10 bg-surface/50 dark:bg-surface-dark/50 rounded-full">
-                                        <GripVerticalIcon className="w-6 h-6" />
+                                    <div className="absolute top-1/2 -translate-y-1/2 right-3 p-2 text-text-secondary cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-50 transition-opacity z-10 bg-surface/50 dark:bg-surface-dark/50 rounded-full">
+                                        <GripVerticalIcon className="w-5 h-5" />
                                     </div>
                                     {sections[key].content}
                                 </div>
