@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Transaction, TransactionType, Account } from '../types';
 import { GoogleGenAI } from '@google/genai';
@@ -13,11 +14,12 @@ interface TransactionFormProps {
   onUpdateTransaction: (transaction: Transaction) => void;
   onClose: () => void;
   transactionToEdit?: Transaction | null;
-  t: (key: string) => void;
+  t: (key: string) => string;
   onOpenAccountModal: () => void;
+  formatCurrency: (amount: number, currency: string) => string;
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransaction, onUpdateTransaction, onClose, transactionToEdit, t, onOpenAccountModal }) => {
+const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransaction, onUpdateTransaction, onClose, transactionToEdit, t, onOpenAccountModal, formatCurrency }) => {
   const { currentDate } = useCurrentDate();
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -26,6 +28,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
   const [accountId, setAccountId] = useState<string>(accounts[0]?.id || '');
   const [destinationAccountId, setDestinationAccountId] = useState<string>('');
   const [date, setDate] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   
   const [isSuggestingCategory, setIsSuggestingCategory] = useState(false);
   const [categoryCache, setCategoryCache] = useLocalStorage<Record<string, string>>('category-cache', {});
@@ -111,14 +114,24 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(''); // Reset error on new submission
+
     const isTransfer = type === TransactionType.TRANSFER;
     if (!amount || !description || !accountId || (!isTransfer && !category) || (isTransfer && !destinationAccountId)) {
-        alert(t('fillAllFields'));
+        setErrorMessage(t('fillAllFields'));
         return;
     }
     if (isTransfer && accountId === destinationAccountId) {
-        alert(t('transfer_same_account_error'));
+        setErrorMessage(t('transfer_same_account_error'));
         return;
+    }
+    
+    const selectedAccount = accounts.find(acc => acc.id === accountId);
+    if (selectedAccount && (type === TransactionType.EXPENSE || isTransfer) && selectedAccount.type !== 'credit') {
+        if (selectedAccount.balance < parseFloat(amount)) {
+            setErrorMessage(t('insufficient_balance_for_payment'));
+            return;
+        }
     }
 
     const transactionData = {
@@ -169,13 +182,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
           <div>
             <label htmlFor="accountId" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('from_account')}</label>
             <select id="accountId" value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClasses}>
-              {fromAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+              {fromAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name} ({formatCurrency(acc.balance, acc.currency)})</option>)}
             </select>
           </div>
           <div>
             <label htmlFor="destinationAccountId" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('to_account')}</label>
             <select id="destinationAccountId" value={destinationAccountId} onChange={(e) => setDestinationAccountId(e.target.value)} className={inputClasses}>
-              {toAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+              {toAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name} ({formatCurrency(acc.balance, acc.currency)})</option>)}
             </select>
           </div>
         </div>
@@ -183,7 +196,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
         <div>
             <label htmlFor="accountId" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('account')}</label>
             <select id="accountId" value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClasses}>
-            {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+            {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name} ({formatCurrency(acc.balance, acc.currency)})</option>)}
             </select>
         </div>
       )}
@@ -223,6 +236,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ accounts, onAddTransa
         <label htmlFor="date" className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">{t('date')}</label>
         <input type="date" id="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClasses} />
       </div>
+
+      {errorMessage && (
+        <div className="p-3 my-2 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-900/50 dark:text-red-300" role="alert">
+            {errorMessage}
+        </div>
+      )}
 
       <div className="flex justify-end pt-4">
         <button type="button" onClick={onClose} className="bg-secondary hover:bg-gray-200 dark:bg-secondary-dark dark:hover:bg-opacity-80 text-text-main dark:text-text-main-dark font-bold py-2 px-4 rounded mr-2 transition-transform transform active:scale-95">{t('cancel')}</button>

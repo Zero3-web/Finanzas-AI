@@ -10,6 +10,7 @@ interface DebtsProps {
   onEditDebt: (debt: Debt) => void;
   onRemoveDebt: (debtId: string) => void;
   t: (key: string, params?: { [key: string]: string | number }) => string;
+  onPayDebt: (debt: Debt) => void;
 }
 
 const getIconForDebt = (debt: Debt): React.FC<{ className?: string }> => {
@@ -20,54 +21,66 @@ const getIconForDebt = (debt: Debt): React.FC<{ className?: string }> => {
     return ScaleIcon;
 };
 
-const DebtCard: React.FC<{ debt: Debt; formatCurrency: (amount: number, currency: string) => string; onEdit: (debt: Debt) => void; onRemove: (id: string) => void; t: (key: string, params?: { [key: string]: string | number }) => string; }> = ({ debt, formatCurrency, onEdit, onRemove, t }) => {
+const DebtCard: React.FC<{ debt: Debt; formatCurrency: (amount: number, currency: string) => string; onEdit: (debt: Debt) => void; onRemove: (id: string) => void; t: (key: string, params?: { [key: string]: string | number }) => string; onPay: (debt: Debt) => void; }> = ({ debt, formatCurrency, onEdit, onRemove, t, onPay }) => {
     const amountPaid = debt.paidInstallments * debt.monthlyPayment;
     const remainingAmount = debt.totalAmount - amountPaid;
     const progress = debt.totalInstallments > 0 ? (debt.paidInstallments / debt.totalInstallments) * 100 : 0;
     const Icon = getIconForDebt(debt);
+    const isPaidOff = debt.paidInstallments >= debt.totalInstallments;
 
     return (
-        <Card>
-            <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                    <div className="bg-primary/10 text-primary p-2 rounded-lg">
-                        <Icon className="w-6 h-6" />
+        <Card className="flex flex-col justify-between">
+            <div>
+                <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                            <Icon className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark">{debt.name}</h3>
+                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('monthlyPayment')}: {formatCurrency(debt.monthlyPayment, debt.currency)}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark">{debt.name}</h3>
-                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('monthlyPayment')}: {formatCurrency(debt.monthlyPayment, debt.currency)}</p>
+                    <div className="flex space-x-2">
+                        <button onClick={() => onEdit(debt)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark transition-colors p-1">
+                            <PencilIcon className="w-5 h-5" />
+                        </button>
+                        <button onClick={() => onRemove(debt.id)} className="text-text-secondary dark:text-text-secondary-dark hover:text-expense dark:hover:text-expense-dark transition-colors p-1">
+                            <TrashIcon className="w-5 h-5" />
+                        </button>
                     </div>
                 </div>
-                <div className="flex space-x-2">
-                    <button onClick={() => onEdit(debt)} className="text-text-secondary dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary-dark transition-colors p-1">
-                        <PencilIcon className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => onRemove(debt.id)} className="text-text-secondary dark:text-text-secondary-dark hover:text-expense dark:hover:text-expense-dark transition-colors p-1">
-                        <TrashIcon className="w-5 h-5" />
-                    </button>
+                <div className="my-4">
+                    <div className="flex justify-between text-sm mb-1">
+                        <span className="font-semibold text-text-main dark:text-text-main-dark">{t('remaining')}</span>
+                        <span className="font-bold text-expense">{formatCurrency(remainingAmount, debt.currency)}</span>
+                    </div>
+                    <div className="w-full bg-secondary dark:bg-secondary-dark rounded-full h-2.5">
+                        <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                    </div>
+                    <div className="flex justify-between text-xs text-text-secondary dark:text-gray-500 mt-1">
+                        <span>{t('installments_paid', { paid: debt.paidInstallments, total: debt.totalInstallments })}</span>
+                        <span>{t('total')}: {formatCurrency(debt.totalAmount, debt.currency)}</span>
+                    </div>
+                </div>
+                <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                    {t('next_payment')}: {new Date(debt.nextPaymentDate).toLocaleDateString()}
                 </div>
             </div>
-            <div className="my-4">
-                <div className="flex justify-between text-sm mb-1">
-                    <span className="font-semibold text-text-main dark:text-text-main-dark">{t('remaining')}</span>
-                    <span className="font-bold text-expense">{formatCurrency(remainingAmount, debt.currency)}</span>
-                </div>
-                <div className="w-full bg-secondary dark:bg-secondary-dark rounded-full h-2.5">
-                    <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
-                </div>
-                <div className="flex justify-between text-xs text-text-secondary dark:text-gray-500 mt-1">
-                    <span>{t('installments_paid', { paid: debt.paidInstallments, total: debt.totalInstallments })}</span>
-                    <span>{t('total')}: {formatCurrency(debt.totalAmount, debt.currency)}</span>
-                </div>
-            </div>
-            <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
-                {t('next_payment')}: {new Date(debt.nextPaymentDate).toLocaleDateString()}
+            <div className="mt-4">
+                <button
+                    onClick={() => onPay(debt)}
+                    disabled={isPaidOff}
+                    className="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                    {isPaidOff ? t('debt_fully_paid') : t('pay_installment')}
+                </button>
             </div>
         </Card>
     );
 };
 
-const Debts: React.FC<DebtsProps> = ({ debts, formatCurrency, onAddDebt, onEditDebt, onRemoveDebt, t }) => {
+const Debts: React.FC<DebtsProps> = ({ debts, formatCurrency, onAddDebt, onEditDebt, onRemoveDebt, t, onPayDebt }) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -82,7 +95,7 @@ const Debts: React.FC<DebtsProps> = ({ debts, formatCurrency, onAddDebt, onEditD
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {debts.map((debt, index) => (
                 <div key={debt.id} className="animate-item-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                    <DebtCard debt={debt} formatCurrency={formatCurrency} onEdit={onEditDebt} onRemove={onRemoveDebt} t={t} />
+                    <DebtCard debt={debt} formatCurrency={formatCurrency} onEdit={onEditDebt} onRemove={onRemoveDebt} t={t} onPay={onPayDebt} />
                 </div>
             ))}
         </div>

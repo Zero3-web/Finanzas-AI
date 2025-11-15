@@ -10,9 +10,9 @@ import {
     CollectionIcon,
     ShieldCheckIcon,
     CalendarIcon,
-    BullseyeIcon,
-    GaugeIcon,
-    DocumentTextIcon
+    DocumentTextIcon,
+    ArrowTrendingUpIcon,
+    ShoppingCartIcon
 } from './icons';
 
 interface NavigationProps {
@@ -37,13 +37,13 @@ const Navigation: React.FC<NavigationProps> = ({
   const navItems: { tab: Tab; labelKey: string; icon: React.FC<{ className?: string }> }[] = [
     { tab: 'dashboard', labelKey: 'dashboard', icon: HomeIcon },
     { tab: 'accounts', labelKey: 'accounts', icon: CardIcon },
+    { tab: 'inversion_inicial', labelKey: 'inversion_inicial', icon: ArrowTrendingUpIcon },
+    { tab: 'lista_compras', labelKey: 'lista_compras', icon: ShoppingCartIcon },
     { tab: 'debts', labelKey: 'debts', icon: ScaleIcon },
     { tab: 'recurring', labelKey: 'recurring', icon: CollectionIcon },
     { tab: 'limits', labelKey: 'limits', icon: ShieldCheckIcon },
-    { tab: 'goals', labelKey: 'goals', icon: BullseyeIcon },
     { tab: 'analysis', labelKey: 'analysis', icon: ChartPieIcon },
     { tab: 'history', labelKey: 'history', icon: DocumentTextIcon },
-    { tab: 'wellness', labelKey: 'wellness', icon: GaugeIcon },
     { tab: 'calendar', labelKey: 'calendar', icon: CalendarIcon },
     { tab: 'settings', labelKey: 'settings', icon: CogIcon },
   ];

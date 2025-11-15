@@ -1,3 +1,4 @@
+
 export enum TransactionType {
   INCOME = 'income',
   EXPENSE = 'expense',
@@ -56,16 +57,24 @@ export interface SpendingLimit {
   currency: string;
 }
 
-export interface Goal {
+export interface InitialInvestment {
   id: string;
   name: string;
-  targetAmount: number;
-  savedAmount: number;
-  deadline: string;
+  amount: number;
   currency: string;
+  status: 'pending' | 'paid' | 'loan';
+  debtId?: string; 
 }
 
-export type Tab = 'dashboard' | 'accounts' | 'debts' | 'recurring' | 'limits' | 'analysis' | 'settings' | 'calendar' | 'goals' | 'wellness' | 'history';
+export interface ShoppingListItem {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  purchased: boolean;
+}
+
+export type Tab = 'dashboard' | 'accounts' | 'debts' | 'recurring' | 'limits' | 'analysis' | 'settings' | 'calendar' | 'history' | 'inversion_inicial' | 'lista_compras';
 
 export type Language = 'en' | 'es';
 
@@ -94,22 +103,12 @@ export interface CalendarEvent {
 
 export type ColorTheme = 'default' | 'ocean' | 'sunset' | 'forest';
 
-// FIX: Added Theme type to centralize type definitions.
 export type Theme = 'light' | 'dark';
 
 export interface CoupleLink {
   linked: boolean;
   partnerName: string | null;
   linkId: string | null;
-}
-
-// FIX: Add missing FocusWidgetType and FocusModeConfig type definitions.
-export type FocusWidgetType = 'goal' | 'limit' | 'upcoming' | 'quickAdd' | 'tip';
-
-export interface FocusModeConfig {
-  activeWidgets: FocusWidgetType[];
-  selectedGoalId?: string | null;
-  selectedLimitId?: string | null;
 }
 
 export type LastTransactionAction = {

@@ -200,8 +200,8 @@ const RecentActivityItem: React.FC<{ transaction: Transaction, accounts: Map<str
     );
 };
 
-const defaultSectionOrder = ['accountBalances', 'accountSelector', 'recentActivity', 'activityChart', 'debtSummary', 'recurringSummary', 'totalSummary'];
-const defaultVisibleSections = ['accountBalances', 'accountSelector', 'activityChart', 'recentActivity', 'debtSummary', 'recurringSummary', 'totalSummary'];
+const defaultSectionOrder = ['accountBalances', 'accountSelector', 'recentActivity', 'activityChart', 'debtSummary', 'recurringSummary', 'overallSummary', 'weeklySpending'];
+const defaultVisibleSections = ['accountBalances', 'accountSelector', 'activityChart', 'recentActivity', 'debtSummary', 'recurringSummary', 'overallSummary', 'weeklySpending'];
 
 const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, recurringTransactions, theme, toggleTheme, colorTheme, formatCurrency, t, notifications, userName, onAddAccount, onAddDebt, onAddRecurring, primaryCurrency, onOpenDetailModal, selectedAccountId, setSelectedAccountId }) => {
     const accountMap = useMemo(() => new Map(accounts.map(acc => [acc.id, acc])), [accounts]);
@@ -486,7 +486,7 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         activityChart: {
             nameKey: 'section_activityChart',
             content: (
-                 <Card className="dark:bg-surface-dark h-full">
+                 <Card className="dark:bg-surface-dark">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-xl font-bold text-text-main dark:text-text-main-dark">
                             {t('activity')} <span className="text-base font-medium text-text-secondary dark:text-text-secondary-dark">{selectedAccount ? `(${selectedAccount.name})` : `(${t('all')})`}</span>
@@ -582,36 +582,39 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
                 </Card>
             )
         },
-        totalSummary: {
-            nameKey: 'section_totalSummary',
+        overallSummary: {
+            nameKey: 'section_overallSummary',
             content: (
              <Card>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                    <div className="space-y-4">
-                         <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark">{t('overall_summary')}</h2>
-                        <div>
-                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('total_income')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                            <p className="text-2xl font-bold text-income">{formatCurrency(totalIncome, primaryCurrency)}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('expense')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
-                            <p className="text-2xl font-bold text-expense">{formatCurrency(totalExpenses, primaryCurrency)}</p>
-                        </div>
+                <div className="space-y-4">
+                     <h2 className="text-xl font-bold text-text-main dark:text-text-main-dark">{t('overall_summary')}</h2>
+                    <div>
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('total_income')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                        <p className="text-2xl font-bold text-income">{formatCurrency(totalIncome, primaryCurrency)}</p>
                     </div>
                     <div>
-                         <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark mb-2 text-center lg:text-left">{t('weekly_spending')}</h3>
-                        <WeeklySpendingChart 
-                            transactions={transactions}
-                            accounts={accounts}
-                            primaryCurrency={primaryCurrency}
-                            accentColor={accentColor}
-                            formatCurrency={formatCurrency}
-                            t={t}
-                            onBarClick={(date) => handleChartDayClick(date, TransactionType.EXPENSE)}
-                        />
+                        <p className="text-sm text-text-secondary dark:text-text-secondary-dark">{t('expense')} <span className="text-xs">({t('summary_in_primary_currency', { currency: primaryCurrency })})</span></p>
+                        <p className="text-2xl font-bold text-expense">{formatCurrency(totalExpenses, primaryCurrency)}</p>
                     </div>
-                 </div>
+                </div>
              </Card>
+            )
+        },
+        weeklySpending: {
+            nameKey: 'section_weeklySpending',
+            content: (
+                <Card>
+                     <h3 className="text-lg font-bold text-text-main dark:text-text-main-dark mb-2">{t('weekly_spending')}</h3>
+                    <WeeklySpendingChart 
+                        transactions={transactions}
+                        accounts={accounts}
+                        primaryCurrency={primaryCurrency}
+                        accentColor={accentColor}
+                        formatCurrency={formatCurrency}
+                        t={t}
+                        onBarClick={(date) => handleChartDayClick(date, TransactionType.EXPENSE)}
+                    />
+                </Card>
             )
         }
     };
@@ -639,8 +642,8 @@ const Dashboard: React.FC<DashboardProps> = ({ accounts, transactions, debts, re
         );
     };
 
-    const mainColKeys = ['accountSelector', 'activityChart'];
-    const sideColKeys = ['recentActivity', 'debtSummary', 'recurringSummary'];
+    const mainColKeys = ['accountSelector', 'activityChart', 'overallSummary'];
+    const sideColKeys = ['recentActivity', 'debtSummary', 'recurringSummary', 'weeklySpending'];
     const sectionsToRender = sectionOrder.filter(key => visibleSections.includes(key) && sections[key]);
     
     const layout = useMemo(() => sectionsToRender.reduce((acc, key) => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Modal from './Modal';
 import { Account } from '../types';
 
@@ -21,8 +21,8 @@ const CurrencyMismatchModal: React.FC<CurrencyMismatchModalProps> = ({
   onCreateNew,
   t,
 }) => {
-  // FIX: Rewrote the logic to create `uniqueAccountsByCurrency` using `Array.from()` to ensure proper type inference. The spread syntax on an iterator (`...map.values()`) can sometimes cause TypeScript to infer a less specific type like `unknown[]`. `Array.from()` is more robust in this case.
-  const uniqueAccountsByCurrency = Array.from(new Map(accounts.map(item => [item.currency, item])).values());
+  // FIX: Wrapped in useMemo to ensure TypeScript correctly infers the type of the accounts array, resolving errors where properties on 'account' were not found.
+  const uniqueAccountsByCurrency = useMemo(() => Array.from(new Map(accounts.map(item => [item.currency, item])).values()), [accounts]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('currency_mismatch_title')}>

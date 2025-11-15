@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
 import { v4 as uuidv4 } from 'uuid';
-import { Tab, Transaction, Account, Debt, RecurringTransaction, SpendingLimit, Goal, Notification, Language, ColorTheme, TransactionType, AccountType, CoupleLink, LastTransactionAction } from './types';
+import { Tab, Transaction, Account, Debt, RecurringTransaction, SpendingLimit, Notification, Language, ColorTheme, TransactionType, AccountType, CoupleLink, LastTransactionAction, InitialInvestment, ShoppingListItem } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import { useTheme } from './hooks/useTheme';
 import { useColorTheme } from './hooks/useColorTheme';
@@ -20,29 +20,29 @@ import AccountForm from './components/AccountForm';
 import DebtForm from './components/DebtForm';
 import RecurringTransactionForm from './components/SubscriptionForm';
 import LimitForm from './components/LimitForm';
-import GoalForm from './components/GoalForm';
+import InversionInicialForm from './components/InversionInicialForm';
+import ShoppingItemForm from './components/ShoppingItemForm';
 import ConfirmationModal from './components/ConfirmationModal';
 import OnboardingTour from './components/OnboardingTour';
 import VoiceInputModal from './components/VoiceInputModal';
 import VoiceTour from './components/VoiceTour';
 import DynamicIsland from './components/DynamicIsland';
-import Confetti from './components/Confetti';
 import TransactionDetailModal from './components/TransactionDetailModal';
 import AccountSelectionModal from './components/AccountSelectionModal';
 import CurrencyMismatchModal from './components/CurrencyMismatchModal';
+import DebtPaymentModal from './components/DebtPaymentModal';
 
 import Dashboard from './views/Dashboard';
 import Accounts from './views/Accounts';
 import Debts from './views/Debts';
 import Recurring from './views/Subscriptions';
 import Limits from './views/Limits';
-import Goals from './views/Goals';
 import History from './views/History';
 import Analysis from './views/Analysis';
 import Calendar from './views/Calendar';
 import Settings from './views/Settings';
-import Wellness from './views/Wellness';
-import FollowUpModal from './components/FollowUpModal';
+import InversionInicial from './views/InversionInicial';
+import ShoppingList from './views/ShoppingList';
 import { MicIcon, PlusIcon } from './components/icons';
 import DashboardSkeleton from './components/DashboardSkeleton';
 
@@ -57,7 +57,6 @@ const App: React.FC = () => {
     const [theme, toggleTheme] = useTheme();
     const [colorTheme, setColorTheme] = useColorTheme();
     const [isFinishedOnboarding, setIsFinishedOnboarding] = useLocalStorage('onboarding-finished', false);
-    const [hasShownWelcomeConfetti, setHasShownWelcomeConfetti] = useLocalStorage('welcome-confetti-shown', false);
     const [coupleLink, setCoupleLink] = useLocalStorage<CoupleLink>('couple-link', { linked: false, partnerName: null, linkId: null });
 
     // Main App State
@@ -74,7 +73,8 @@ const App: React.FC = () => {
     const [debts, setDebts] = useLocalStorage<Debt[]>('debts', []);
     const [recurringTransactions, setRecurringTransactions] = useLocalStorage<RecurringTransaction[]>('recurringTransactions', []);
     const [limits, setLimits] = useLocalStorage<SpendingLimit[]>('limits', []);
-    const [goals, setGoals] = useLocalStorage<Goal[]>('goals', []);
+    const [initialInvestments, setInitialInvestments] = useLocalStorage<InitialInvestment[]>('initial-investments', []);
+    const [shoppingListItems, setShoppingListItems] = useLocalStorage<ShoppingListItem[]>('shopping-list-items', []);
     const [lastAutoProcessDate, setLastAutoProcessDate] = useLocalStorage<string>('last-auto-process-date', '');
 
 
@@ -87,6 +87,7 @@ const App: React.FC = () => {
     const [isFormSubmitting, setIsFormSubmitting] = useState(false);
     const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
     const [accountFormSuccessCallback, setAccountFormSuccessCallback] = useState<((newAccount: Account) => void) | null>(null);
+    const [debtToPay, setDebtToPay] = useState<Debt | null>(null);
 
 
     // Voice Input & Dynamic Island State
@@ -103,23 +104,10 @@ const App: React.FC = () => {
     const [scrollToTransactionId, setScrollToTransactionId] = useState<string | null>(null);
     const [lastTransactionAction, setLastTransactionAction] = useState<LastTransactionAction | null>(null);
 
-
-    // Goal Completion State
-    const [showConfetti, setShowConfetti] = useState(false);
-    const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
-
     useEffect(() => {
         const timer = setTimeout(() => setIsLoading(false), 1200);
         return () => clearTimeout(timer);
     }, []);
-
-    useEffect(() => {
-        if (isFinishedOnboarding && !hasShownWelcomeConfetti) {
-            setShowConfetti(true);
-            setHasShownWelcomeConfetti(true);
-            setTimeout(() => setShowConfetti(false), 8000); // Confetti lasts 8 seconds
-        }
-    }, [isFinishedOnboarding, hasShownWelcomeConfetti, setHasShownWelcomeConfetti]);
 
     const t = useCallback((key: string, params?: { [key: string]: string | number }) => {
         let translation = translations[language][key] || key;
@@ -187,7 +175,6 @@ const App: React.FC = () => {
         migrateCurrency(accounts, setAccounts, 'accounts');
         migrateCurrency(debts, setDebts, 'debts');
         migrateCurrency(limits, setLimits, 'limits');
-        migrateCurrency(goals, setGoals, 'goals');
     
         dataMigrationRan.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -286,7 +273,7 @@ const App: React.FC = () => {
             console.log("Monthly processing complete.");
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentDate]);
+    }, [currentDate, lastAutoProcessDate, accounts, debts, recurringTransactions, transactions, setAccounts, setDebts, setLastAutoProcessDate, setTransactions, t]);
 
 
     // Notifications
@@ -442,7 +429,7 @@ const App: React.FC = () => {
         items: T[],
         setItems: (items: T[]) => void,
         newItem: Omit<T, 'id'> | T,
-        entityNameKey: 'account' | 'debt' | 'recurring_item' | 'limit' | 'goal'
+        entityNameKey: 'account' | 'debt' | 'recurring_item' | 'limit' | 'inversion_inicial' | 'shopping_item'
     ): T => {
         setIsFormSubmitting(true);
         const isEditing = 'id' in newItem;
@@ -457,6 +444,32 @@ const App: React.FC = () => {
         return result;
     };
 
+    const handleInvestmentSubmit = (
+        investment: Omit<InitialInvestment, 'id'> | InitialInvestment,
+        debtDetails?: Omit<Debt, 'id'>
+    ) => {
+        setIsFormSubmitting(true);
+        const isEditingInvestment = 'id' in investment;
+
+        if (investment.status === 'loan' && debtDetails) {
+            const newDebt = handleAddOrUpdate(debts, setDebts, debtDetails);
+            const newInvestmentData = { ...investment, debtId: newDebt.id };
+            handleAddOrUpdate(initialInvestments, setInitialInvestments, newInvestmentData);
+        } else {
+            handleAddOrUpdate(initialInvestments, setInitialInvestments, investment);
+        }
+
+        setIslandStatus('success');
+        setIslandMessage(t(isEditingInvestment ? 'item_updated_successfully' : 'item_added_successfully', { item: t('inversion_inicial') }));
+        playTone('success');
+        setIsIslandOpen(true);
+    };
+
+    const handleToggleShoppingListItem = (id: string) => {
+        setShoppingListItems(prev => prev.map(item =>
+            item.id === id ? { ...item, purchased: !item.purchased } : item
+        ));
+    };
 
     const handleRemove = (type: string, id: string, silent = false) => {
         const setters: { [key: string]: React.Dispatch<any> } = {
@@ -465,7 +478,8 @@ const App: React.FC = () => {
             debt: setDebts,
             recurring: setRecurringTransactions,
             limit: setLimits,
-            goal: setGoals
+            inversion_inicial: setInitialInvestments,
+            shopping_item: setShoppingListItems,
         };
         const items: { [key: string]: any[] } = {
             account: accounts,
@@ -473,7 +487,8 @@ const App: React.FC = () => {
             debt: debts,
             recurring: recurringTransactions,
             limit: limits,
-            goal: goals
+            inversion_inicial: initialInvestments,
+            shopping_item: shoppingListItems,
         };
         
         if (type === 'transaction') {
@@ -539,17 +554,6 @@ const App: React.FC = () => {
         setDetailModalContent({ title, transactions });
         setIsDetailModalOpen(true);
     };
-
-
-    // Goal Completion Effect
-    useEffect(() => {
-        goals.forEach(goal => {
-            if (goal.savedAmount >= goal.targetAmount) {
-                setShowConfetti(true);
-                setTimeout(() => setShowConfetti(false), 8000); // Confetti lasts 8 seconds
-            }
-        });
-    }, [goals]);
 
     // Effect to scroll to a newly added transaction on mobile
     useEffect(() => {
@@ -828,20 +832,83 @@ const App: React.FC = () => {
         }
     };
 
+    // Payment Handlers
+    const handleOpenPayDebtModal = (debt: Debt) => {
+        setDebtToPay(debt);
+    };
+
+    const handlePayDebtInstallment = (debtId: string, fromAccountId: string) => {
+        const debt = debts.find(d => d.id === debtId);
+        const account = accounts.find(a => a.id === fromAccountId);
+
+        if (!debt || !account) return;
+
+        // 1. Create expense transaction
+        const paymentTransaction: Transaction = {
+          id: uuidv4(),
+          accountId: fromAccountId,
+          amount: debt.monthlyPayment,
+          description: t('auto_debt_payment', { name: debt.name }),
+          category: 'Housing',
+          type: TransactionType.EXPENSE,
+          date: currentDate.toISOString().split('T')[0],
+        };
+        setTransactions(prev => [...prev, paymentTransaction]);
+
+        // 2. Update account balance
+        setAccounts(prev => prev.map(acc => 
+            acc.id === fromAccountId ? { ...acc, balance: acc.balance - debt.monthlyPayment } : acc
+        ));
+
+        // 3. Update debt
+        const newNextPaymentDate = new Date(debt.nextPaymentDate);
+        newNextPaymentDate.setMonth(newNextPaymentDate.getMonth() + 1);
+        
+        setDebts(prev => prev.map(d =>
+            d.id === debtId ? { 
+                ...d, 
+                paidInstallments: d.paidInstallments + 1,
+                nextPaymentDate: newNextPaymentDate.toISOString().split('T')[0]
+            } : d
+        ));
+
+        setDebtToPay(null); // Close modal
+        
+        // 4. Show success feedback
+        setIslandStatus('success');
+        setIslandMessage(t('payment_successful'));
+        playTone('success');
+        setIsIslandOpen(true);
+    };
+
+    const handleOpenCreditCardPayment = (account: Account) => {
+        if (account.type !== 'credit') return;
+
+        const sourceAccount = accounts.find(a => a.type !== 'credit' && a.currency === account.currency) || accounts.find(a => a.type !== 'credit');
+        
+        openModal('transaction', {
+            type: TransactionType.TRANSFER,
+            destinationAccountId: account.id,
+            accountId: sourceAccount?.id || '',
+            amount: account.balance < 0 ? Math.abs(account.balance) : undefined,
+            description: t('paymentFor', { name: account.name }),
+        });
+    };
+
 
     const renderView = () => {
         switch (activeTab) {
             case 'dashboard': return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} selectedAccountId={selectedAccountId} setSelectedAccountId={setSelectedAccountId} />;
-            case 'accounts': return <Accounts accounts={accounts} transactions={transactions} primaryCurrency={primaryCurrency} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={(id) => openConfirmation('account', id)} t={t} />;
-            case 'debts': return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onEditDebt={(debt) => openModal('debt', debt)} onRemoveDebt={(id) => openConfirmation('debt', id)} t={t} />;
+            case 'accounts': return <Accounts accounts={accounts} transactions={transactions} primaryCurrency={primaryCurrency} formatCurrency={formatCurrency} onAddAccount={() => openModal('account')} onEditAccount={(acc) => openModal('account', acc)} onRemoveAccount={(id) => openConfirmation('account', id)} t={t} onMakeCreditCardPayment={handleOpenCreditCardPayment} />;
+            case 'debts': return <Debts debts={debts} formatCurrency={formatCurrency} onAddDebt={() => openModal('debt')} onEditDebt={(debt) => openModal('debt', debt)} onRemoveDebt={(id) => openConfirmation('debt', id)} t={t} onPayDebt={handleOpenPayDebtModal} />;
             case 'recurring': return <Recurring recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} onAddRecurring={() => openModal('recurring')} onEditRecurring={(rec) => openModal('recurring', rec)} onRemoveRecurring={(id) => openConfirmation('recurring', id)} t={t} />;
             case 'limits': return <Limits limits={limits} transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onAddLimit={() => openModal('limit')} onEditLimit={(limit) => openModal('limit', limit)} onRemoveLimit={(id) => openConfirmation('limit', id)} t={t} />;
-            case 'goals': return <Goals goals={goals} formatCurrency={formatCurrency} onAddGoal={() => openModal('goal')} onEditGoal={(goal) => openModal('goal', goal)} onRemoveGoal={(id) => openConfirmation('goal', id)} t={t} primaryCurrency={primaryCurrency} />;
             case 'history': return <History transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} onEditTransaction={(tr) => openModal('transaction', tr)} onRemoveTransaction={(id) => openConfirmation('transaction', id)} t={t} />;
             case 'analysis': return <Analysis transactions={transactions} accounts={accounts} formatCurrency={formatCurrency} t={t} colorTheme={colorTheme} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} />;
             case 'calendar': return <Calendar accounts={accounts} debts={debts} recurringTransactions={recurringTransactions} formatCurrency={formatCurrency} t={t} />;
             case 'settings': return <Settings theme={theme} toggleTheme={toggleTheme} currency={primaryCurrency} setCurrency={setPrimaryCurrency} language={language} setLanguage={setLanguage} colorTheme={colorTheme} setColorTheme={setColorTheme} avatar={avatar} setAvatar={setAvatar} userName={userName} setUserName={setUserName} t={t} accounts={accounts} transactions={transactions} debts={debts} coupleLink={coupleLink} setCoupleLink={setCoupleLink} onOpenModal={openModal} setActiveTab={setActiveTab} formatCurrency={formatCurrency} />;
-            case 'wellness': return <Wellness transactions={transactions} accounts={accounts} debts={debts} t={t} colorTheme={colorTheme} />;
+            case 'inversion_inicial': return <InversionInicial initialInvestments={initialInvestments} debts={debts} formatCurrency={formatCurrency} onAddInversion={() => openModal('inversion_inicial')} onEditInversion={(inv) => openModal('inversion_inicial', inv)} onRemoveInversion={(id) => openConfirmation('inversion_inicial', id)} t={t} primaryCurrency={primaryCurrency} />;
+            case 'lista_compras': return <ShoppingList items={shoppingListItems} onAddItem={() => openModal('shopping_item')} onEditItem={(item) => openModal('shopping_item', item)} onRemoveItem={(id) => openConfirmation('shopping_item', id)} onToggleItem={handleToggleShoppingListItem} formatCurrency={formatCurrency} primaryCurrency={primaryCurrency} t={t} />;
             default: return <Dashboard accounts={accounts} transactions={transactions} debts={debts} recurringTransactions={recurringTransactions} theme={theme} toggleTheme={toggleTheme} colorTheme={colorTheme} formatCurrency={formatCurrency} t={t} notifications={notifications} userName={userName} avatar={avatar} onAddAccount={() => openModal('account')} onAddDebt={() => openModal('debt')} onAddRecurring={() => openModal('recurring')} primaryCurrency={primaryCurrency} onOpenDetailModal={handleOpenDetailModal} selectedAccountId={selectedAccountId} setSelectedAccountId={setSelectedAccountId} />;
         }
     };
@@ -866,7 +933,6 @@ const App: React.FC = () => {
 
     return (
         <div className={`flex h-screen bg-background dark:bg-background-dark text-text-main dark:text-text-main-dark font-sans`}>
-            {showConfetti && <Confetti />}
             <Navigation activeTab={activeTab} setActiveTab={setActiveTab} isCollapsed={isNavCollapsed} toggleCollapse={() => setIsNavCollapsed(!isNavCollapsed)} t={t} userName={userName} avatar={avatar} />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <MobileHeader activeTab={activeTab} t={t} notifications={notifications} onAvatarClick={() => setIsMobileMenuOpen(true)} userName={userName} avatar={avatar} />
@@ -892,6 +958,7 @@ const App: React.FC = () => {
                     transactionToEdit={itemToEdit}
                     t={t}
                     onOpenAccountModal={() => openModal('account')}
+                    formatCurrency={formatCurrency}
                 />
             </Modal>
             <Modal 
@@ -965,18 +1032,37 @@ const App: React.FC = () => {
                     primaryCurrency={primaryCurrency}
                 />
             </Modal>
-             <Modal 
-                isOpen={modal === 'goal'} 
-                onClose={closeModal} 
-                title={itemToEdit ? t('edit_goal') : t('addGoal')}
+            <Modal
+                isOpen={modal === 'inversion_inicial'}
+                onClose={closeModal}
+                title={itemToEdit ? t('edit_inversion') : t('add_inversion')}
                 isExiting={isFormSubmitting}
                 onExitComplete={handleModalExitComplete}
             >
-                <GoalForm
-                    onAddGoal={(goal) => handleGenericSubmit(goals, setGoals, goal, 'goal')}
-                    onUpdateGoal={(goal) => handleGenericSubmit(goals, setGoals, goal, 'goal')}
+                <InversionInicialForm
+                    onSubmit={handleInvestmentSubmit}
                     onClose={closeModal}
-                    goalToEdit={itemToEdit}
+                    investmentToEdit={itemToEdit}
+                    t={t}
+                    primaryCurrency={primaryCurrency}
+                />
+            </Modal>
+            <Modal
+                isOpen={modal === 'shopping_item'}
+                onClose={closeModal}
+                title={itemToEdit ? t('edit_item') : t('add_item')}
+                isExiting={isFormSubmitting}
+                onExitComplete={handleModalExitComplete}
+            >
+                <ShoppingItemForm
+                    onSubmit={(item) => {
+                        handleGenericSubmit(shoppingListItems, setShoppingListItems, { ...item, purchased: false }, 'shopping_item');
+                    }}
+                    onUpdate={(item) => {
+                        handleGenericSubmit(shoppingListItems, setShoppingListItems, item, 'shopping_item');
+                    }}
+                    onClose={closeModal}
+                    itemToEdit={itemToEdit}
                     t={t}
                     primaryCurrency={primaryCurrency}
                 />
@@ -999,6 +1085,16 @@ const App: React.FC = () => {
                 title={t('confirm_delete_title')}
                 message={t('confirm_delete_message')}
                 t={t}
+            />
+
+            <DebtPaymentModal
+                isOpen={!!debtToPay}
+                onClose={() => setDebtToPay(null)}
+                onConfirm={handlePayDebtInstallment}
+                debt={debtToPay}
+                accounts={accounts}
+                t={t}
+                formatCurrency={formatCurrency}
             />
             
              <MobileMenu 
@@ -1080,13 +1176,6 @@ const App: React.FC = () => {
                     handleEditAction();
                     handleCloseIsland();
                 }}
-                t={t}
-            />
-
-            <FollowUpModal
-                isOpen={isFollowUpModalOpen}
-                onClose={() => setIsFollowUpModalOpen(false)}
-                onAsk={(q) => console.log('Follow up:', q)}
                 t={t}
             />
 

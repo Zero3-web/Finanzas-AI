@@ -12,6 +12,7 @@ interface AccountsProps {
   onEditAccount: (account: Account) => void;
   onRemoveAccount: (accountId: string) => void;
   t: (key: string) => string;
+  onMakeCreditCardPayment: (account: Account) => void;
 }
 
 const AccountCard: React.FC<{ 
@@ -21,7 +22,8 @@ const AccountCard: React.FC<{
     onEdit: (account: Account) => void;
     onRemove: (id: string) => void;
     t: (key: string) => string;
-}> = ({ account, transactions, formatCurrency, onEdit, onRemove, t }) => {
+    onMakePayment: (account: Account) => void;
+}> = ({ account, transactions, formatCurrency, onEdit, onRemove, t, onMakePayment }) => {
   
   const recentTransactions = transactions
     .filter(t => t.accountId === account.id || t.destinationAccountId === account.id)
@@ -68,22 +70,32 @@ const AccountCard: React.FC<{
       </div>
 
       {account.type === 'credit' && (
-        <div className="mt-4 pt-4 border-t border-secondary dark:border-border-dark text-sm">
-            <div className="flex justify-between">
-                <span className="text-text-secondary dark:text-text-secondary-dark">{t('credit_limit')}</span>
-                <span className="font-medium text-text-main dark:text-text-main-dark">{formatCurrency(account.creditLimit || 0, account.currency)}</span>
+        <>
+            <div className="mt-4 pt-4 border-t border-secondary dark:border-border-dark text-sm">
+                <div className="flex justify-between">
+                    <span className="text-text-secondary dark:text-text-secondary-dark">{t('credit_limit')}</span>
+                    <span className="font-medium text-text-main dark:text-text-main-dark">{formatCurrency(account.creditLimit || 0, account.currency)}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-text-secondary dark:text-text-secondary-dark">{t('payment_due_date')}</span>
+                    <span className="font-medium text-text-main dark:text-text-main-dark">{t('day')} {account.paymentDueDate}</span>
+                </div>
             </div>
-            <div className="flex justify-between">
-                <span className="text-text-secondary dark:text-text-secondary-dark">{t('payment_due_date')}</span>
-                <span className="font-medium text-text-main dark:text-text-main-dark">{t('day')} {account.paymentDueDate}</span>
+            <div className="mt-4">
+                <button
+                    onClick={() => onMakePayment(account)}
+                    className="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-focus transition-colors"
+                >
+                    {t('make_payment')}
+                </button>
             </div>
-        </div>
+        </>
       )}
     </Card>
   );
 };
 
-const Accounts: React.FC<AccountsProps> = ({ accounts, transactions, primaryCurrency, formatCurrency, onAddAccount, onEditAccount, onRemoveAccount, t }) => {
+const Accounts: React.FC<AccountsProps> = ({ accounts, transactions, primaryCurrency, formatCurrency, onAddAccount, onEditAccount, onRemoveAccount, t, onMakeCreditCardPayment }) => {
   const totalBalance = accounts
     .filter(acc => acc.currency === primaryCurrency)
     .reduce((sum, acc) => sum + acc.balance, 0);
@@ -109,7 +121,7 @@ const Accounts: React.FC<AccountsProps> = ({ accounts, transactions, primaryCurr
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {accounts.map((account, index) => (
             <div key={account.id} className="animate-item-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
-                <AccountCard account={account} transactions={transactions} formatCurrency={formatCurrency} onEdit={onEditAccount} onRemove={onRemoveAccount} t={t} />
+                <AccountCard account={account} transactions={transactions} formatCurrency={formatCurrency} onEdit={onEditAccount} onRemove={onRemoveAccount} t={t} onMakePayment={onMakeCreditCardPayment} />
             </div>
           ))}
         </div>
